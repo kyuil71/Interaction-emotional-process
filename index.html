@@ -1,431 +1,2988 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Material Surface Interaction Lab v4</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Segoe UI",sans-serif}
-body{display:flex;width:100vw;height:100vh;background:#111;color:#fff;overflow:hidden}
-#canvas-container{flex:1;position:relative;background:#111;overflow:hidden}
-canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none}
-#control-panel{width:50vw;max-width:680px;min-width:420px;background:#202020;border-left:1px solid #333;padding:22px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;transition:.3s}
-#control-panel.collapsed{width:0;min-width:0;padding:0;border-left:none;overflow:hidden}
-#floating-toggle{position:absolute;top:14px;right:16px;z-index:50;background:#007bff;border:none;color:#fff;padding:9px 14px;border-radius:8px;cursor:pointer;font-weight:700}
-h3{margin-top:34px;font-size:20px}
-.tabs{display:flex;gap:8px}
-.tab-btn{flex:1;padding:12px;border:none;border-radius:8px;background:#333;color:#aaa;font-weight:700;cursor:pointer}
-.tab-btn.active{background:#007bff;color:#fff}
-.info-text{font-size:13px;line-height:1.5;color:#bbb;background:#2a2a2a;padding:12px;border-radius:8px}
-.control-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.control-group{background:#2b2b2b;padding:12px;border-radius:9px;display:flex;flex-direction:column;gap:8px}
-.control-group label{display:flex;justify-content:space-between;font-size:13px;color:#ccc}
-.control-group span{color:#4da3ff;font-weight:700}
-input[type=range]{width:100%}
-input[type=color]{width:100%;height:38px;border:none;background:transparent;cursor:pointer}
-.utility-btn{padding:11px 14px;border:1px solid #444;border-radius:8px;background:#333;color:#fff;font-weight:700;cursor:pointer}
-.hidden{display:none!important}
-@media(max-width:768px){
-body{flex-direction:column}
-#control-panel{width:100%;max-width:none;min-width:0;height:50vh;border-left:none;border-top:1px solid #333}
-#control-panel.collapsed{height:0;width:100%}
-.control-grid{grid-template-columns:1fr}
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>감성 · 지각 · 인터랙션 컨셉 랩 v12.2</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    /* ==========================================================
+       타이포 시스템 — 모든 텍스트 16px 이상을 강제합니다.
+       body 접두사로 특이도를 한 단계 올려 유틸리티 충돌을 막습니다.
+       ========================================================== */
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      background-color: #e2e8f0;
+      color: #0f172a;
+      font-size: 17px;
+      line-height: 1.8;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
+    body * { font-size: inherit; }
+    body .t-display { font-size: 34px; line-height: 1.2;  font-weight: 800; letter-spacing: -0.025em; }
+    body .t-h1      { font-size: 26px; line-height: 1.35; font-weight: 800; letter-spacing: -0.015em; }
+    body .t-h2      { font-size: 22px; line-height: 1.4;  font-weight: 800; letter-spacing: -0.01em; }
+    body .t-h3      { font-size: 19px; line-height: 1.5;  font-weight: 700; }
+    body .t-body    { font-size: 17px; line-height: 1.8;  font-weight: 400; }
+    body .t-small   { font-size: 16px; line-height: 1.75; }
+    body .t-meta    { font-size: 16px; line-height: 1.65; }
+    body .t-label   { font-size: 16px; font-weight: 800; letter-spacing: 0.04em; }
+
+    body .prose-ko { text-align: left; white-space: pre-line; }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fade-in 0.35s ease-out forwards; }
+    @keyframes scale-in { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .animate-scale-in { animation: scale-in 0.18s ease-out forwards; }
+
+    /* 회전형 로딩 — '동작 줄이기' 설정에서도 반드시 회전합니다. */
+    @keyframes spinner-rotate { to { transform: rotate(360deg); } }
+    .spinner-ring {
+      width: 84px; height: 84px; border-radius: 50%;
+      background: conic-gradient(#1d4ed8 0 126deg, #e2e8f0 126deg 360deg);
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 7px));
+      mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 7px));
+      animation: spinner-rotate 0.9s linear infinite;
+      will-change: transform;
+    }
+    .spinner-mini {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 3px solid rgba(255,255,255,.35); border-top-color: #fff;
+      animation: spinner-rotate 0.9s linear infinite;
+      display: inline-block; vertical-align: -4px;
+    }
+
+    :focus-visible { outline: 3px solid #1d4ed8; outline-offset: 2px; border-radius: 8px; }
+
+    .dock { padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+    .dock-space { padding-bottom: calc(180px + env(safe-area-inset-bottom)); }
+    .page-top { padding-top: 128px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *:not(.spinner-ring):not(.spinner-mini), *::before, *::after {
+        animation-duration: .001ms !important; transition-duration: .001ms !important;
+      }
+      .spinner-ring, .spinner-mini { animation-duration: 1.4s !important; }
+    }
+
+    body ::placeholder { font-size: inherit; }
+    body summary { font-size: inherit; }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+
+    /* ==========================================================
+       인터랙션 시뮬레이터
+       ========================================================== */
+    .sim-phone {
+      position: relative;
+      width: min(100%, 340px);
+      margin: 0 auto;
+      border-radius: 38px;
+      padding: 12px;
+      background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+      box-shadow: 0 30px 60px rgba(15,23,42,.28);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .sim-phone-screen {
+      position: relative;
+      border-radius: 30px;
+      min-height: 620px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.38);
+      user-select: none;
+      touch-action: none;
+    }
+    .sim-notch {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 126px;
+      height: 26px;
+      border-radius: 999px;
+      background: rgba(15,23,42,.92);
+      z-index: 20;
+    }
+    .sim-glass {
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+    .sim-pressable { touch-action: none; }
+    .sim-ripple {
+      position: absolute;
+      width: 20px; height: 20px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.55);
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      animation: sim-ripple 0.7s ease-out forwards;
+    }
+    @keyframes sim-ripple {
+      from { opacity: .55; transform: translate(-50%, -50%) scale(0.4); }
+      to   { opacity: 0; transform: translate(-50%, -50%) scale(5.4); }
+    }
+    .sim-sheen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(125deg, rgba(255,255,255,.22), rgba(255,255,255,0) 32%, rgba(255,255,255,.18) 65%, rgba(255,255,255,0));
+      pointer-events: none;
+      mix-blend-mode: screen;
+      opacity: .9;
+    }
+
+  </style>
 </head>
-
 <body>
-<div id="canvas-container">
-<button id="floating-toggle">설정창 접기 ◀</button>
-<canvas id="simCanvas"></canvas>
-</div>
+  <div id="root"></div>
+  <div id="toast-region" aria-live="polite" class="sr-only"></div>
 
-<div id="control-panel">
-<h3>Material Surface Interaction Lab</h3>
+  <script type="module">
+    (function () {
+      "use strict";
 
-<div class="tabs">
-<button class="tab-btn active" data-mode="1">천</button>
-<button class="tab-btn" data-mode="2">고무</button>
-<button class="tab-btn" data-mode="3">복사용지</button>
-</div>
+      /* =========================================================
+         1. CONFIG / 상수
+         ========================================================= */
+      const CONFIG = {
+        API_BASE: "https://api.openai.com/v1",
+        SESSION_KEY_API: "interaction_lab_openai_key_v1",
+        SESSION_KEY_PREFS: "interaction_lab_image_prefs_v1",
+        PROJECTS_KEY: "interaction_lab_projects_v1",
+        IMAGE_DB: { name: "interaction_lab_images_v1", store: "images" },
+        MAX_PROJECTS: 5,
+        AUTOSAVE_MS: 5000,
+        IMAGE_SIZE: "1024x1536"
+      };
 
-<p class="info-text" id="mode-desc">천: 원형 자국 없이 가로·세로 직조 격자 자체가 눌리고 휘어집니다.</p>
+      /* 모델은 사용자 선택 없이 아래 두 모델로 고정합니다. */
+      const FIXED_TEXT_MODEL = "gpt-5.6-terra";
+      const FIXED_IMAGE_MODEL = "gpt-image-2.5-flare";
+      /* 감성 표현 강도를 높이기 위해 AI가 골라 쓰는 8가지 이미지 스타일 */
+      const IMAGE_STYLES = {
+        "Cinematic Architectural Visual":
+          "cinematic architectural visualisation: dramatic wide framing of built space, strong directional light cutting through deep shadow, faint atmospheric haze, restrained graded colour, anamorphic film mood",
+        "Soft 3D Illustration":
+          "soft 3D emotional illustration rendered in high quality CGI: rounded volumes, matte clay or plush surfaces, gentle subsurface glow, tender pastel palette, shallow depth of field, one endearing hero object",
+        "Lifestyle Photography":
+          "lifestyle action photography: a real moment caught mid-movement, natural available light, visible motion energy, candid off-centre framing, authentic textures and props",
+        "Fine Art Landscape Photography":
+          "fine art landscape photography: large-format clarity, quiet horizon composition, long tonal range, natural weather light, generous contemplative negative space",
+        "Futuristic Architecture Photography":
+          "futuristic architecture photography: crisp geometry, precise machined edges, cool reflective envelopes, controlled one-point perspective, clean sky or void background",
+        "Abstract Color Flow Render":
+          "colour flow abstract render: liquid ribbons and gradient fields caught in motion, smooth CG surfaces, luminous colour transitions, no recognisable object",
+        "Luxury Abstract CG Art":
+          "luxury abstract CG art: sculptural forms in precious material, studio reflections, refined specular highlights, deep saturated ground, gallery product mood",
+        "Soft Macro Nature Photography":
+          "soft macro nature photography: extreme close-up of a natural subject, dew drops, fibres and petal edges in razor focus, creamy bokeh, delicate diffused light"
+      };
+      const STYLE_NAMES = Object.keys(IMAGE_STYLES);
+      const STYLE_LIST_TEXT = STYLE_NAMES.map((n, i) => `${i + 1}. ${n}`).join(" / ");
 
-<button class="utility-btn" id="resetBtn">🔄 리셋</button>
+      /* Mood Image Visual Style Rule — 스타일 선택 기준 */
+      const STYLE_RULE_TEXT = `입력 감성의 특성에 따라 위 8개 표현 방식 중 가장 적합한 하나를 직접 고릅니다. 감성의 의미뿐 아니라 에너지, 긴장도, 공간감, 시간성, 자연성, 추상성을 함께 고려해 결정합니다. 같은 스타일을 기계적으로 반복하지 말고, 입력된 감성을 가장 명확하게 전달하는 표현 방식을 고릅니다.`;
 
-<div class="control-grid">
-<div class="control-group"><label>소재 색상</label><input type="color" id="materialColor" value="#c9bba7"></div>
-<div class="control-group"><label>배경 색상</label><input type="color" id="bgColor" value="#141414"></div>
-</div>
+      const LABEL_LANGS = [
+        { id: "en", label: "영문만" },
+        { id: "ko", label: "한글 + 영문" }
+      ];
 
-<div id="controls-mode1" class="mode-controls control-grid">
-<div class="control-group"><label>눌림 깊이 <span id="v-fabric-depth">46</span></label><input id="fabric-depth" type="range" min="5" max="100" value="46"></div>
-<div class="control-group"><label>눌림 범위 <span id="v-fabric-radius">155</span></label><input id="fabric-radius" type="range" min="70" max="280" value="155"></div>
-<div class="control-group"><label>직조 격자 밀도 <span id="v-fabric-density">30</span></label><input id="fabric-density" type="range" min="12" max="50" value="30"></div>
-<div class="control-group"><label>천 당김 강도 <span id="v-fabric-pull">62</span></label><input id="fabric-pull" type="range" min="0" max="100" value="62"></div>
-<div class="control-group"><label>주름 미세감 <span id="v-fabric-wrinkle">28</span></label><input id="fabric-wrinkle" type="range" min="0" max="100" value="28"></div>
-<div class="control-group"><label>명암 강도 <span id="v-fabric-shade">32</span></label><input id="fabric-shade" type="range" min="0" max="80" value="32"></div>
-<div class="control-group"><label>복원 속도 <span id="v-fabric-recover">38</span></label><input id="fabric-recover" type="range" min="1" max="100" value="38"></div>
-<div class="control-group"><label>잔상 유지율 <span id="v-fabric-residue">0</span></label><input id="fabric-residue" type="range" min="0" max="40" value="0"></div>
-</div>
+      const QUALITIES = [
+        { id: "medium", label: "표준" },
+        { id: "high",   label: "고품질" }
+      ];
 
-<div id="controls-mode2" class="mode-controls control-grid hidden">
-<div class="control-group"><label>눌림 깊이 <span id="v-rubber-depth">64</span></label><input id="rubber-depth" type="range" min="5" max="120" value="64"></div>
-<div class="control-group"><label>말랑한 범위 <span id="v-rubber-radius">175</span></label><input id="rubber-radius" type="range" min="70" max="300" value="175"></div>
-<div class="control-group"><label>탄성 반발 <span id="v-rubber-elastic">78</span></label><input id="rubber-elastic" type="range" min="5" max="120" value="78"></div>
-<div class="control-group"><label>가장자리 부풀림 <span id="v-rubber-bulge">46</span></label><input id="rubber-bulge" type="range" min="0" max="100" value="46"></div>
-<div class="control-group"><label>표면 광택 <span id="v-rubber-gloss">38</span></label><input id="rubber-gloss" type="range" min="0" max="100" value="38"></div>
-<div class="control-group"><label>복원 속도 <span id="v-rubber-recover">72</span></label><input id="rubber-recover" type="range" min="1" max="100" value="72"></div>
-</div>
+      /* 감성 해석 방식 — 사용자 선택 없이 한 가지 방법론으로 고정합니다. */
+      const EMOTION_METHOD = {
+        label: "지각·경험 중심 감성디자인",
+        en: "Emotion & Perception-centered Design",
+        guide: `입력 감성을 색·소재·형태로 바로 번역하지 않습니다. 먼저 사람이 그 감성을 몸과 마음으로 어떻게 경험하는지 해석합니다. 감성의 에너지, 긴장과 이완, 안정감, 활동성, 움직임과 리듬, 시간감, 공간 분위기, 정서적 온도, 자극에 대한 반응, 감정의 여운을 함께 봅니다. 감성을 문자 그대로 묘사하는 대신, 그 감정을 실제로 체험하는 듯 느끼게 하는 하나의 정서적 은유 장면으로 표현합니다.`
+      };
 
-<div id="controls-mode3" class="mode-controls control-grid hidden">
-<div class="control-group"><label>압흔 깊이 <span id="v-paper-depth">42</span></label><input id="paper-depth" type="range" min="5" max="100" value="42"></div>
-<div class="control-group"><label>구김 복잡도 <span id="v-paper-crumple">46</span></label><input id="paper-crumple" type="range" min="5" max="100" value="46"></div>
-<div class="control-group"><label>접힘 선명도 <span id="v-paper-sharp">68</span></label><input id="paper-sharp" type="range" min="5" max="100" value="68"></div>
-<div class="control-group"><label>복원 속도 <span id="v-paper-recover">16</span></label><input id="paper-recover" type="range" min="0" max="100" value="16"></div>
-<div class="control-group"><label>잔상 유지율 <span id="v-paper-residue">38</span></label><input id="paper-residue" type="range" min="0" max="90" value="38"></div>
-</div>
-</div>
+      const STAGES = [
+        { n: 1, label: "감성 키워드" },
+        { n: 2, label: "감성 해석" },
+        { n: 3, label: "지각 특성" },
+        { n: 4, label: "인터랙션 물성" },
+        { n: 5, label: "인터랙션 제안" },
+        { n: 6, label: "시뮬레이션" }
+      ];
 
-<script>
-const canvas=document.getElementById("simCanvas");
-const ctx=canvas.getContext("2d");
-const panel=document.getElementById("control-panel");
-const toggleBtn=document.getElementById("floating-toggle");
+      const SAMPLE_KEYWORDS = [
+        "차갑고 아름답고 무거움",
+        "밝고 아름답다",
+        "젊고 활기차고 아름답다",
+        "고요하고 단단하다",
+        "귀엽고 향기롭다",
+        "따뜻하고 편안하다",
+        "날카롭고 세련되다",
+        "부드럽고 생명력 있다"
+      ];
 
-let currentMode=1;
-let impacts=[];
-let pointerDown=false;
-let lastPointer=null;
-let time=0;
+      const NO_DATA = "이 항목은 AI 응답에 포함되지 않았습니다. 다시 생성해 보세요.";
 
-function el(id){return document.getElementById(id)}
-function val(id){return Number(el(id).value)}
+      /* =========================================================
+         2. PROMPTS — 텍스트
+         ========================================================= */
+      const SYSTEM = `당신은 감성 디자인, 지각심리학, 체화인지, 인터랙션 디자인, 햅틱 UX, 모션 디자인, 동적 물성 시뮬레이션을 함께 다루는 시니어 Interaction Experience Designer입니다.
+- 모든 한국어 문장은 정중하고 명확한 존댓말로 작성합니다.
+- 감성 단계에서는 사람이 실제로 느끼는 정서와 몸·마음의 반응을 자연스럽고 구체적인 경험 언어로 표현합니다.
+- 지각 단계에서는 관찰 가능한 인식 과정으로, 물성 단계에서는 인터랙션의 반응을 만들어 내는 동적 성질로, 마지막 단계에서는 실제 UI 요소의 움직임과 피드백으로 구체화합니다.
+- CMF 소재 제안이나 제조 공정 제안이 아니라, 디지털 인터랙션에서 감성을 어떻게 지각시키고 움직이게 할 것인지에 집중합니다.
+- 반드시 요청받은 JSON 객체 하나만 반환합니다. 설명, 머리말, 코드펜스를 붙이지 않습니다.`;
 
-function resizeCanvas(){
- const rect=canvas.getBoundingClientRect();
- const dpr=window.devicePixelRatio||1;
- canvas.width=rect.width*dpr;
- canvas.height=rect.height*dpr;
- ctx.setTransform(dpr,0,0,dpr,0,0);
-}
-window.addEventListener("resize",resizeCanvas);
-setTimeout(resizeCanvas,50);
+      const PROMPTS = {
+        EMOTION: (keyword, note, instruction) => `감성 키워드: "${keyword}"
+${note ? `사용자가 입력한 연관 과제: ${note}\n` : ""}
 
-function hexToRgb(hex){
- let c=hex.replace("#","");
- if(c.length===3)c=c.split("").map(x=>x+x).join("");
- const n=parseInt(c,16);
- return[(n>>16)&255,(n>>8)&255,n&255];
-}
-function rgba(rgb,a=1){return`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`}
-function shade(rgb,v){return rgb.map(x=>Math.max(0,Math.min(255,x+v)))}
+[고정 해석 방식]
+${EMOTION_METHOD.label} (${EMOTION_METHOD.en})
+${EMOTION_METHOD.guide}
 
-function resetSimulation(){impacts=[]}
-el("resetBtn").addEventListener("click",resetSimulation);
+[목표]
+하나의 감성 키워드를 같은 감성 패밀리 안에서 서로 다른 3개의 지각·경험으로 해석하고, 사용자가 그중 하나를 고를 수 있게 합니다.
+세 안은 서로 달라야 하지만 완전히 동떨어져서는 안 됩니다. 사용자가 보았을 때 “같은 감성을 이렇게 세 가지 방식으로 느낄 수 있구나”라고 이해되어야 합니다.
 
-toggleBtn.addEventListener("click",()=>{
- panel.classList.toggle("collapsed");
- toggleBtn.textContent=panel.classList.contains("collapsed")?"설정창 열기 ▶":"설정창 접기 ◀";
- setTimeout(resizeCanvas,350);
-});
+[3개 해석의 기본 초점]
+- 1안: Energy & Motion — 에너지 수준, 반응 속도, 움직임, 리듬, 생동감을 중심으로 해석합니다.
+- 2안: Atmosphere & Space — 공간 분위기, 빛, 거리감, 개방감·포근함·긴장감 등 환경적으로 느껴지는 상태를 중심으로 해석합니다.
+- 3안: Sensation & Afterglow — 촉각적으로 연상되는 느낌, 정서적 온도, 몸의 반응, 감정이 남는 방식과 여운을 중심으로 해석합니다.
+- 단, 입력 감성의 성격상 특정 초점이 부자연스러우면 억지로 맞추지 말고 가장 가까운 경험 축으로 자연스럽게 조정합니다.
 
-document.querySelectorAll(".tab-btn").forEach(btn=>{
- btn.addEventListener("click",()=>switchMode(Number(btn.dataset.mode)));
-});
+[감성 정의 규칙]
+- 각 안에는 한글 콘셉트명과 2~3단어의 영문 콘셉트명을 붙입니다.
+- "definition"은 3~4문장으로 씁니다. 유사어를 나열하지 말고 사람이 실제로 느끼는 정서 상태와 몸·마음의 변화를 자연스럽게 설명합니다.
+- 에너지 수준, 긴장과 이완, 안정감, 활동성, 시간적 느낌, 공간 분위기, 감정의 온도, 반응성, 여운 중 해당 감성에 중요한 요소를 포함합니다.
+- 지나치게 시적이거나 광고 카피 같은 문구, 브랜드·시장·트렌드 분석을 피합니다.
+- 탄성, 감쇠, 관성, 마찰, 지연시간, 햅틱, UI 컴포넌트명 등 구현 언어는 이 단계에서 사용하지 않습니다.
+- "moodWords"는 해당 해석을 요약하는 한국어 감성 단어 4개입니다.
+- "experience"는 이미지 아래에 붙일 1~2문장의 체감 설명입니다. 이미지에 보이는 사물을 설명하지 말고, 그 장면에서 사람이 어떻게 반응하고 어떤 여운을 느끼는지 적습니다.
 
-function switchMode(mode){
- currentMode=mode;
- document.querySelectorAll(".tab-btn").forEach(btn=>{
-  btn.classList.toggle("active",Number(btn.dataset.mode)===mode);
- });
- el("controls-mode1").classList.toggle("hidden",mode!==1);
- el("controls-mode2").classList.toggle("hidden",mode!==2);
- el("controls-mode3").classList.toggle("hidden",mode!==3);
+[대표 장면과 정서적 은유]
+- "subject"는 각 안의 감정을 가장 자연스럽게 전달하는 하나의 대표 장면, 대표 존재 또는 대표 상황입니다.
+- 사람, 동물, 식물, 자연, 사물, 건축, 공간, 풍경, 빛, 물, 구름, 꽃, 패브릭, 추상적 형태, 행동의 순간 등에서 자유롭게 선택합니다.
+- 키워드를 문자 그대로 묘사하지 않습니다. 예를 들어 “향기로운”을 향수병이나 냄새 맡는 사람으로 바로 표현하지 말고, 꽃잎·공기·빛·섬세한 움직임처럼 향기의 경험을 연상시키는 정서적 은유를 우선합니다.
+- 예쁘거나 화려하다는 이유로 감정과 관계가 약한 대상을 고르지 않습니다.
+- 한 안 안에 서로 관련 없는 상징물들을 억지로 섞지 않습니다. 하나의 일관된 장면으로 완결되어야 합니다.
+- 세 안의 장면은 서로 충분히 구분되게 하되, 같은 감성 패밀리의 정서적 연결감은 유지합니다.
 
- if(mode===1){
-  el("mode-desc").textContent="천: 원형 자국 없이 가로·세로 직조 격자 자체가 눌리고 휘어집니다.";
-  el("materialColor").value="#c9bba7";
-  el("bgColor").value="#141414";
- }
- if(mode===2){
-  el("mode-desc").textContent="고무: 표면 조명과 곡면이 변하며 눌림과 탄성이 표현됩니다.";
-  el("materialColor").value="#171717";
-  el("bgColor").value="#eeeeee";
- }
- if(mode===3){
-  el("mode-desc").textContent="복사용지: 표면에 압흔, 접힘, 구김이 남는 효과입니다.";
-  el("materialColor").value="#ffffff";
-  el("bgColor").value="#d6d6d6";
- }
- resetSimulation();
-}
+[이미지 표현 규칙]
+- "visual"은 각 안의 단독 Mood Image 1장을 만들기 위한 영어 프롬프트 2~4문장입니다.
+- 하나의 장면만 묘사하고 collage, montage, triptych, multiple scenes, multiple panels 같은 구성을 지시하지 않습니다.
+- 피사체, 행동 또는 상태, 공간, 빛, 색의 분위기, 깊이감, 움직임, 카메라/구도를 구체적으로 적습니다.
+- 텍스트 정의와 이미지가 반드시 같은 정서 상태를 전달해야 하며, 단순히 보기 좋은 이미지를 목표로 하지 않습니다.
+- 감성에 따라 가장 적합한 이미지 표현 스타일을 고릅니다. 반드시 다음 중 하나를 철자 그대로 사용합니다: ${STYLE_LIST_TEXT}
+- 스타일 선택 기준: ${STYLE_RULE_TEXT}
+- Soft 3D Illustration은 귀엽고 부드럽고 사랑스럽고 몽환적인 감성에 적합합니다.
+- Lifestyle Photography는 젊음, 활력, 자유, 즐거움, 즉각적인 움직임에 적합합니다.
+- Cinematic Architectural Visual은 공간의 긴장, 깊이, 장엄함, 정제된 분위기에 적합합니다.
+- Fine Art Landscape Photography는 고요함, 숭고함, 자연적 깊이와 시간감에 적합합니다.
+- Futuristic Architecture Photography는 미래적, 정제된, 차갑고 선명한 감성에 적합합니다.
+- Soft Macro Nature Photography는 생명감, 섬세함, 따뜻함, 부드러움, 자연성에 적합합니다.
+- Abstract Color Flow Render는 리듬, 색의 에너지, 흐름, 확장감에 적합합니다.
+- Luxury Abstract CG Art는 깊이감, 고급감, 절제된 긴장, 추상적 감각에 적합합니다.
+- 세 안의 스타일을 억지로 모두 다르게 만들 필요는 없습니다. 같은 스타일이 가장 적합하면 일부 반복할 수 있으나, 장면·구도·경험 초점은 분명히 구분합니다.
+- "label"은 이미지에 넣을 2~3단어의 짧은 영문 제목이며 Title Case로 씁니다.
+- "labelKo"는 같은 뜻의 짧은 한글 제목입니다.
 
-document.querySelectorAll("input[type='range']").forEach(input=>{
- const v=el("v-"+input.id);
- if(v){
-  v.textContent=input.value;
-  input.addEventListener("input",()=>v.textContent=input.value);
- }
-});
+[금지 규칙]
+- 키워드의 동의어만 나열하지 않습니다.
+- 3개의 멋있는 제목만 만들고 실제 경험 설명을 약하게 하지 않습니다.
+- 건축 + 동물 + 풍경처럼 unrelated한 이미지를 한 안에 조합하지 않습니다.
+- 모든 안을 사람 중심 이미지로 만들지 않습니다.
+- 모든 안을 의미 없는 추상 이미지로 만들지 않습니다.
+- 감성에서 바로 모션 파라미터나 UI 컴포넌트를 제안하지 않습니다.
+${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
+[FORMAT] 정확히 이 JSON만 반환하세요:
+{"concepts":[{"nameKo":"한글 콘셉트명","nameEn":"English Concept","definition":"3~4문장","moodWords":["","","",""],"experience":"이미지 체감 설명 1~2문장","subject":"대표 장면 또는 존재","visual":"english single-scene mood image prompt","label":"Image Title","labelKo":"한글 제목","style":"Soft 3D Illustration"}]}`,
 
-function pointerPos(e){
- const rect=canvas.getBoundingClientRect();
- return{x:e.clientX-rect.left,y:e.clientY-rect.top};
-}
+        PERCEPTION: (keyword, concept, instruction) => `원래 감성 키워드: "${keyword}"
+선택된 감성 해석:
+- 콘셉트: ${concept.nameKo} (${concept.nameEn})
+- 감성 정의: ${concept.definition}
+- 체감 설명: ${concept.experience || ""}
+- 대표 장면: ${concept.subject}
 
-canvas.addEventListener("pointerdown",e=>{
- e.preventDefault();
- pointerDown=true;
- const p=pointerPos(e);
- lastPointer=p;
- addImpact(p,0,0,false);
-});
+당신은 지각심리, 감성디자인, 체화인지, 인터랙션 디자인에 전문성을 가진 Perception Experience Designer입니다.
+이 단계의 목적은 선택된 감성 해석을 다시 시적으로 표현하는 것이 아니라, 사람이 실제 제품·표면·공간·오브젝트를 보고 가까이 다가가고 만지고 움직임을 경험할 때 '어떻게 지각되는가'라는 전문적인 중간 언어로 변환하는 것입니다.
 
-canvas.addEventListener("pointermove",e=>{
- if(!pointerDown&&e.pointerType!=="touch")return;
- e.preventDefault();
- const p=pointerPos(e);
- const prev=lastPointer||p;
- addImpact(p,p.x-prev.x,p.y-prev.y,true);
- lastPointer=p;
-});
+[핵심 관점]
+- 사용자 지각·상호작용 중심 관점(User Perception & Sensory Experience View)으로 분석합니다.
+- 감성에서 곧바로 모션이나 UI 컴포넌트로 넘어가지 않습니다.
+- 결과는 다음 단계에서 물리·광학·촉각 물성으로 번역 가능한 지각 언어여야 합니다.
+- 선택된 감성 해석 하나만 이어서 발전시키며, 선택되지 않은 다른 감성안과 섞지 않습니다.
 
-canvas.addEventListener("pointerup",()=>{pointerDown=false;lastPointer=null});
-canvas.addEventListener("pointercancel",()=>{pointerDown=false;lastPointer=null});
+[출력 수량]
+- 핵심 지각 특성은 반드시 정확히 6개만 생성합니다.
+- 6개는 의미가 중복되지 않는 서로 다른 지각 축이어야 합니다.
 
-function addImpact(p,dx,dy,dragging){
- let radius=150,depth=50,recover=.02,residue=0;
+[지각 축 선정 원칙]
+다음 풀을 참고하되 입력 감성에 가장 적합한 6개를 직접 고릅니다. 아래 항목을 기계적으로 모두 사용하지 않습니다.
+감지 속도, 첫인상 선명도, 표면 반응감, 저항감, 회복감, 확산감, 리듬감, 깊이감, 온도 인상, 밀도감, 공간 점유감, 안착감, 잔향감, 방향성, 경계감, 거리감, 균형감, 압력감, 변화 감지, 움직임 연속성.
 
- if(currentMode===1){
-  radius=val("fabric-radius");
-  depth=val("fabric-depth");
-  recover=val("fabric-recover")*.0012+.004;
-  residue=val("fabric-residue")/100;
- }
- if(currentMode===2){
-  radius=val("rubber-radius");
-  depth=val("rubber-depth");
-  recover=val("rubber-recover")*.0012+.003;
-  residue=0;
- }
- if(currentMode===3){
-  radius=90+val("paper-crumple")*.8;
-  depth=val("paper-depth");
-  recover=val("paper-recover")*.0006;
-  residue=val("paper-residue")/100;
- }
+가능하면 6개 지각이 다음의 서로 다른 경험 역할을 고르게 포괄하도록 구성합니다.
+1) 초기 인식 — 처음 보거나 닿는 순간 어떻게 알아차려지는가
+2) 접촉·반응 — 자극이나 터치에 어떤 반응처럼 느껴지는가
+3) 공간·전개 — 시선·빛·감각이 어떻게 퍼지고 깊어지고 모이는가
+4) 시간·움직임 — 변화, 리듬, 회복, 지속이 어떻게 경험되는가
+5) 잔향·안착 — 경험이 끝난 뒤 어떤 안정감이나 여운으로 남는가
+단, 감성에 더 적절한 축이 있으면 위 역할을 유연하게 대체합니다.
 
- impacts.push({
-  mode:currentMode,
-  x:p.x,y:p.y,dx,dy,
-  radius,depth,recover,residue,
-  strength:1,
-  age:0,
-  seed:Math.random()*999,
-  angle:Math.atan2(dy,dx)||Math.random()*Math.PI*2,
-  dragging
- });
+[작성 규칙]
+- "category"는 감지, 반응, 확산, 깊이, 회복, 안착, 잔향처럼 지각 축을 부르는 2~5자의 전문적이고 짧은 이름입니다.
+- "titleKo"는 사람이 실제로 지각하는 방식을 나타내는 짧은 동사형 문장입니다. 예: "가볍게 감지된다", "탄력 있게 되돌아온다", "넓게 퍼져 보인다", "깊이 있게 머문다", "안정적으로 안착한다".
+- "titleKo"를 "싱그러운 잔광", "맑은 온기", "부드러운 회복"처럼 시적인 명사구로 쓰지 않습니다.
+- "titleEn"은 같은 지각을 간결하게 표현하는 자연스러운 영어 문구입니다.
+- "description"은 정확히 2문장입니다. 첫 문장은 언제·어떻게 지각되는지, 둘째 문장은 그 지각이 사용자에게 어떤 인상과 경험을 남기는지 설명합니다.
+- description은 감성 정의의 유사어 반복이 아니라 관찰 가능한 인식 과정으로 씁니다.
+- "cue"는 도구 없이도 눈·손·몸으로 확인할 수 있는 구체적인 관찰 단서 1문장입니다.
+- 각 지각 특성은 다음 단계의 인터랙션 물성 축으로 연결 가능해야 합니다. 그러나 이 단계에서는 Elasticity, Damping, Inertia, Friction, Latency, Glow, Haptic 같은 구현 물성명이나 UI 컴포넌트명을 직접 쓰지 않습니다.
+- 다섯 항목이 온기·빛·여운처럼 비슷한 감성 표현에 몰리지 않게 하며, 서로 다른 감각·시간·공간·반응 축을 사용합니다.
 
- if(impacts.length>70)impacts.shift();
-}
+[대표 이미지 생성 지침]
+각 지각 특성마다 그 특성이 한눈에 읽히는 '단독 대표 장면 1개'를 설계합니다. 실제 API 생성은 6개 장면을 하나의 통합 이미지 파일로 묶어 생성하지만, 각 셀은 독립된 하나의 완결된 이미지여야 합니다.
 
-function updateImpacts(){
- for(let i=impacts.length-1;i>=0;i--){
-  const im=impacts[i];
-  im.age++;
-  im.strength-=im.recover;
-  if(im.strength<=im.residue){
-   if(im.residue<=0)impacts.splice(i,1);
-   else im.strength=im.residue;
-  }
- }
-}
+- "visual"은 단일 사물, 사물의 일부, 하나의 행동, 하나의 공간 또는 하나의 자연/인공 현상을 영어 2~3문장으로 구체적으로 묘사합니다.
+- visual에는 피사체, 스케일(매크로/클로즈업/중경/공간), 카메라 시점, 빛, 움직임 또는 정지 상태, 배경, 지각 특성이 드러나는 핵심 순간을 포함합니다.
+- 예쁜 이미지를 만드는 것이 아니라 해당 지각 특성이 시각적으로 즉시 읽히는 것이 우선입니다.
+- 같은 피사체를 반복하지 않습니다. 특히 잎, 꽃, 숲, 물방울 같은 식물·자연 소재를 6개 모두 반복하지 않습니다.
+- 6개 중 자연/식물 중심 장면은 최대 2개까지만 허용하고, 동일한 잎사귀나 유사한 녹색 매크로 장면은 최대 1개만 허용합니다.
+- 최소 3개 이미지는 서로 다른 비자연 범주를 포함합니다. 예: 건축·공간, 인공 오브젝트/제품 일부, 패브릭/움직임, 빛과 그림자, 추상적 물질 현상, 손이나 부분적 동작 장면 등.
+- 피사체 범주, 스케일, 구도, 빛, 움직임을 다양화합니다. 6개 이미지가 같은 색조와 같은 카메라 거리로 반복되지 않게 합니다.
+- 사람의 얼굴을 중심으로 하지 않습니다. 손, 팔, 몸의 일부는 특정 지각 반응을 보여줄 때만 사용합니다.
+- 이미지의 다양성보다 선택된 감성 해석과의 정서적 일관성이 우선이며, 여섯 이미지가 하나의 감성 패밀리로 느껴져야 합니다.
 
-function fabricDisplace(x,y){
- let px=0,py=0,z=0;
- const pullPower=val("fabric-pull")/100;
- const wrinklePower=val("fabric-wrinkle")/100;
+[이미지 스타일 규칙]
+- "style"은 해당 지각을 가장 명확하게 보여 주는 표현 스타일 하나를 반드시 다음 목록에서 철자 그대로 선택합니다: ${STYLE_LIST_TEXT}
+- 스타일 선택 기준: ${STYLE_RULE_TEXT}
+- 같은 스타일을 6개 모두 반복하지 않습니다.
+- 동일 스타일은 최대 2개까지만 사용합니다.
+- Soft Macro Nature Photography는 미세한 자연 디테일을 실제로 보여줘야 할 때만 사용하며 기본값처럼 반복하지 않습니다.
+- 움직임·회복·리듬은 Lifestyle Photography 또는 상황에 맞는 동적 표현을 우선 고려합니다.
+- 공간감·깊이·경계는 Cinematic Architectural Visual 또는 Futuristic Architecture Photography를 고려합니다.
+- 확산·흐름·방향성은 Abstract Color Flow Render를 고려할 수 있습니다.
+- 응축감·무게감·정제된 감각은 Luxury Abstract CG Art를 고려할 수 있습니다.
+- 자연의 섬세한 감지는 Soft Macro Nature Photography, 고요한 광역 공간감은 Fine Art Landscape Photography를 제한적으로 사용합니다.
 
- for(const im of impacts){
-  if(im.mode!==1)continue;
-  const dx=x-im.x,dy=y-im.y;
-  const d=Math.hypot(dx,dy);
-  const r=im.radius;
-  if(d>r)continue;
+[라벨]
+- "label"은 통합 이미지 셀에 넣을 2~3단어의 짧은 영문 제목입니다.
+- "labelKo"는 같은 뜻의 짧은 한글 제목입니다.
+- label은 감성 시어보다 지각 내용이 명료하게 읽히는 제목으로 만듭니다.
 
-  const q=1-d/r;
-  const fall=q*q*(3-2*q);
-  const s=im.strength;
-  const dirX=d?dx/d:0;
-  const dirY=d?dy/d:0;
+[금지 규칙]
+- 감성 정의를 표현만 바꾸어 5번 반복하지 않습니다.
+- 6개 항목을 모두 '빛', '온기', '여운', '싱그러움' 같은 감성 언어로 만들지 않습니다.
+- 모든 대표 이미지를 나뭇잎·꽃·숲 등 자연 이미지로 만들지 않습니다.
+- 같은 피사체를 클로즈업만 바꾸어 반복하지 않습니다.
+- 모든 셀을 Soft Macro Nature Photography로 만들지 않습니다.
+- 지각 단계에서 모션 파라미터, 햅틱 값, UI 컴포넌트명, 전문 물성값을 미리 제안하지 않습니다.
+${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
+[FORMAT] 정확히 이 JSON만 반환하세요:
+{"perceptions":[{"category":"감지","titleKo":"가볍게 감지된다","titleEn":"Lightly Detected","description":"2문장","cue":"관찰 단서 1문장","visual":"english single-scene perceptual image prompt","label":"Light Presence","labelKo":"가벼운 감지","style":"Soft Macro Nature Photography"}]}`,
 
-  const inward=-im.depth*.24*pullPower*fall*s;
-  const dragX=im.dx*.10*fall*s;
-  const dragY=im.dy*.10*fall*s;
+        PROPERTY: (concept, perceptions, instruction) => `선택된 감성 해석: ${concept.nameKo} (${concept.nameEn})
+감성 정의: ${concept.definition}
+체감 설명: ${concept.experience || ""}
+대표 장면: ${concept.subject || ""}
 
-  px+=dirX*inward+dragX;
-  py+=dirY*inward+dragY;
+사용자가 선택한 지각 요소:
+${perceptions.map((p, i) => `${i + 1}. [${p.category}] ${p.titleKo} — ${p.description} (관찰 단서: ${p.cue})`).join("\n")}
 
-  const basin=-im.depth*.48*fall*s;
-  const micro=Math.sin(d*.17-im.age*.09+im.seed)*im.depth*.025*wrinklePower*fall*s;
-  z+=basin+micro;
- }
- return{x:x+px,y:y+py,z};
-}
+선택된 지각 특성을 실제 디지털 인터랙션의 반응으로 만들어 내는 핵심 '인터랙션 물성'을 9~12개 범위에서 정의해 주세요.
 
-function rubberHeight(x,y){
- let z=0;
- for(const im of impacts){
-  if(im.mode!==2)continue;
-  const dx=x-im.x,dy=y-im.y;
-  const d=Math.hypot(dx,dy);
-  const r=im.radius;
-  if(d>r)continue;
+[핵심 관점]
+- 이 단계는 CMF 소재나 제조 물성 제안이 아닙니다. 사용자가 누르고, 끌고, 밀고, 전환하고, 놓았을 때 화면 요소가 어떻게 감지되고 저항하고 변형되고 회복하고 잔향을 남기는지를 설명하는 Dynamic Interaction Properties 단계입니다.
+- 물성은 다음 단계에서 버튼, 카드, 패널, 스와이프 영역, 다이얼, 팝업, 리퀴드 레이어, 확대 렌즈, 침잠형 표면, 탄성 토글처럼 다양한 인터랙션 요소와 상태 전이로 번역될 수 있어야 합니다. 특정 컴포넌트 목록에 억지로 맞추지 말고, 어떤 인터랙션이 가장 적합한지 열어 두고 정의합니다.
+- 앞 단계의 지각 특성이 왜 그런 체감으로 느껴지는지를 시간·힘·변형·광학 피드백·햅틱의 언어로 설명합니다.
 
-  const q=1-d/r;
-  const fall=q*q*(3-2*q);
-  const s=im.strength;
-  const center=-im.depth*.78*fall*s;
-  const ring=Math.exp(-Math.pow((d-r*.55)/(r*.18),2))*im.depth*(val("rubber-bulge")/100)*.32*s;
-  const bounce=Math.sin(im.age*.25+d*.045)*val("rubber-elastic")*.018*s*fall;
-  z+=center+ring+bounce;
- }
- return z;
-}
+[우선 검토할 물성 축]
+- Detection: 입력 감지 임계값, 즉시성, 반응 민감도
+- Force & Resistance: 드래그 저항, 압력 저항, 마찰, 장력
+- Deformation: 압축, 늘어남, 곡률 변화, 경계 변형
+- Motion: 가속, 속도, 관성, 오버슈트, 방향성
+- Recovery: 탄성, 복원 속도, 스프링 강성, 감쇠
+- Temporal: 지연, 지속시간, 리듬, 잔향, 미세 요동
+- Optical Feedback: 밝기/불투명도/블러/깊이/발광의 동적 변화
+- Haptic: 진동의 강도, 길이, 패턴, 부드러움
+단, 감성·지각과 관련 없는 축을 억지로 넣지 않습니다.
 
-function drawFabric(w,h,rgb){
- const base=rgb;
- const top=shade(base,14);
- const bottom=shade(base,-16);
+[작성 규칙]
+- "titleKo"는 인터랙션에서 체감할 수 있는 전문 물성명으로 적습니다. 예: 복원 탄성, 점진 저항, 운동 관성, 입력 감지 임계, 잔향 감쇠, 경계 변형성, 광학 확산 반응, 햅틱 펄스 완만도.
+- "titleEn"은 대응되는 2~4단어 전문 영문명으로 적습니다. 예: Restorative Elasticity, Progressive Resistance, Motion Inertia, Input Detection Threshold, Residual Damping.
+- "axis"는 감지, 힘, 변형, 운동, 회복, 시간, 광학, 햅틱 중 가장 가까운 짧은 분류어를 씁니다.
+- "description"은 정확히 2문장입니다. 첫 문장은 물성이 어떤 동적 성질인지 설명하고, 둘째 문장은 선택된 지각 경험을 어떻게 만들어 내는지 설명합니다.
+- "interactionHint"는 이 물성을 UI 움직임으로 번역하는 방법을 한 문장으로 적습니다. 예: '누르는 동안 4~7% 압축되고 손을 떼면 작은 오버슈트 후 복원됩니다.'
+- "check"는 프로토타입에서 눈·손으로 비교 확인할 수 있는 테스트 방법 1문장입니다.
+- "value"는 LOW~HIGH 축의 위치를 0~100 정수로 적고, "level"은 낮음/중간/높음 중 하나만 씁니다.
+- "visual"은 제품 소재 샘플이 아니라 UI 요소의 압축, 늘어남, 드래그 저항, 스프링 복원, 잔광, 모션 트레일, 파동, 햅틱 반응을 연상시키는 단일 인터랙션 현상을 영어 한 문장으로 적습니다.
+- 실제 소재명, 제조 공정, 표면 마감, CMF 색상 제안은 하지 않습니다.
 
- const bg=ctx.createLinearGradient(0,0,w,h);
- bg.addColorStop(0,rgba(top,1));
- bg.addColorStop(.55,rgba(base,1));
- bg.addColorStop(1,rgba(bottom,1));
- ctx.fillStyle=bg;
- ctx.fillRect(0,0,w,h);
+${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
+[FORMAT] 정확히 이 JSON만 반환하세요:
+{"properties":[{"axis":"회복","titleKo":"복원 탄성","titleEn":"Restorative Elasticity","description":"2문장","interactionHint":"UI 움직임으로 번역하는 1문장","check":"프로토타입 확인 방법 1문장","value":78,"level":"높음","visual":"close-up interaction study of a rounded UI control compressing under touch and springing back with a subtle overshoot"}]}`,
 
- const spacing=Math.max(8,54-val("fabric-density"));
- const shadePower=val("fabric-shade")/100;
+        INTERACTION: (concept, properties, instruction) => `선택된 감성 해석: ${concept.nameKo} (${concept.nameEn})
+감성 정의: ${concept.definition}
+체감 설명: ${concept.experience || ""}
+대표 장면: ${concept.subject || ""}
+감성 단어: ${(concept.moodWords || []).join(", ")}
 
- ctx.save();
- ctx.lineCap="round";
+사용자가 선택한 인터랙션 물성:
+${properties.map((p, i) => `${i + 1}. [${p.axis}] ${p.titleKo} (${p.titleEn}) · 목표 ${p.level} ${p.value} — ${p.description} / 변환 힌트: ${p.interactionHint || ""}`).join("\n")}
 
- for(let y=-spacing;y<h+spacing;y+=spacing){
-  ctx.beginPath();
-  for(let x=-40;x<w+40;x+=8){
-   const p=fabricDisplace(x,y);
-   p.y+=Math.sin(x*.032+time*.01)*0.35;
-   if(x<=-40)ctx.moveTo(p.x,p.y);
-   else ctx.lineTo(p.x,p.y);
-  }
-  ctx.strokeStyle="rgba(255,255,255,.19)";
-  ctx.lineWidth=1.05;
-  ctx.stroke();
+이 물성을 실제 UI에서 체감할 수 있도록 서로 다른 인터랙션 컨셉 5개를 정확히 제안해 주세요.
 
-  ctx.strokeStyle="rgba(92,72,50,.16)";
-  ctx.lineWidth=.5;
-  ctx.stroke();
- }
+[인터랙션 요소 선정 원칙]
+- 5개는 AI가 선택된 감성·지각·인터랙션 물성을 가장 잘 표현할 수 있다고 판단한 요소여야 합니다. 미리 정해진 컴포넌트 목록에 맞추지 않습니다.
+- 버튼, 토글, 슬라이더, 스와이프, 팝업 같은 기본 요소를 사용할 수는 있지만, 그것만 반복하지 않습니다. 필요하면 Magnifier Popup, Liquid Glass Pane, Sinking Button, Elastic Card, Friction Rail, Ripple Field, Stretch Sheet, Floating Lens, Pressure Pocket 같은 새 인터랙션 컨셉을 제안할 수 있습니다.
+- 적어도 3개 이상은 서로 분명히 다른 인터랙션 원리와 역할을 가져야 합니다. 단순히 모양만 조금 바뀐 비슷한 버튼 5개를 만들지 않습니다.
+- 제안의 색감, 밀도감, 빛, 움직임의 결론은 반드시 처음 입력한 감성 키워드의 정서와 일치해야 합니다. 예를 들어 차갑고 날카로운 감성에서 밝고 가벼운 파스텔 인터랙션을 만들지 않습니다.
+- 목적은 평범한 UI 스킨이 아니라, 물성을 중심으로 새로운 가치의 인터랙션 컨셉을 도출하는 것입니다. Apple의 Liquid Glass처럼 '이 물성이라서 가능한 새 인터랙션 경험'이 느껴져야 합니다.
 
- for(let x=-spacing;x<w+spacing;x+=spacing){
-  ctx.beginPath();
-  for(let y=-40;y<h+40;y+=8){
-   const p=fabricDisplace(x,y);
-   p.x+=Math.sin(y*.028+time*.007)*0.28;
-   if(y<=-40)ctx.moveTo(p.x,p.y);
-   else ctx.lineTo(p.x,p.y);
-  }
-  ctx.strokeStyle="rgba(40,30,22,.18)";
-  ctx.lineWidth=.95;
-  ctx.stroke();
+[Motion Grammar 5단계]
+모든 인터랙션은 다음 시간 문법을 명확히 적용합니다.
+1) Rest / 정지 — 아무 입력이 없을 때의 기본 상태와 긴장도
+2) Acknowledge / 입력 감지 — 손가락이 닿거나 입력이 시작되었음을 즉시 알리는 첫 반응
+3) Resistance / 저항과 힘의 축적 — 누름·드래그·전환 중 물성이 체감되는 구간
+4) Transition / 임계점 통과와 주 움직임 — 상태가 바뀌고 형태·위치·빛·깊이가 본격적으로 전환되는 구간
+5) Settle / 감쇠·안착·여운 — 입력이 끝난 뒤 복원·잔광·미세 진동이 정리되며 감성이 남는 구간
 
-  ctx.strokeStyle="rgba(255,255,255,.075)";
-  ctx.lineWidth=.38;
-  ctx.stroke();
- }
+[핵심 관점]
+- 각 제안은 단순한 UI 스킨이 아니라 '물성을 가진 움직임'이어야 합니다.
+- 선택된 물성 중 2~4개를 각 인터랙션에 연결하고, 어떤 물성이 어느 순간에 작동하는지 분명히 설명합니다.
+- 감성에 따라 동일한 유형의 요소도 반응 속도, 변형량, 저항, 오버슈트, 감쇠, 잔향, 광학 피드백, 햅틱이 달라져야 합니다.
+- 인터랙션의 형태, 깊이, 색감, 투명도, 모션 성격은 처음 감성 키워드와 선택된 감성 해석을 끝까지 유지해야 합니다.
+- 실제 화면에서 구현 가능한 수준으로 구체화하되, 특정 OS나 브랜드 UI를 복제하지 않습니다.
 
- for(const im of impacts){
-  if(im.mode!==1)continue;
-  const a=im.strength;
-  const r=im.radius;
+[작성 규칙]
+- "type"은 인터랙션의 핵심 원리나 요소 유형을 짧은 영문 명칭으로 적습니다. 예: Button, Elastic Card, Magnifier Popup, Liquid Pane, Friction Rail, Sinking Surface.
+- "nameKo"/"nameEn"은 감성과 움직임 특성이 함께 읽히는 짧은 제안명입니다.
+- "role"은 이 요소가 담당하는 UX 기능을 한 문장으로 적습니다.
+- "interactionDNA"는 제안 전체의 움직임 원리를 3~5개의 핵심어로 요약합니다.
+- "rest", "acknowledge", "resistance", "transition", "settle"은 각각 1~2문장으로 실제 화면 변화를 묘사합니다.
+- "timing"은 전체 시간 범위와 easing/spring 성격을 구체적으로 적습니다. 예: 320–520 ms / soft spring / low overshoot.
+- "haptic"은 필요한 경우 진동 패턴을 구체적으로 적고, 불필요하면 '없음'이라고 적습니다.
+- "visualBehavior"는 형태, 위치, 스케일, 블러, 투명도, 깊이, 발광, 파동 등 시각적 변화의 조합을 1~2문장으로 적습니다. 이때 색감과 광학 톤도 반드시 원래 감성을 반영합니다.
+- "propertyMapping"은 사용한 물성명을 2~4개 배열로 적습니다.
+- "emotionalEffect"는 이 인터랙션이 원래 감성을 어떻게 강화하는지 1~2문장으로 설명합니다. 특히 왜 이 제안이 처음 감성 키워드와 어울리는지 드러내야 합니다.
+- "states"는 이미지와 검증에 사용할 3개 대표 상태를 정확히 3개 만듭니다. 기본적으로 시작–작동 중–안착 흐름을 따르되, 각 상태에는 labelKo, labelEn, description을 넣고 인터랙션 특성에 맞게 라벨을 조정할 수 있습니다.
+- "visual"은 해당 인터랙션이 3개 상태로 변화하는 모습을 한눈에 보여 주는 영어 이미지 지시입니다. clean smartphone-scale UI interaction study, three sequential states, same interaction concept, clear motion/deformation cues, white or neutral background를 포함하고 감성에 맞는 색감·깊이·광학 효과를 구체화합니다.
+- 소재 규격, 제조 공정, 실제 CMF 샘플 제안은 하지 않습니다.
 
-  const shadow=ctx.createRadialGradient(im.x,im.y,0,im.x,im.y,r);
-  shadow.addColorStop(0,`rgba(70,55,42,${.11*shadePower*a})`);
-  shadow.addColorStop(.42,`rgba(95,75,58,${.055*shadePower*a})`);
-  shadow.addColorStop(.82,`rgba(120,100,80,${.018*shadePower*a})`);
-  shadow.addColorStop(1,"rgba(0,0,0,0)");
-  ctx.fillStyle=shadow;
-  ctx.beginPath();
-  ctx.ellipse(im.x,im.y,r*.82,r*.76,im.angle*.08,0,Math.PI*2);
-  ctx.fill();
- }
+${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
+[FORMAT] 정확히 이 JSON만 반환하세요:
+{"interactions":[{"nameKo":"침잠형 긴장 버튼","nameEn":"Sinking Tension Button","type":"Sinking Button","role":"결정적 실행을 압축감 있게 확인합니다.","interactionDNA":"압력 축적 · 침잠 변형 · 날카로운 안착","rest":"정지 상태 설명","acknowledge":"입력 감지 설명","resistance":"저항 구간 설명","transition":"전환 설명","settle":"안착 설명","timing":"260–420 ms / tight spring / restrained overshoot","haptic":"짧고 단단한 1회 pulse","visualBehavior":"형태·깊이·빛의 동적 변화","propertyMapping":["점진 저항","경계 변형성","잔향 감쇠"],"emotionalEffect":"원래 감성을 강화하는 설명","states":[{"labelKo":"시작","labelEn":"Rest","description":"기본 상태"},{"labelKo":"가압","labelEn":"Pressing","description":"입력 상태"},{"labelKo":"안착","labelEn":"Settle","description":"안착 상태"}],"visual":"clean smartphone-scale UI interaction study, three sequential states of the same sinking button from rest to pressing to settled state, clear depth change, resistance and controlled recovery, neutral background with emotion-matched optical tone"}]}`
+      };
 
- ctx.restore();
-}
+      /* =========================================================
+         3. PROMPTS — 통합 이미지
+         각 단계의 여러 이미지를 한 장으로 묶어 생성 비용을 줄입니다.
+         ========================================================= */
+      const IMG_BASE = `Editorial imagery for a high-end design magazine. Premium image quality, professional lighting, convincing material and atmospheric detail where appropriate, natural tonal depth, no watermark, no logo, no signature. Preserve the chosen style faithfully rather than forcing every panel to look equally sharp. Avoid conventional posed portraits and identifiable faces; hands, back views or partial figures are fine when a lifestyle scene genuinely needs a person.`;
 
-function drawRubber(w,h,rgb){
- const base=rgb;
- const g=ctx.createLinearGradient(0,0,w,h);
- g.addColorStop(0,rgba(shade(base,34),1));
- g.addColorStop(.42,rgba(base,1));
- g.addColorStop(1,rgba(shade(base,-32),1));
- ctx.fillStyle=g;
- ctx.fillRect(0,0,w,h);
+      /* 라벨이 작게 찍히면 화면에서 읽히지 않습니다. 픽셀 높이를 직접 지정합니다. */
+      const IMG_LABEL_RULE = `Label typography, applied to every label in the image: set each label on its own clean white caption strip, with the leading number in bold and the Korean title followed immediately by the English title on the SAME LINE in regular weight, in a neutral sans-serif on white. Do not place English on a second line. The label text must be large and unmistakably legible — letters at least 40 pixels tall in this 1024 x 1536 image. Never set label text smaller than that; if space is tight make the caption strip taller rather than shrinking the type. Render only the label text specified below and no other lettering anywhere in the image.`;
 
- for(const im of impacts){
-  if(im.mode!==2)continue;
-  const a=im.strength;
-  const r=im.radius;
-  const gloss=val("rubber-gloss")/100;
+      const pad2 = n => String(n).padStart(2, "0");
 
-  const dent=ctx.createRadialGradient(im.x-r*.18,im.y-r*.22,0,im.x,im.y,r);
-  dent.addColorStop(0,`rgba(255,255,255,${.10*gloss*a})`);
-  dent.addColorStop(.25,`rgba(0,0,0,${.25*a})`);
-  dent.addColorStop(.54,`rgba(0,0,0,${.14*a})`);
-  dent.addColorStop(.76,`rgba(255,255,255,${.07*gloss*a})`);
-  dent.addColorStop(1,"rgba(255,255,255,0)");
-  ctx.fillStyle=dent;
-  ctx.beginPath();
-  ctx.ellipse(im.x,im.y,r*.92,r*.78,im.angle*.08,0,Math.PI*2);
-  ctx.fill();
- }
+      function styleOf(item, i) {
+        const name = item && IMAGE_STYLES[item.style] ? item.style : STYLE_NAMES[i % STYLE_NAMES.length];
+        return { name, directive: IMAGE_STYLES[name] };
+      }
 
-}
+      /* 이미지에 찍을 라벨 줄 — 설정에 따라 한글을 함께 넣습니다. */
+      function labelLines(item, i) {
+        const en = item.label || item.labelEn || "";
+        const ko = item.labelKo || "";
+        if (state.labelLang === "ko" && ko) {
+          return [`"${pad2(i + 1)}" in bold followed by "${ko}  ${en}" on the SAME line`];
+        }
+        return [`"${pad2(i + 1)}" in bold followed by "${en}"`];
+      }
 
-function drawPaper(w,h,rgb){
- ctx.fillStyle=rgba(rgb,1);
- ctx.fillRect(0,0,w,h);
- for(let y=0;y<h;y+=9){
-  ctx.strokeStyle="rgba(0,0,0,.018)";
-  ctx.beginPath();
-  ctx.moveTo(0,y);
-  ctx.lineTo(w,y+Math.sin(y*.05));
-  ctx.stroke();
- }
-}
+      function emotionLabelLine(item, i) {
+        const ko = item.nameKo || item.labelKo || "";
+        const en = item.nameEn || item.label || "";
+        return state.labelLang === "ko" && ko
+          ? `"${pad2(i + 1)}" in bold followed by "${ko}  ${en}" on the SAME line`
+          : `"${pad2(i + 1)}" in bold followed by "${en}"`;
+      }
 
-function animate(){
- time++;
- updateImpacts();
+      function perceptionLabelLine(item, i) {
+        const ko = item.titleKo || item.labelKo || "";
+        const en = item.titleEn || item.label || "";
+        return state.labelLang === "ko" && ko
+          ? `"${pad2(i + 1)}" in bold followed by "${ko}  ${en}" on the SAME line`
+          : `"${pad2(i + 1)}" in bold followed by "${en}"`;
+      }
 
- const rect=canvas.getBoundingClientRect();
- const w=rect.width,h=rect.height;
- const bg=el("bgColor").value;
- const rgb=hexToRgb(el("materialColor").value);
+      function propertyLabelLine(item, i) {
+        const ko = item.titleKo || item.labelKo || "";
+        const en = item.titleEn || item.label || "";
+        return state.labelLang === "ko" && ko
+          ? `"${pad2(i + 1)}" in bold followed by "${ko}" and a smaller second line "${en}"`
+          : `"${pad2(i + 1)}" in bold followed by "${en}"`;
+      }
 
- ctx.clearRect(0,0,w,h);
- ctx.fillStyle=bg;
- ctx.fillRect(0,0,w,h);
+      function styleNote(items) {
+        const used = items.map((it, i) => styleOf(it, i).name);
+        return Array.from(new Set(used)).join(", ");
+      }
 
- if(currentMode===1)drawFabric(w,h,rgb);
- if(currentMode===2)drawRubber(w,h,rgb);
- if(currentMode===3)drawPaper(w,h,rgb);
+      const IMG = {
+        emotion(concepts) {
+          const panels = concepts.map((c, i) => {
+            const s = styleOf(c, i);
+            return `Panel ${i + 1} — one complete standalone mood image, rendered as ${s.directive}.
+  Emotional concept: ${c.nameKo} / ${c.nameEn}.
+  Single-scene direction: ${c.visual}
+  Important: this panel itself must be a single coherent scene, never a collage, montage, split-screen, contact sheet, or collection of unrelated symbolic objects.
+  Caption strip along the bottom edge of this panel: ${emotionLabelLine(c, i)}. The caption title must exactly match the corresponding emotion text-card title; do not invent or shorten a different title.`;
+          }).join("\n");
+          return `${IMG_BASE}
+Generate ONE single vertical 2:3 image file that contains THREE independent, full-width mood-image panels stacked vertically. The generation request is one integrated image, but each of the three panels must visually function as a complete standalone image for Concept 01, 02, and 03 respectively.
+Use equal-height panels, a narrow white outer margin, thin light-grey dividers, and a clean white caption strip at the bottom of each panel. Do not create any additional subdivisions inside a panel.
+${panels}
+The three panels express different experiential readings of the same original emotion. Keep a recognisable emotional family across all three while clearly differentiating scene, experiential focus, composition and visual rhythm. Do not force radically different palettes just for variety; colour should follow each concept naturally.
+Do not combine architecture, animals, landscapes, products or abstract forms as disconnected symbols inside one panel. Every panel must feel like one naturally photographed or rendered moment.
+${IMG_LABEL_RULE}`;
+        },
+        perception(items) {
+          const cells = items.map((p, i) => {
+            const s = styleOf(p, i);
+            return `Cell ${i + 1} — one complete standalone perceptual reference image, rendered as ${s.directive}.
+  Perceptual axis: ${p.category} / ${p.titleKo}.
+  Single-scene direction: ${p.visual}
+  Important: visually demonstrate the perceptual mechanism, not merely a beautiful mood. This cell must contain one coherent subject or scene, never a collage or multiple examples.
+  White caption strip directly under this image: ${perceptionLabelLine(p, i)}. Keep Korean and English together on one line.`;
+          }).join("\n");
+          return `${IMG_BASE}
+Create ONE single vertical 2:3 integrated image file containing exactly SIX independent perceptual-reference images on a clean white editorial board.
+Layout: Cells 01–06 form a balanced 2-column × 3-row grid. Each cell contains one image plus a separate white caption strip directly beneath it. Use thin light-grey hairlines, consistent gutters, generous white margins, and no extra cells or subdivisions.
+${cells}
 
- requestAnimationFrame(animate);
-}
-animate();
-</script>
+[CRITICAL SUBJECT-DIVERSITY RULES]
+- The six cells must show six meaningfully different subject categories and visual situations while staying in the same emotional family.
+- Never generate a board dominated by leaves, flowers, forests, dew, or green botanical macro photography.
+- Nature/botanical subjects may appear in no more than TWO of the six cells, and only ONE cell may use a leaf or similar green foliage close-up.
+- At least FOUR cells must use clearly different non-botanical categories such as: architecture or spatial environment; designed object/product detail; textile or flexible moving surface; controlled light/shadow phenomenon; abstract material-like motion; human hand/partial interaction; crafted object; water/air phenomenon without foliage.
+- Vary scale deliberately across the six: include a mix of macro/close-up, object-scale, and spatial-scale imagery.
+- Vary camera angle, depth, lighting behaviour and motion state. Do not make six variations of the same shot.
+- Do not force six unrelated colour palettes. Maintain one emotional family, but avoid six nearly identical green/yellow images.
+- Each image must make its own perceptual quality immediately visible: initial detection, contact/response, spatial development, temporal movement/recovery, aftereffect/settling, or directional/spatial orientation as appropriate.
+- Styles must not all be identical. The same named style may appear at most twice across the six cells.
+Styles used across the cells: ${styleNote(items)}.
+${IMG_LABEL_RULE}`;
+        },
+        property(items) {
+          const cards = items.map((p, i) => `Card ${i + 1}:
+  Large prominent numbering and title on white: ${propertyLabelLine(p, i)}.
+  Optional small axis badge only: "${p.axis}".
+  Image direction: ${p.visual || p.interactionHint || p.description}
+  The image must show a dynamic UI/interaction phenomenon such as compression, drag resistance, spring recovery, inertia, damping, glow diffusion, motion trail, deformation or haptic-like pulse. Do not show a physical material coupon.`).join("\n");
+          return `${IMG_BASE}
+Create ONE single vertical 2:3 integrated image file that presents all ${items.length} Dynamic Interaction Property cards on a clean premium editorial board.
+Do NOT place any large board title or introductory paragraph at the top.
+Layout: compact two-column grid of white cards with thin light-grey lines, generous margins and consistent spacing. Fit every card cleanly on one board.
+Each card contains a strong title and ONE interaction-study image only. The image must visually explain the property through a UI component or abstract digital response, not through a material sample.
+Use consistent neutral interface geometry, but vary the demonstrated behavior: touch compression, threshold detection, progressive drag, elastic stretch, inertial movement, overshoot, damping, opacity/blur diffusion, edge deformation, ripple propagation, or tactile pulse visualization.
+Avoid product mockups, phones, devices, brand UI, icons as decoration, physical sample tiles, metal/glass/textile swatches, or CMF boards.
+${cards}
+Render only the specified card titles/badges and no extra paragraphs.`;
+        },
+        interaction(items) {
+          const rows = items.map((m, i) => {
+            const states = Array.isArray(m.states) && m.states.length ? m.states : [
+              { labelKo: "시작", labelEn: "Rest", description: m.rest || "" },
+              { labelKo: "입력 중", labelEn: "Acknowledge", description: m.acknowledge || "" },
+              { labelKo: "안착", labelEn: "Settle", description: m.settle || "" }
+            ];
+            return `Row ${i + 1} — ${m.type} / ${m.nameKo} / ${m.nameEn}.
+  Show THREE sequential states of the SAME UI component from left to right.
+  State 1: ${states[0]?.labelKo || "시작"} / ${states[0]?.labelEn || "Rest"} — ${states[0]?.description || m.rest || ""}
+  State 2: ${states[1]?.labelKo || "입력 중"} / ${states[1]?.labelEn || "Acknowledge"} — ${states[1]?.description || m.acknowledge || ""}
+  State 3: ${states[2]?.labelKo || "안착"} / ${states[2]?.labelEn || "Settle"} — ${states[2]?.description || m.settle || ""}
+  Motion and visual behavior: ${m.visualBehavior || ""}
+  Specific visual direction: ${m.visual || ""}
+  The three panels must clearly communicate movement, deformation, position change, depth, opacity, blur, glow, ripple or motion trail as appropriate. Keep the component identity constant across the three states.`;
+          }).join("\n");
+          return `${IMG_BASE}
+Create ONE single vertical 2:3 INTERACTION CONCEPT BOARD with exactly ${items.length} horizontal rows, one row per proposed interaction concept.
+Each row has a narrow left label area and THREE equal state panels arranged left-to-right using that row's own state labels. The final image must make the interaction element and its state transition immediately understandable at a glance.
+Use clean smartphone-scale UI components or interface fragments on a white or very light neutral background. Show one consistent interaction concept per row across all three states; do not switch subjects between states.
+The interaction types are NOT fixed. Some rows may be buttons, some may be lenses, sheets, cards, fields, rails, liquid panes, sinking surfaces, elastic popups, or other novel UI constructs — whatever best expresses the selected properties. Make each row's concept identity visually distinct.
+Visualize material-like interaction behavior through deformation, resistance, spring recovery, inertia, damping, ripple, depth, blur, glow, translucency, magnification, refraction or residual motion. Make those changes explicit rather than decorative.
+Across the whole board, the color atmosphere, optical mood, weight, tension and motion character must stay faithful to the original emotion family. For example, a cold sharp emotion should remain restrained, crisp and tense rather than soft pastel and playful.
+Do not show physical materials, CMF sample chips, product photography, phones/devices, brand logos, app screenshots, people, animals, landscapes or unrelated decorative scenes.
+Typography: row number, interaction type and concept name must be large and legible. State labels may be small but readable. No paragraphs of body copy inside the board.
+${rows}
+The board should resemble a professional interaction design concept sheet or motion-spec review board that reveals new value through material-like behavior, not a mood board or material trend board.`;
+        }
+      };
+
+      /* =========================================================
+         4. 유틸 — 이스케이프 / 토스트 / ID
+         ========================================================= */
+      let uidSeq = 0;
+      const uid = p => `${p}_${Date.now().toString(36)}_${(uidSeq++).toString(36)}`;
+
+      function esc(v) {
+        return String(v === null || v === undefined ? "" : v)
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+      }
+      const escAttr = esc;
+
+      const nowLabel = t => new Date(t).toLocaleString("ko-KR", {
+        year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+      });
+
+      let toastTimer = null;
+      function toast(msg, kind) {
+        const region = document.getElementById("toast-region");
+        if (region) region.textContent = msg;
+        let el = document.getElementById("toast-visual");
+        if (!el) {
+          el = document.createElement("div");
+          el.id = "toast-visual";
+          document.body.appendChild(el);
+        }
+        el.className = "fixed left-1/2 -translate-x-1/2 bottom-[calc(28px+env(safe-area-inset-bottom))] z-[10050] px-5 py-3.5 rounded-2xl shadow-2xl t-small font-bold text-white max-w-[92vw] text-center " +
+          (kind === "error" ? "bg-red-700" : "bg-slate-900");
+        el.textContent = msg;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { if (el && el.parentNode) el.parentNode.removeChild(el); }, 3200);
+      }
+
+      /* =========================================================
+         5. 저장소 — 프로젝트 텍스트는 localStorage, 이미지는 IndexedDB
+         이미지는 base64라 용량이 커서 localStorage에 넣으면 곧 넘칩니다.
+         ========================================================= */
+      const Store = {
+        list() {
+          try {
+            const raw = localStorage.getItem(CONFIG.PROJECTS_KEY);
+            const arr = raw ? JSON.parse(raw) : [];
+            return Array.isArray(arr) ? arr : [];
+          } catch (e) {
+            console.warn("저장 목록을 읽지 못했습니다.", e);
+            return [];
+          }
+        },
+        _write(list) {
+          try { localStorage.setItem(CONFIG.PROJECTS_KEY, JSON.stringify(list)); return true; }
+          catch (e) { return false; }
+        },
+        save(snapshot, meta) {
+          let list = Store.list().filter(p => p.id !== meta.id);
+          list.unshift({ id: meta.id, title: meta.title, savedAt: Date.now(), data: snapshot });
+          if (list.length > CONFIG.MAX_PROJECTS) {
+            list.slice(CONFIG.MAX_PROJECTS).forEach(p => ImageDB.removeProject(p.id));
+            list = list.slice(0, CONFIG.MAX_PROJECTS);
+          }
+          if (Store._write(list)) return { ok: true };
+          const reduced = list.slice(0, Math.max(1, list.length - 1));
+          if (Store._write(reduced)) return { ok: true, pruned: "oldest" };
+          return { ok: false };
+        },
+        remove(id) {
+          ImageDB.removeProject(id);
+          return Store._write(Store.list().filter(p => p.id !== id));
+        }
+      };
+
+      const IMAGE_SLOTS = ["emotion", "perception", "property", "interaction"];
+      let imageDbPromise = null;
+
+      const ImageDB = {
+        open() {
+          if (!("indexedDB" in window)) return Promise.reject(new Error("IDB_UNAVAILABLE"));
+          if (imageDbPromise) return imageDbPromise;
+          imageDbPromise = new Promise((res, rej) => {
+            const req = indexedDB.open(CONFIG.IMAGE_DB.name, 1);
+            req.onupgradeneeded = () => {
+              const db = req.result;
+              if (!db.objectStoreNames.contains(CONFIG.IMAGE_DB.store)) {
+                db.createObjectStore(CONFIG.IMAGE_DB.store, { keyPath: "id" });
+              }
+            };
+            req.onsuccess = () => res(req.result);
+            req.onerror = () => rej(req.error || new Error("IDB_OPEN_FAILED"));
+          });
+          return imageDbPromise;
+        },
+        _act(mode, fn) {
+          return ImageDB.open().then(db => new Promise((res, rej) => {
+            const tx = db.transaction(CONFIG.IMAGE_DB.store, mode);
+            const rq = fn(tx.objectStore(CONFIG.IMAGE_DB.store));
+            rq.onsuccess = () => res(rq.result);
+            rq.onerror = () => rej(rq.error || new Error("IDB_REQUEST_FAILED"));
+          }));
+        },
+        key: (projectId, slot) => `${projectId}::${slot}`,
+        async put(projectId, slot, dataUrl) {
+          try {
+            await ImageDB._act("readwrite", st => st.put({
+              id: ImageDB.key(projectId, slot), projectId, slot, dataUrl, savedAt: Date.now()
+            }));
+            return true;
+          } catch (e) { console.warn("이미지 저장 실패", e); return false; }
+        },
+        async get(projectId, slot) {
+          try {
+            const row = await ImageDB._act("readonly", st => st.get(ImageDB.key(projectId, slot)));
+            return row && row.dataUrl ? row.dataUrl : null;
+          } catch (e) { return null; }
+        },
+        async loadAll(projectId) {
+          const out = {};
+          for (const slot of IMAGE_SLOTS) out[slot] = await ImageDB.get(projectId, slot);
+          return out;
+        },
+        async remove(projectId, slot) {
+          if (!IMAGE_SLOTS.includes(slot)) return false;
+          try {
+            await ImageDB._act("readwrite", st => st.delete(ImageDB.key(projectId, slot)));
+            return true;
+          } catch (e) {
+            console.warn("이미지 삭제 실패", slot, e);
+            return false;
+          }
+        },
+        async removeSlots(projectId, slots) {
+          const targets = Array.from(new Set(arr(slots).filter(slot => IMAGE_SLOTS.includes(slot))));
+          await Promise.all(targets.map(slot => ImageDB.remove(projectId, slot)));
+        },
+        removeProject(projectId) {
+          IMAGE_SLOTS.forEach(slot => {
+            ImageDB._act("readwrite", st => st.delete(ImageDB.key(projectId, slot))).catch(() => {});
+          });
+        }
+      };
+
+      /* =========================================================
+         6. STATE
+         ========================================================= */
+      function blankProject() {
+        return {
+          projectId: uid("proj"),
+          keyword: "",
+          note: "",
+          concepts: [],
+          conceptId: null,
+          perceptions: [],
+          perceptionIds: [],
+          properties: [],
+          propertyIds: [],
+          interactions: [],
+          simulationId: null,
+          simulation: null,
+          images: { emotion: null, perception: null, property: null, interaction: null },
+          createdAt: Date.now()
+        };
+      }
+
+      const state = Object.assign({
+        apiKey: "",
+        quality: QUALITIES[0].id,
+        labelLang: "ko",
+        step: -1,
+        isAnalyzing: false,
+        loadingMsg: "",
+        errorMsg: null,
+        lightbox: null,
+        settingsOpen: false
+      }, blankProject());
+
+      /* 입력 중인 값은 재렌더에도 유지되도록 별도 보관합니다. */
+      const drafts = {};
+      const draft = id => (drafts[id] === undefined ? "" : drafts[id]);
+      function setDraft(id, v) { drafts[id] = v; }
+      window.setDraft = setDraft;
+
+      function setState(patch, resetScroll) {
+        Object.assign(state, patch);
+        render(resetScroll);
+      }
+      window.setState = setState;
+
+      function selectedConcept() { return state.concepts.find(c => c.id === state.conceptId) || null; }
+      function selectedPerceptions() { return state.perceptions.filter(p => state.perceptionIds.includes(p.id)); }
+      function selectedProperties() { return state.properties.filter(p => state.propertyIds.includes(p.id)); }
+
+      function clamp(n, min, max) {
+        return Math.max(min, Math.min(max, n));
+      }
+
+      function includesAny(text, list) {
+        return list.some(k => text.includes(k));
+      }
+
+      function simulationInteraction() {
+        const first = state.interactions[0] || null;
+        if (!first) return null;
+        return state.interactions.find(m => m.id === state.simulationId) || first;
+      }
+
+      function interactionTextBlob(m) {
+        if (!m) return "";
+        return [m.type, m.nameKo, m.nameEn, m.role, m.interactionDNA, m.rest, m.acknowledge,
+          m.resistance, m.transition, m.settle, m.visualBehavior, m.emotionalEffect,
+          Array.isArray(m.propertyMapping) ? m.propertyMapping.join(" ") : ""]
+          .join(" ").toLowerCase();
+      }
+
+      function simulationArchetype(m) {
+        const t = interactionTextBlob(m);
+        if (includesAny(t, ["toggle", "switch", "토글", "스위치"])) return "toggle";
+        if (includesAny(t, ["slider", "dial", "rail", "scrub", "swipe", "scroll", "레일", "슬라이더", "다이얼", "스크롤", "스와이프"])) return "rail";
+        if (includesAny(t, ["lens", "magnifier", "zoom", "렌즈", "돋보기", "확대"])) return "lens";
+        if (includesAny(t, ["popup", "sheet", "panel", "pane", "modal", "팝업", "시트", "패널"])) return "panel";
+        if (includesAny(t, ["card", "카드"])) return "card";
+        if (includesAny(t, ["surface", "field", "pool", "pocket", "바닥", "표면", "필드", "포켓", "ripple"])) return "surface";
+        if (includesAny(t, ["button", "press", "sinking", "침잠", "버튼"])) return "button";
+        if (includesAny(t, ["liquid", "glass", "리퀴드", "유리", "액체"])) return "panel";
+        return "card";
+      }
+
+      function deriveEmotionTheme() {
+        const c = selectedConcept();
+        const text = [state.keyword, c && c.nameKo, c && c.nameEn, c && c.definition, c && c.experience,
+          ...(c && Array.isArray(c.moodWords) ? c.moodWords : [])].filter(Boolean).join(" ").toLowerCase();
+        let theme = {
+          bg1: "#f8fafc", bg2: "#dbe7f3", hero: "rgba(255,255,255,.7)",
+          surface: "rgba(255,255,255,.72)", surfaceStrong: "rgba(255,255,255,.88)",
+          accent: "#2563eb", accentSoft: "#93c5fd", ink: "#0f172a", muted: "#64748b",
+          border: "rgba(148,163,184,.32)", glow: "rgba(37,99,235,.18)", screenShadow: "rgba(15,23,42,.14)",
+          softness: .56, liquid: false, sharp: false, heavy: false
+        };
+        if (includesAny(text, ["차갑", "날카", "세련", "cold", "sharp", "crisp", "precise"])) {
+          theme = Object.assign(theme, {
+            bg1: "#edf2f7", bg2: "#b9c7d8", hero: "rgba(255,255,255,.52)",
+            surface: "rgba(248,251,255,.58)", surfaceStrong: "rgba(255,255,255,.84)",
+            accent: "#26456b", accentSoft: "#9bb6d5", ink: "#102132", muted: "#506377",
+            border: "rgba(38,69,107,.18)", glow: "rgba(78,124,177,.16)", softness: .24, sharp: true
+          });
+        } else if (includesAny(text, ["귀엽", "향기", "부드", "따뜻", "포근", "사랑", "cute", "warm", "soft", "fragrant"])) {
+          theme = Object.assign(theme, {
+            bg1: "#fff4f7", bg2: "#f7d7e5", hero: "rgba(255,255,255,.76)",
+            surface: "rgba(255,250,252,.74)", surfaceStrong: "rgba(255,255,255,.9)",
+            accent: "#e986aa", accentSoft: "#f4bfd2", ink: "#4a3240", muted: "#8a6a7a",
+            border: "rgba(233,134,170,.22)", glow: "rgba(233,134,170,.18)", softness: .82
+          });
+        } else if (includesAny(text, ["젊", "활기", "energy", "dynamic", "vivid"])) {
+          theme = Object.assign(theme, {
+            bg1: "#ecfbff", bg2: "#d6f5ea", hero: "rgba(255,255,255,.74)",
+            surface: "rgba(255,255,255,.72)", surfaceStrong: "rgba(255,255,255,.9)",
+            accent: "#0f766e", accentSoft: "#6ee7b7", ink: "#133430", muted: "#4f6d68",
+            border: "rgba(15,118,110,.2)", glow: "rgba(16,185,129,.16)", softness: .42
+          });
+        } else if (includesAny(text, ["고요", "차분", "calm", "quiet", "still"])) {
+          theme = Object.assign(theme, {
+            bg1: "#f4f7fb", bg2: "#d8dee8", hero: "rgba(255,255,255,.78)",
+            accent: "#597492", accentSoft: "#b3c2d5", muted: "#6b7788", softness: .5
+          });
+        }
+        if (includesAny(text, ["무거", "dense", "heavy"])) theme.heavy = true;
+        if (includesAny(text, ["리퀴드", "liquid", "glass", "유리", "투명", "굴절"])) theme.liquid = true;
+        return theme;
+      }
+
+      function defaultSimulationState(m) {
+        const archetype = simulationArchetype(m);
+        return {
+          targetId: m ? m.id : null,
+          archetype,
+          phase: "Rest / 정지",
+          active: false,
+          toggleOn: false,
+          railValue: 48,
+          panelOpen: archetype === "lens" ? 0.76 : 0.16,
+          cardLift: 0,
+          cardX: 0,
+          cardY: 0,
+          lensX: 50,
+          lensY: 44,
+          ripple: 0,
+          pointX: 50,
+          pointY: 50,
+          pressDepth: 0,
+          drag: null
+        };
+      }
+
+      function simStateFor(m) {
+        if (!m) return defaultSimulationState(null);
+        if (state.simulation && state.simulation.targetId === m.id) return state.simulation;
+        return defaultSimulationState(m);
+      }
+
+      function setSimulationState(patch, resetScroll) {
+        const m = simulationInteraction();
+        const base = simStateFor(m);
+        state.simulation = Object.assign({}, base, patch, { targetId: m ? m.id : null });
+        render(resetScroll);
+      }
+
+      let simTimer = null;
+      function scheduleSimPhase(phase, ms, extra) {
+        clearTimeout(simTimer);
+        simTimer = setTimeout(() => {
+          const m = simulationInteraction();
+          if (!m) return;
+          const base = simStateFor(m);
+          state.simulation = Object.assign({}, base, extra || {}, { phase, targetId: m.id });
+          render();
+        }, ms);
+      }
+
+      function resetSimulationFor(id) {
+        const m = state.interactions.find(x => x.id === id) || state.interactions[0] || null;
+        state.simulationId = m ? m.id : null;
+        state.simulation = defaultSimulationState(m);
+      }
+
+      function beginSimulationDrag(kind, data) {
+        const m = simulationInteraction();
+        const base = simStateFor(m);
+        state.simulation = Object.assign({}, base, { drag: Object.assign({ kind }, data || {}) });
+      }
+
+      function handleSimulationPointerMove(ev) {
+        const m = simulationInteraction();
+        if (!m) return;
+        const sim = simStateFor(m);
+        const drag = sim.drag;
+        if (!drag) return;
+        if (drag.kind === "rail") {
+          const ratio = clamp((ev.clientX - drag.left) / drag.width, 0, 1);
+          setSimulationState({ railValue: Math.round(ratio * 100), phase: "Transition / 전환" });
+          return;
+        }
+        if (drag.kind === "sheet") {
+          const next = clamp(drag.startOpen + ((drag.startY - ev.clientY) / 260), 0.08, 1);
+          setSimulationState({ panelOpen: next, phase: next > sim.panelOpen ? "Transition / 전환" : "Resistance / 저항" });
+          return;
+        }
+        if (drag.kind === "card") {
+          const dx = clamp(ev.clientX - drag.startX, -64, 64);
+          const dy = clamp(ev.clientY - drag.startY, -96, 88);
+          const lift = clamp((-dy + 20) / 110, 0, 1);
+          setSimulationState({ cardX: dx, cardY: dy, cardLift: lift, phase: "Transition / 전환" });
+          return;
+        }
+        if (drag.kind === "lens") {
+          const x = clamp(((ev.clientX - drag.left) / drag.width) * 100, 18, 82);
+          const y = clamp(((ev.clientY - drag.top) / drag.height) * 100, 20, 78);
+          setSimulationState({ lensX: x, lensY: y, phase: "Transition / 전환" });
+          return;
+        }
+      }
+
+      function handleSimulationPointerUp() {
+        const m = simulationInteraction();
+        if (!m) return;
+        const sim = simStateFor(m);
+        const drag = sim.drag;
+        if (!drag) return;
+        if (drag.kind === "rail") {
+          setSimulationState({ drag: null, phase: "Settle / 안착" });
+          scheduleSimPhase("Rest / 정지", 520, { drag: null });
+          return;
+        }
+        if (drag.kind === "sheet") {
+          const open = sim.panelOpen >= 0.48 ? 1 : 0.16;
+          setSimulationState({ drag: null, panelOpen: open, phase: "Settle / 안착" });
+          scheduleSimPhase(open > 0.5 ? "Rest / 정지" : "Rest / 정지", 520, { drag: null, panelOpen: open });
+          return;
+        }
+        if (drag.kind === "card") {
+          setSimulationState({ drag: null, cardX: 0, cardY: 0, cardLift: 0, phase: "Settle / 안착" });
+          scheduleSimPhase("Rest / 정지", 520, { drag: null, cardX: 0, cardY: 0, cardLift: 0 });
+          return;
+        }
+        if (drag.kind === "lens") {
+          setSimulationState({ drag: null, phase: "Settle / 안착" });
+          scheduleSimPhase("Rest / 정지", 520, { drag: null });
+        }
+      }
+
+      window.addEventListener("pointermove", handleSimulationPointerMove, { passive: true });
+      window.addEventListener("pointerup", handleSimulationPointerUp);
+      window.addEventListener("pointercancel", handleSimulationPointerUp);
+
+      /* =========================================================
+         7. 세션 헬퍼 — API 키와 이미지 표시 설정만 이 브라우저 세션에 보관
+         모델은 GPT-5.6 Terra / Image 2.5 Flare로 고정합니다.
+         ========================================================= */
+      function loadSession() {
+        try {
+          state.apiKey = sessionStorage.getItem(CONFIG.SESSION_KEY_API) || "";
+          const raw = sessionStorage.getItem(CONFIG.SESSION_KEY_PREFS);
+          if (raw) {
+            const m = JSON.parse(raw);
+            if (m && typeof m === "object") {
+              if (m.quality) state.quality = m.quality;
+              if (m.labelLang) state.labelLang = m.labelLang;
+            }
+          }
+        } catch (e) { /* 세션 저장소 차단 환경 */ }
+      }
+      function saveSession() {
+        try {
+          sessionStorage.setItem(CONFIG.SESSION_KEY_API, state.apiKey || "");
+          sessionStorage.setItem(CONFIG.SESSION_KEY_PREFS, JSON.stringify({
+            quality: state.quality, labelLang: state.labelLang
+          }));
+        } catch (e) { /* 무시 */ }
+      }
+
+      /* =========================================================
+         8. OpenAI 호출 — GPT-5.6 Terra / Image 2.5 Flare 고정
+         파라미터 호환성 차이가 있을 때만 요청 옵션을 단계적으로 줄여 재시도합니다.
+         ========================================================= */
+      let activeController = null;
+
+      function parseModelJson(text) {
+        let t = String(text || "").trim();
+        t = t.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+        try { return JSON.parse(t); } catch (e) { /* 구간 추출 재시도 */ }
+        const starts = [t.indexOf("{"), t.indexOf("[")].filter(i => i >= 0);
+        const first = starts.length ? Math.min.apply(null, starts) : -1;
+        const last = Math.max(t.lastIndexOf("}"), t.lastIndexOf("]"));
+        if (first >= 0 && last > first) {
+          try { return JSON.parse(t.slice(first, last + 1)); } catch (e) { /* fallthrough */ }
+        }
+        throw new Error("AI 응답을 JSON으로 해석하지 못했습니다. 다시 시도해 주세요.");
+      }
+
+      function extractOutputText(data) {
+        if (data && typeof data.output_text === "string" && data.output_text.trim()) return data.output_text;
+        const out = (data && Array.isArray(data.output)) ? data.output : [];
+        const parts = [];
+        out.forEach(item => {
+          if (item && Array.isArray(item.content)) {
+            item.content.forEach(c => {
+              if (c && typeof c.text === "string" && (c.type === "output_text" || c.type === "text")) parts.push(c.text);
+            });
+          }
+        });
+        return parts.join("\n");
+      }
+
+      function httpMessage(status, payload) {
+        const detail = payload && payload.error && payload.error.message ? payload.error.message : "";
+        if (status === 401 || status === 403) return "API 키가 유효하지 않거나 권한이 없습니다. 키를 다시 확인해 주세요.";
+        if (status === 404) return `고정 모델을 찾을 수 없습니다. API 계정에서 GPT-5.6 Terra와 Image 2.5 Flare 사용 권한을 확인해 주세요.${detail ? " (" + detail + ")" : ""}`;
+        if (status === 429) return "요청이 너무 많거나 사용 한도에 도달했습니다. 잠시 후 다시 시도해 주세요.";
+        if (status === 400) return detail || "요청 형식이 거부되었습니다.";
+        return `요청이 거부되었습니다 (상태 ${status}).${detail ? " " + detail : ""}`;
+      }
+
+      async function postJson(path, body, controller) {
+        const res = await fetch(CONFIG.API_BASE + path, {
+          method: "POST",
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${state.apiKey || ""}`
+          },
+          body: JSON.stringify(body)
+        });
+        let payload = null;
+        try { payload = await res.json(); } catch (e) { payload = null; }
+        if (!res.ok) {
+          const err = new Error(httpMessage(res.status, payload));
+          err.status = res.status;
+          err.fatal = [401, 403].includes(res.status);
+          err.paramIssue = res.status === 400 || res.status === 404;
+          throw err;
+        }
+        return payload;
+      }
+
+      /* 텍스트 분석 — Responses API. 모델별 파라미터 지원 차이를 흡수합니다. */
+      async function callText(systemPrompt, userPrompt) {
+        const controller = new AbortController();
+        activeController = controller;
+
+        const input = [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ];
+        const variants = [
+          { model: FIXED_TEXT_MODEL, input, text: { format: { type: "json_object" } }, max_output_tokens: 12000, reasoning: { effort: "low" } },
+          { model: FIXED_TEXT_MODEL, input, text: { format: { type: "json_object" } }, max_output_tokens: 12000 },
+          { model: FIXED_TEXT_MODEL, input, text: { format: { type: "json_object" } } },
+          { model: FIXED_TEXT_MODEL, input }
+        ];
+
+        const delays = [900, 2200, 5000];
+        let lastError = "알 수 없는 오류가 발생했습니다.";
+        let vi = 0;
+        let attempt = 0;
+
+        while (vi < variants.length) {
+          try {
+            const data = await postJson("/responses", variants[vi], controller);
+            if (data && data.status === "incomplete") {
+              throw new Error("응답이 최대 길이에 도달해 잘렸습니다. 선택 항목을 줄이고 다시 시도해 주세요.");
+            }
+            const text = extractOutputText(data);
+            if (!text.trim()) throw new Error("AI가 빈 응답을 반환했습니다. 다시 시도해 주세요.");
+            return parseModelJson(text);
+          } catch (err) {
+            if (err.name === "AbortError") { const e = new Error("__aborted__"); e.aborted = true; throw e; }
+            lastError = err.message;
+            if (err.fatal) break;
+            if (err.paramIssue) { vi += 1; attempt = 0; continue; }
+            if (attempt >= delays.length) break;
+            await new Promise(r => setTimeout(r, delays[attempt]));
+            attempt += 1;
+          }
+        }
+        throw new Error(lastError);
+      }
+
+      /* 이미지 생성 — Images API. 통합 이미지 한 장만 생성합니다. */
+      async function callImage(prompt) {
+        const controller = new AbortController();
+        activeController = controller;
+
+        const variants = [
+          { model: FIXED_IMAGE_MODEL, prompt, size: CONFIG.IMAGE_SIZE, quality: state.quality },
+          { model: FIXED_IMAGE_MODEL, prompt, size: CONFIG.IMAGE_SIZE },
+          { model: FIXED_IMAGE_MODEL, prompt }
+        ];
+        const delays = [1200, 3000];
+        let lastError = "이미지를 생성하지 못했습니다.";
+        let vi = 0;
+        let attempt = 0;
+
+        while (vi < variants.length) {
+          try {
+            const data = await postJson("/images/generations", variants[vi], controller);
+            const first = data && Array.isArray(data.data) ? data.data[0] : null;
+            if (first && first.b64_json) return `data:image/png;base64,${first.b64_json}`;
+            if (first && first.url) return first.url;
+            throw new Error("이미지 응답이 비어 있습니다. 다시 시도해 주세요.");
+          } catch (err) {
+            if (err.name === "AbortError") { const e = new Error("__aborted__"); e.aborted = true; throw e; }
+            lastError = err.message;
+            if (err.fatal) break;
+            if (err.paramIssue) { vi += 1; attempt = 0; continue; }
+            if (attempt >= delays.length) break;
+            await new Promise(r => setTimeout(r, delays[attempt]));
+            attempt += 1;
+          }
+        }
+        throw new Error(lastError);
+      }
+
+      async function withLoading(msg, fn) {
+        setState({ isAnalyzing: true, loadingMsg: msg, errorMsg: null });
+        try {
+          const out = await fn();
+          setState({ isAnalyzing: false });
+          return out;
+        } catch (err) {
+          if (err && err.aborted) { setState({ isAnalyzing: false }); toast("작업을 취소했습니다."); return null; }
+          console.error(err);
+          setState({ isAnalyzing: false, errorMsg: err.message || "처리에 실패했습니다." });
+          return null;
+        } finally {
+          activeController = null;
+        }
+      }
+
+      /* =========================================================
+         9. 응답 정규화 — 필드가 빠져도 화면이 죽지 않도록 방어
+         ========================================================= */
+      const str = v => (typeof v === "string" ? v.trim() : (v === null || v === undefined ? "" : String(v)));
+      const arr = v => (Array.isArray(v) ? v : []);
+
+      /* AI가 스타일 이름을 조금 다르게 적어도 가장 가까운 것으로 맞춥니다. */
+      function matchStyle(raw, i) {
+        const want = str(raw).toLowerCase();
+        if (want) {
+          const exact = STYLE_NAMES.find(n => n.toLowerCase() === want);
+          if (exact) return exact;
+          const partial = STYLE_NAMES.find(n => n.toLowerCase().includes(want) || want.includes(n.toLowerCase()));
+          if (partial) return partial;
+        }
+        return STYLE_NAMES[i % STYLE_NAMES.length];
+      }
+
+      /* 형상을 지정하지 않고 오면 서로 다른 기본 형상을 돌려 씁니다. */
+      const FORM_FALLBACK = [
+        "a flat square material tile with softly radiused corners and visible thickness",
+        "a rounded rectangular sample chip with a chamfered edge",
+        "three stacked material coupons of slightly different thickness",
+        "a gently curved sample strip with a clean cut edge",
+        "a thin folded sample sheet with one lifted edge exposing its section",
+        "a slim rectangular panel with one precision-cut corner revealing thickness",
+        "a layered cross-section coupon with a clean exposed edge",
+        "a flat circular material puck with a simple beveled rim"
+      ];
+
+      function clampValue(raw, level) {
+        const n = Number(raw);
+        if (Number.isFinite(n)) return Math.max(2, Math.min(98, Math.round(n)));
+        const map = { "낮음": 22, "중간": 55, "높음": 84 };
+        return map[str(level)] || 55;
+      }
+      function levelFromValue(v) { return v < 38 ? "낮음" : (v > 68 ? "높음" : "중간"); }
+
+      function normConcepts(raw) {
+        return arr(raw && raw.concepts).slice(0, 3).map((c, i) => ({
+          id: uid("cpt"),
+          index: i + 1,
+          nameKo: str(c.nameKo) || `해석 ${i + 1}`,
+          nameEn: str(c.nameEn) || `Concept ${i + 1}`,
+          definition: str(c.definition) || NO_DATA,
+          moodWords: arr(c.moodWords).map(str).filter(Boolean).slice(0, 6),
+          experience: str(c.experience),
+          subject: str(c.subject),
+          visual: str(c.visual) || str(c.subject) || "an abstract still life on a neutral background",
+          label: str(c.label) || str(c.nameEn) || `Concept ${i + 1}`,
+          labelKo: str(c.labelKo) || str(c.nameKo),
+          style: matchStyle(c.style, i)
+        }));
+      }
+
+      function normPerceptions(raw) {
+        return arr(raw && raw.perceptions).slice(0, 6).map((p, i) => ({
+          id: uid("prc"),
+          index: i + 1,
+          category: str(p.category) || "지각",
+          titleKo: str(p.titleKo) || `지각 특성 ${i + 1}`,
+          titleEn: str(p.titleEn) || `Perception ${i + 1}`,
+          description: str(p.description) || NO_DATA,
+          cue: str(p.cue),
+          visual: str(p.visual) || "a single object on a neutral background",
+          label: str(p.label) || str(p.titleEn) || `Perception ${i + 1}`,
+          labelKo: str(p.labelKo) || str(p.titleKo),
+          style: matchStyle(p.style, i)
+        }));
+      }
+
+      function normProperties(raw) {
+        const levels = ["낮음", "중간", "높음"];
+        return arr(raw && raw.properties).slice(0, 14).map((p, i) => ({
+          id: uid("prp"),
+          index: i + 1,
+          axis: str(p.axis) || "물성",
+          titleKo: str(p.titleKo) || `물성 ${i + 1}`,
+          titleEn: str(p.titleEn) || `Property ${i + 1}`,
+          description: str(p.description) || NO_DATA,
+          check: str(p.check),
+          interactionHint: str(p.interactionHint),
+          value: clampValue(p.value, p.level),
+          level: levels.includes(str(p.level)) ? str(p.level) : levelFromValue(clampValue(p.value, p.level)),
+          visual: str(p.visual) || "a clean interaction study showing deformation, motion, resistance, recovery, optical feedback or haptic-like response",
+          label: str(p.label) || str(p.titleEn) || `Property ${i + 1}`,
+          labelKo: str(p.labelKo) || str(p.titleKo)
+        }));
+      }
+
+      function normInteractions(raw) {
+        const source = arr(raw && (raw.interactions || raw.materials));
+        return source.slice(0, 5).map((m, i) => ({
+          id: uid("int"),
+          index: i + 1,
+          nameKo: str(m.nameKo) || `인터랙션 ${i + 1}`,
+          nameEn: str(m.nameEn) || `Interaction ${i + 1}`,
+          type: str(m.type) || `Interaction Concept ${i + 1}`,
+          role: str(m.role) || NO_DATA,
+          interactionDNA: str(m.interactionDNA) || NO_DATA,
+          rest: str(m.rest) || NO_DATA,
+          acknowledge: str(m.acknowledge) || NO_DATA,
+          resistance: str(m.resistance) || NO_DATA,
+          transition: str(m.transition) || NO_DATA,
+          settle: str(m.settle) || NO_DATA,
+          timing: str(m.timing) || NO_DATA,
+          haptic: str(m.haptic) || "없음",
+          visualBehavior: str(m.visualBehavior) || NO_DATA,
+          propertyMapping: arr(m.propertyMapping).map(str).filter(Boolean).slice(0, 4),
+          emotionalEffect: str(m.emotionalEffect) || NO_DATA,
+          states: arr(m.states).slice(0, 3).map((x, j) => ({
+            labelKo: str(x && x.labelKo) || ["시작", "입력 중", "안착"][j],
+            labelEn: str(x && x.labelEn) || ["Rest", "Acknowledge", "Settle"][j],
+            description: str(x && x.description) || ""
+          })),
+          visual: str(m.visual) || "clean smartphone UI component study showing three sequential states of the same control with clear motion and deformation cues"
+        }));
+      }
+
+      /* =========================================================
+         10. 단계 이동 규칙 — 데이터가 준비된 단계까지만 이동
+         ========================================================= */
+      function stepReady(n) {
+        switch (n) {
+          case 1: return true;
+          case 2: return state.concepts.length > 0;
+          case 3: return state.perceptions.length > 0;
+          case 4: return state.properties.length > 0;
+          case 5: return state.interactions.length > 0;
+          case 6: return state.interactions.length > 0;
+          default: return false;
+        }
+      }
+
+      /* =========================================================
+         11. 자동 저장
+         ========================================================= */
+      /* 홈(step 0)은 탐색 화면일 뿐 프로젝트 진행 단계가 아닙니다.
+         저장 시 화면 위치가 아니라 실제 생성된 데이터의 가장 깊은 단계를 기록합니다. */
+      function progressStep() {
+        if (state.interactions.length) return 5;
+        if (state.properties.length) return 4;
+        if (state.perceptions.length) return 3;
+        if (state.concepts.length) return 2;
+        return 1;
+      }
+
+      function snapshot() {
+        return {
+          projectId: state.projectId,
+          keyword: state.keyword,
+          note: state.note,
+          concepts: state.concepts,
+          conceptId: state.conceptId,
+          perceptions: state.perceptions,
+          perceptionIds: state.perceptionIds,
+          properties: state.properties,
+          propertyIds: state.propertyIds,
+          interactions: state.interactions,
+          simulationId: state.simulationId,
+          createdAt: state.createdAt,
+          step: progressStep()
+        };
+      }
+
+      function hasContent() {
+        return !!(state.keyword || state.concepts.length || state.perceptions.length ||
+          state.properties.length || state.interactions.length);
+      }
+
+      function projectTitle() {
+        const c = selectedConcept();
+        if (state.keyword && c) return `${state.keyword} · ${c.nameKo}`;
+        if (state.keyword) return state.keyword;
+        return "이름 없는 프로젝트";
+      }
+
+      let quotaWarned = false;
+      function persist(showToast) {
+        if (!hasContent()) return "empty";
+        const r = Store.save(snapshot(), { id: state.projectId, title: projectTitle() });
+        if (r.ok) {
+          if (showToast) toast("진행 상태를 저장했습니다.");
+          if (r.pruned === "oldest") toast("저장 공간이 부족해 가장 오래된 프로젝트를 정리했습니다.");
+          return "ok";
+        }
+        if (!quotaWarned) {
+          quotaWarned = true;
+          toast("저장 공간이 부족해 자동 저장이 중단되었습니다. 리포트를 파일로 내려받아 주세요.", "error");
+        }
+        return "full";
+      }
+
+      /* =========================================================
+         12. 렌더 헬퍼 — 카드/버튼/이미지의 형식을 한곳에서 통일
+         ========================================================= */
+      function header(title, backStep) {
+        const cur = STAGES.find(s => s.n === state.step);
+        const nextN = state.step + 1;
+        const showNext = STAGES.some(s => s.n === nextN) && stepReady(nextN);
+        const pct = cur ? Math.round((cur.n / STAGES.length) * 100) : 0;
+        return `
+        <header class="fixed top-0 left-0 right-0 z-50 bg-white max-w-[430px] mx-auto">
+          <div class="px-3 h-14 flex items-center justify-between gap-1">
+            <div class="flex items-center gap-1 overflow-hidden flex-1 min-w-0">
+              ${backStep !== undefined ? `<button type="button" aria-label="이전 단계로" onclick="setState({step:${backStep}}, true)" class="p-2.5 rounded-full hover:bg-slate-100 active:bg-slate-200 text-slate-700 flex-shrink-0"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>` : ""}
+              <h1 class="t-h3 truncate text-slate-900">${esc(title)}</h1>
+            </div>
+            <div class="flex items-center gap-0.5 flex-shrink-0 text-slate-700">
+              ${showNext ? `<button type="button" aria-label="다음 단계로" onclick="setState({step:${nextN}}, true)" class="p-2.5 rounded-full hover:bg-slate-100 active:bg-slate-200 text-slate-900"><i data-lucide="chevron-right" class="w-6 h-6"></i></button>` : ""}
+              <button type="button" aria-label="진행 상태 저장" onclick="Actions.saveNow()" class="p-2.5 rounded-full hover:bg-slate-100 active:bg-slate-200"><i data-lucide="save" class="w-6 h-6"></i></button>
+              <button type="button" aria-label="리포트 복사" onclick="Actions.copyReport()" class="p-2.5 rounded-full hover:bg-slate-100 active:bg-slate-200"><i data-lucide="copy" class="w-6 h-6"></i></button>
+              <button type="button" aria-label="처음 화면으로" onclick="Actions.goHome()" class="p-2.5 rounded-full hover:bg-slate-100 active:bg-slate-200"><i data-lucide="home" class="w-6 h-6"></i></button>
+            </div>
+          </div>
+          ${cur ? `<div class="px-4 pb-2 flex items-center gap-3">
+            <div class="h-2 bg-slate-300 rounded-full flex-1 overflow-hidden"><div class="h-full bg-blue-700 rounded-full transition-all" style="width:${pct}%"></div></div>
+            <span class="t-meta font-bold text-slate-600 tabular-nums flex-shrink-0">${cur.n} / ${STAGES.length} · ${esc(cur.label)}</span>
+          </div>` : ""}
+        </header>`;
+      }
+
+      function dock(inner) {
+        return `<div class="fixed bottom-0 left-0 right-0 px-5 pt-5 dock bg-white max-w-[430px] mx-auto z-[60]">${inner}</div>`;
+      }
+
+      function primaryBtn(label, onclick, disabled) {
+        return `<button type="button" ${disabled ? "disabled" : ""} onclick="${onclick}"
+          class="w-full py-5 rounded-2xl font-bold t-h3 text-white bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none shadow-lg active:scale-[0.98] disabled:active:scale-100 transition-all">${esc(label)}</button>`;
+      }
+
+      function secondaryBtn(label, onclick, icon) {
+        return `<button type="button" onclick="${onclick}"
+          class="w-full py-4 rounded-2xl font-bold t-small text-slate-700 bg-white border-2 border-slate-200 hover:bg-slate-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2">${icon ? `<i data-lucide="${icon}" class="w-5 h-5"></i>` : ""}${esc(label)}</button>`;
+      }
+
+      function ghostBtn(label, onclick, icon) {
+        return `<button type="button" onclick="${onclick}"
+          class="px-4 py-2.5 rounded-xl font-bold t-meta text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 active:scale-95 transition-all inline-flex items-center gap-1.5">${icon ? `<i data-lucide="${icon}" class="w-4 h-4"></i>` : ""}${esc(label)}</button>`;
+      }
+
+      /* 모든 선택 카드는 테두리·체크 표시·선택 상태를 동일한 형식으로 씁니다. */
+      function optionCard(opts) {
+        const on = !!opts.selected;
+        const badge = opts.badge
+          ? `<span class="t-meta font-bold px-2.5 py-1 rounded-lg flex-shrink-0 ${on ? "bg-blue-100 text-blue-800" : "bg-slate-200 text-slate-700"}">${esc(opts.badge)}</span>`
+          : "";
+        return `<button type="button" onclick="${opts.onclick}" aria-pressed="${on}"
+          class="w-full text-left p-5 rounded-[2rem] border-2 transition-all bg-white ${on ? "border-blue-700 shadow-lg ring-2 ring-blue-700/15" : "border-slate-200 hover:border-blue-300 shadow-md"}">
+          <div class="flex items-start gap-3 mb-3">
+            <span class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-bold t-meta tabular-nums ${on ? "bg-blue-700 text-white" : "bg-slate-200 text-slate-700"}">${on ? '<i data-lucide="check" class="w-5 h-5"></i>' : esc(pad2(opts.index))}</span>
+            <div class="min-w-0 flex-1">
+              <h3 class="t-h3 text-slate-900 leading-snug">${esc(opts.title)}</h3>
+              ${opts.subtitle ? `<p class="t-meta text-slate-500">${esc(opts.subtitle)}</p>` : ""}
+            </div>
+            ${badge}
+          </div>
+          <div class="space-y-2">${opts.body || ""}</div>
+        </button>`;
+      }
+
+      function chip(text, tone) {
+        const cls = tone === "blue"
+          ? "bg-blue-50 text-blue-800 border-blue-200"
+          : "bg-slate-100 text-slate-700 border-slate-200";
+        return `<span class="inline-block t-meta px-2.5 py-1 rounded-lg border ${cls}">${esc(text)}</span>`;
+      }
+
+      /* 단계별 통합 이미지 카드 */
+      function imageCard(slot, opts) {
+        const url = state.images ? state.images[slot] : null;
+        const caption = opts.caption || "";
+        const saveBtn = url
+          ? `<button type="button" onclick="Actions.downloadImage('${slot}')"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white text-slate-700 t-meta font-bold hover:bg-slate-50 active:scale-[0.98] transition-all">
+               <i data-lucide="download" class="w-4 h-4"></i>저장
+             </button>`
+          : "";
+        const inner = url
+          ? `<button type="button" onclick="Actions.openLightbox('${slot}')" class="block w-full">
+               <img src="${escAttr(url)}" alt="${escAttr(opts.alt || "생성된 통합 이미지")}" class="w-full rounded-2xl bg-slate-100" />
+             </button>`
+          : `<div class="w-full rounded-2xl bg-slate-100 border-2 border-dashed border-slate-300 px-5 py-12 text-center">
+               <i data-lucide="image" class="w-10 h-10 text-slate-400 mx-auto mb-3"></i>
+               <p class="t-small text-slate-600">${esc(opts.empty || "아직 이미지를 생성하지 않았습니다.")}</p>
+             </div>`;
+        return `<section class="bg-white rounded-[2rem] p-4 border-2 border-slate-200 shadow-md mb-6">
+          <div class="flex items-center justify-between gap-3 mb-3 px-1">
+            <h3 class="t-label text-slate-500">${esc(opts.title)}</h3>
+            ${saveBtn}
+          </div>
+          ${inner}
+          ${caption ? `<p class="t-meta text-slate-500 mt-3 px-1 prose-ko">${esc(caption)}</p>` : ""}
+        </section>`;
+      }
+
+      function instructionBox(id, onSend, placeholder) {
+        return `<section class="p-5 bg-slate-800 rounded-3xl shadow-xl mt-8">
+          <h3 class="t-label text-blue-300 mb-3">AI 수정 지시</h3>
+          <label for="${id}" class="sr-only">수정 지시 입력</label>
+          <textarea id="${id}" rows="3" oninput="setDraft('${id}', this.value)"
+            class="w-full block min-w-0 bg-white/10 border border-white/20 rounded-xl px-4 py-3.5 text-white t-small outline-none resize-none placeholder:text-slate-300 focus:border-blue-400 mb-3"
+            placeholder="${escAttr(placeholder)}">${esc(draft(id))}</textarea>
+          <button type="button" onclick="${onSend}"
+            class="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold t-small flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
+            <i data-lucide="send" class="w-5 h-5"></i>지시대로 다시 생성
+          </button>
+        </section>`;
+      }
+
+      /* 각 단계 상단 — 앞 단계에서 무엇을 골랐는지 그대로 보여 줍니다. */
+      function priorChoice(rows) {
+        const list = rows.filter(r => r && r.value);
+        if (!list.length) return "";
+        return `<section class="bg-white border-2 border-slate-200 rounded-[1.5rem] px-5 py-4 mb-6 shadow-sm">
+          ${list.map(r => `<div class="py-1 border-t border-slate-100 first:border-t-0 first:pt-0">
+            <span class="t-meta font-bold text-slate-500">${esc(r.label)}</span>
+            <p class="t-small text-slate-800 prose-ko">${esc(r.value)}</p>
+          </div>`).join("")}
+        </section>`;
+      }
+
+      function joinTitles(items, key) {
+        return items.map((it, i) => `${pad2(i + 1)} ${it[key]}`).join("   ");
+      }
+
+      function sectionTitle(text, sub) {
+        return `<h2 class="t-h1 text-slate-900 mb-2">${esc(text)}</h2>
+          ${sub ? `<p class="t-small text-slate-600 mb-6 prose-ko">${esc(sub)}</p>` : `<div class="mb-6"></div>`}`;
+      }
+
+      /* =========================================================
+         13. 리포트
+         ========================================================= */
+      function buildReport() {
+        const L = [];
+        const line = "==================================================";
+        L.push(line, "   감성 · 지각 · 인터랙션 컨셉 랩 · 종합 리포트", line, "");
+        L.push("[감성 키워드]", `- ${state.keyword || "설정된 키워드 없음"}`);
+        L.push(`- 감성 해석 방식: ${EMOTION_METHOD.label} (${EMOTION_METHOD.en})`);
+        if (state.note) L.push(`- 연관 과제: ${state.note}`);
+        L.push("");
+
+        if (state.concepts.length) {
+          L.push(line, " 1. 감성 해석", line);
+          state.concepts.forEach((c, i) => {
+            const on = c.id === state.conceptId ? "  ★ 선택됨" : "";
+            L.push("", `${pad2(i + 1)}. ${c.nameKo} / ${c.nameEn}${on}`);
+            if (c.moodWords.length) L.push(`  감성 단어: ${c.moodWords.join(" · ")}`);
+            if (c.subject) L.push(`  대표 장면: ${c.subject}`);
+            L.push(`  ${c.definition}`);
+            if (c.experience) L.push(`  체감: ${c.experience}`);
+          });
+          L.push("");
+        }
+
+        if (state.perceptions.length) {
+          L.push(line, " 2. 지각 특성", line);
+          state.perceptions.forEach((p, i) => {
+            const on = state.perceptionIds.includes(p.id) ? "  ★ 선택됨" : "";
+            L.push("", `${pad2(i + 1)}. [${p.category}] ${p.titleKo} / ${p.titleEn}${on}`);
+            L.push(`  ${p.description}`);
+            if (p.cue) L.push(`  관찰 단서: ${p.cue}`);
+          });
+          L.push("");
+        }
+
+        if (state.properties.length) {
+          L.push(line, " 3. 인터랙션 물성", line);
+          state.properties.forEach((p, i) => {
+            const on = state.propertyIds.includes(p.id) ? "  ★ 선택됨" : "";
+            L.push("", `${pad2(i + 1)}. [${p.axis}] ${p.titleKo} / ${p.titleEn} · 목표 ${p.level} (LOW 0 - HIGH 100 축에서 ${p.value})${on}`);
+            L.push(`  ${p.description}`);
+            if (p.interactionHint) L.push(`  인터랙션 변환: ${p.interactionHint}`);
+            if (p.check) L.push(`  확인 방법: ${p.check}`);
+          });
+          L.push("");
+        }
+
+        if (state.interactions.length) {
+          L.push(line, " 4. 인터랙션 제안", line);
+          state.interactions.forEach((m, i) => {
+            L.push("", `${pad2(i + 1)}. ${m.nameKo} / ${m.nameEn}  (${m.type})`);
+            L.push(`  역할: ${m.role}`);
+            L.push(`  Interaction DNA: ${m.interactionDNA}`);
+            L.push(`  Rest: ${m.rest}`);
+            L.push(`  Acknowledge: ${m.acknowledge}`);
+            L.push(`  Resistance: ${m.resistance}`);
+            L.push(`  Transition: ${m.transition}`);
+            L.push(`  Settle: ${m.settle}`);
+            L.push(`  Timing: ${m.timing}`);
+            L.push(`  Haptic: ${m.haptic}`);
+            L.push(`  Visual Behavior: ${m.visualBehavior}`);
+            if (m.propertyMapping && m.propertyMapping.length) L.push(`  연결 물성: ${m.propertyMapping.join(" · ")}`);
+            L.push(`  감성 효과: ${m.emotionalEffect}`);
+          });
+          L.push("");
+        }
+
+        if (state.interactions.length) {
+          const sim = simulationInteraction();
+          L.push(line, " 5. 인터랙션 시뮬레이션", line);
+          L.push("- 마지막 단계에서 가상 스마트폰 화면 위에서 선택한 인터랙션 컨셉을 직접 눌러 보고, 끌어 보고, 열어 보며 물성을 체감할 수 있습니다.");
+          if (sim) L.push(`- 기본 시뮬레이션 대상: ${sim.nameKo} / ${sim.nameEn} (${sim.type})`);
+          L.push("- 시뮬레이션 단계에서는 각 컨셉의 Motion Grammar와 연결 물성이 실제 터치 반응으로 어떻게 느껴지는지 확인합니다.");
+          L.push("");
+        }
+
+        L.push(line, `생성 시각: ${nowLabel(Date.now())}`, line);
+        return L.join("\n");
+      }
+
+
+      /* =========================================================
+         13-B. PDF 리포트 — 분석 내용과 생성 이미지를 함께 담습니다.
+         화면 밖에 인쇄용 문서를 만들고 블록 단위로 캡처해 A4에 배치합니다.
+         블록 단위로 나누면 문장이 페이지 경계에서 잘리지 않습니다.
+         ========================================================= */
+      const PDF = {
+        W: 794,
+        blk(inner, pad) {
+          return `<div style="box-sizing:border-box;width:794px;padding:${pad || "0 0 14px 0"};background:#ffffff;font-family:'Pretendard',sans-serif;color:#0f172a;">${inner}</div>`;
+        },
+        heading(no, title, en) {
+          return PDF.blk(`<div style="border-top:3px solid #0f172a;padding-top:12px;margin-top:18px;">
+            <span style="font-size:22px;font-weight:800;letter-spacing:-0.01em;">${esc(no)}</span>
+            <span style="font-size:22px;font-weight:800;margin-left:8px;">${esc(title)}</span>
+            <span style="font-size:16px;color:#64748b;margin-left:10px;">${esc(en)}</span>
+          </div>`);
+        },
+        image(slot, caption) {
+          const url = state.images && state.images[slot];
+          if (!url) return "";
+          return PDF.blk(`<img src="${escAttr(url)}" style="width:520px;display:block;margin:0 auto 8px;border:1px solid #e2e8f0;" />
+            <p style="font-size:14px;color:#64748b;text-align:center;margin:0;">${esc(caption)}</p>`);
+        },
+        card(inner) {
+          return PDF.blk(`<div style="border:1px solid #cbd5e1;border-radius:14px;padding:16px 18px;">${inner}</div>`, "0 0 10px 0");
+        },
+        kv(k, v) {
+          if (!v) return "";
+          return `<div style="margin-top:8px;">
+            <div style="font-size:14px;font-weight:700;color:#64748b;">${esc(k)}</div>
+            <div style="font-size:16px;line-height:1.7;white-space:pre-line;">${esc(v)}</div>
+          </div>`;
+        },
+        bar(value) {
+          const pct = Math.max(2, Math.min(98, Number(value) || 55));
+          return `<div style="position:relative;height:20px;margin:10px 0 4px;">
+            <div style="position:absolute;left:34px;right:40px;top:9px;height:3px;background:#e2e8f0;border-radius:2px;"></div>
+            <div style="position:absolute;left:0;top:2px;font-size:13px;color:#94a3b8;">LOW</div>
+            <div style="position:absolute;right:0;top:2px;font-size:13px;color:#94a3b8;">HIGH</div>
+            <div style="position:absolute;top:4px;left:calc(34px + (100% - 74px) * ${pct} / 100);width:13px;height:13px;margin-left:-6px;border-radius:50%;background:#1d4ed8;"></div>
+          </div>`;
+        },
+        document() {
+          const c = selectedConcept();
+          const out = [];
+
+          out.push(PDF.blk(`<div style="padding-bottom:6px;">
+            <div style="font-size:14px;letter-spacing:0.12em;color:#64748b;font-weight:700;">EMOTION INTERACTION LAB</div>
+            <h1 style="font-size:30px;font-weight:800;margin:6px 0 10px;letter-spacing:-0.02em;">감성 · 지각 · 인터랙션 컨셉 리포트</h1>
+            <div style="font-size:20px;font-weight:700;">${esc(state.keyword || "감성 키워드 없음")}</div>
+            <div style="font-size:16px;color:#1d4ed8;font-weight:700;margin-top:4px;">${esc(EMOTION_METHOD.label)}</div>
+            ${state.note ? `<div style="font-size:16px;color:#475569;margin-top:4px;">${esc(state.note)}</div>` : ""}
+            <div style="font-size:14px;color:#94a3b8;margin-top:10px;">${esc(nowLabel(Date.now()))}</div>
+          </div>`));
+
+          if (state.concepts.length) {
+            out.push(PDF.heading("01", "감성 해석", "Emotion"));
+            out.push(PDF.image("emotion", "감성 해석 통합 이미지"));
+            state.concepts.forEach((x, i) => {
+              const on = x.id === state.conceptId;
+              out.push(PDF.card(`
+                <div style="font-size:18px;font-weight:800;">${pad2(i + 1)}  ${esc(x.nameKo)}${on ? ' <span style="font-size:14px;color:#1d4ed8;">선택</span>' : ""}</div>
+                <div style="font-size:15px;color:#64748b;">${esc(x.nameEn)}</div>
+                <div style="font-size:16px;line-height:1.75;margin-top:8px;white-space:pre-line;">${esc(x.definition)}</div>
+                ${x.experience ? `<div style="font-size:15px;line-height:1.7;color:#475569;margin-top:8px;">${esc(x.experience)}</div>` : ""}
+                ${x.moodWords && x.moodWords.length ? `<div style="font-size:14px;color:#475569;margin-top:8px;">${esc(x.moodWords.join(" · "))}</div>` : ""}
+                ${x.subject ? `<div style="font-size:14px;color:#64748b;margin-top:4px;">대표 장면 · ${esc(x.subject)}</div>` : ""}
+                ${x.style ? `<div style="font-size:14px;color:#64748b;">이미지 스타일 · ${esc(x.style)}</div>` : ""}`));
+            });
+          }
+
+          if (state.perceptions.length) {
+            out.push(PDF.heading("02", "지각 특성", "Perception"));
+            out.push(PDF.image("perception", "지각 특성 통합 이미지"));
+            state.perceptions.forEach((x, i) => {
+              const on = state.perceptionIds.includes(x.id);
+              out.push(PDF.card(`
+                <div style="font-size:18px;font-weight:800;">${pad2(i + 1)}  ${esc(x.titleKo)}${on ? ' <span style="font-size:14px;color:#1d4ed8;">선택</span>' : ""}
+                  <span style="font-size:14px;color:#64748b;font-weight:700;margin-left:6px;">${esc(x.category)}</span></div>
+                <div style="font-size:15px;color:#64748b;">${esc(x.titleEn)}</div>
+                <div style="font-size:16px;line-height:1.75;margin-top:8px;white-space:pre-line;">${esc(x.description)}</div>
+                ${x.cue ? `<div style="font-size:14px;color:#64748b;margin-top:6px;">관찰 단서 · ${esc(x.cue)}</div>` : ""}`));
+            });
+          }
+
+          if (state.properties.length) {
+            out.push(PDF.heading("03", "인터랙션 물성", "Dynamic Interaction Properties"));
+            out.push(PDF.image("property", "인터랙션 물성 통합 이미지"));
+            state.properties.forEach((x, i) => {
+              const on = state.propertyIds.includes(x.id);
+              out.push(PDF.card(`
+                <div style="font-size:18px;font-weight:800;">${pad2(i + 1)}  ${esc(x.titleKo)}${on ? ' <span style="font-size:14px;color:#1d4ed8;">선택</span>' : ""}
+                  <span style="font-size:14px;color:#64748b;font-weight:700;margin-left:6px;">${esc(x.axis)}</span></div>
+                <div style="font-size:15px;color:#64748b;">${esc(x.titleEn)}</div>
+                <div style="font-size:16px;line-height:1.75;margin-top:8px;white-space:pre-line;">${esc(x.description)}</div>
+                ${PDF.bar(x.value)}
+                <div style="font-size:14px;color:#64748b;">목표 수준 · ${esc(x.level)} (${esc(x.value)})</div>
+                ${x.interactionHint ? `<div style="font-size:14px;color:#1d4ed8;margin-top:5px;">인터랙션 변환 · ${esc(x.interactionHint)}</div>` : ""}
+                ${x.check ? `<div style="font-size:14px;color:#64748b;margin-top:4px;">확인 방법 · ${esc(x.check)}</div>` : ""}`));
+            });
+          }
+
+          if (state.interactions.length) {
+            out.push(PDF.heading("04", "인터랙션 제안", "Interaction Concepts"));
+            out.push(PDF.image("interaction", "5개 인터랙션 요소 · 3상태 샘플 보드"));
+            state.interactions.forEach((x, i) => {
+              out.push(PDF.card(`
+                <div style="font-size:18px;font-weight:800;">${pad2(i + 1)}  ${esc(x.nameKo)}
+                  <span style="font-size:14px;color:#64748b;font-weight:700;margin-left:6px;">${esc(x.type)}</span></div>
+                <div style="font-size:15px;color:#64748b;">${esc(x.nameEn)}</div>
+                ${PDF.kv("역할", x.role)}
+                ${PDF.kv("Interaction DNA", x.interactionDNA)}
+                ${PDF.kv("Rest / 정지", x.rest)}
+                ${PDF.kv("Acknowledge / 입력 감지", x.acknowledge)}
+                ${PDF.kv("Resistance / 저항", x.resistance)}
+                ${PDF.kv("Transition / 전환", x.transition)}
+                ${PDF.kv("Settle / 안착", x.settle)}
+                ${PDF.kv("Timing", x.timing)}
+                ${PDF.kv("Haptic", x.haptic)}
+                ${PDF.kv("Visual Behavior", x.visualBehavior)}
+                ${x.propertyMapping && x.propertyMapping.length ? `<div style="font-size:14px;color:#64748b;margin-top:8px;">연결 물성 · ${esc(x.propertyMapping.join(" · "))}</div>` : ""}
+                ${PDF.kv("감성 효과", x.emotionalEffect)}`));
+            });
+          }
+
+          return out.filter(Boolean).join("");
+        }
+      };
+
+      /* 이미지가 끝내 로드되지 않아도 PDF 생성이 멈추지 않도록 기다림에 상한을 둡니다. */
+      function waitForImages(root, timeoutMs) {
+        const imgs = Array.from(root.querySelectorAll("img"));
+        const all = Promise.all(imgs.map(im => (im.complete && im.naturalWidth)
+          ? Promise.resolve()
+          : new Promise(res => { im.onload = res; im.onerror = res; })));
+        return Promise.race([all, new Promise(res => setTimeout(res, timeoutMs || 6000))]);
+      }
+
+      async function exportPdf() {
+        const h2c = window.html2canvas;
+        const JsPDF = window.jspdf && window.jspdf.jsPDF;
+        if (!h2c || !JsPDF) {
+          toast("PDF 모듈을 불러오지 못했습니다. 텍스트로 내려받습니다.", "error");
+          downloadText(`interaction-report-${Date.now()}.txt`, buildReport());
+          return;
+        }
+
+        const holder = document.createElement("div");
+        holder.setAttribute("aria-hidden", "true");
+        holder.style.cssText = `position:absolute;left:-10000px;top:0;width:${PDF.W}px;background:#ffffff;`;
+        holder.innerHTML = PDF.document();
+        document.body.appendChild(holder);
+
+        try {
+          await waitForImages(holder);
+          if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) { /* 무시 */ } }
+
+          const pdf = new JsPDF({ unit: "pt", format: "a4" });
+          const pw = pdf.internal.pageSize.getWidth();
+          const ph = pdf.internal.pageSize.getHeight();
+          const M = 34;
+          const maxW = pw - M * 2;
+          const maxH = ph - M * 2;
+          let y = M;
+          let placed = 0;
+
+          const blocks = Array.from(holder.children);
+          for (const b of blocks) {
+            const canvas = await h2c(b, { scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false });
+            let w = maxW;
+            let h = canvas.height * maxW / canvas.width;
+            if (h > maxH) { h = maxH; w = canvas.width * maxH / canvas.height; }
+            if (placed && y + h > ph - M) { pdf.addPage(); y = M; }
+            pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", M + (maxW - w) / 2, y, w, h);
+            y += h + 6;
+            placed += 1;
+          }
+          if (!placed) throw new Error("리포트에 담을 내용이 없습니다.");
+          pdf.save(`Interaction-리포트-${(state.keyword || "무제").slice(0, 20)}.pdf`);
+        } finally {
+          if (holder.parentNode) holder.parentNode.removeChild(holder);
+        }
+      }
+
+      function downloadText(name, text) {
+        const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = name;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+      }
+
+      /* =========================================================
+         14. ACTIONS
+         ========================================================= */
+      const Actions = {
+        /* ---- 접속 / 프로젝트 ---- */
+        validateKey() {
+          const el = document.getElementById("api-input");
+          const key = el ? el.value.trim() : "";
+          if (!key) { setState({ errorMsg: "API 키를 입력해 주세요." }); return; }
+          if (!/^sk-/.test(key)) { setState({ errorMsg: "OpenAI API 키는 sk- 로 시작합니다. 키를 다시 확인해 주세요." }); return; }
+          state.apiKey = key;
+          saveSession();
+          setState({ step: 0, errorMsg: null }, true);
+        },
+        pickQuality(id) { state.quality = id; saveSession(); render(); },
+        pickLabelLang(id) { state.labelLang = id; saveSession(); render(); },
+        toggleSettings() { setState({ settingsOpen: !state.settingsOpen }); },
+
+        startNewProject() {
+          persist(false);
+          Object.assign(state, blankProject());
+          drafts["keyword-input"] = "";
+          drafts["note-input"] = "";
+          setState({ step: 1 }, true);
+        },
+
+        async openProject(id) {
+          const row = Store.list().find(p => p.id === id);
+          if (!row || !row.data) { toast("프로젝트를 찾지 못했습니다.", "error"); return; }
+          persist(false);
+          const d = row.data;
+          Object.assign(state, blankProject(), {
+            projectId: d.projectId || row.id,
+            keyword: d.keyword || "",
+            note: d.note || "",
+            concepts: arr(d.concepts),
+            conceptId: d.conceptId || null,
+            perceptions: arr(d.perceptions),
+            perceptionIds: arr(d.perceptionIds),
+            properties: arr(d.properties),
+            propertyIds: arr(d.propertyIds),
+            interactions: arr(d.interactions || d.materials),
+            simulationId: d.simulationId || null,
+            simulation: null,
+            createdAt: d.createdAt || row.savedAt,
+            images: { emotion: null, perception: null, property: null, interaction: null }
+          });
+          drafts["keyword-input"] = state.keyword;
+          drafts["note-input"] = state.note;
+
+          /* 구버전에서 step이 1로 잘못 저장된 프로젝트도 데이터 기준으로 정상 복구합니다. */
+          setState({ step: progressStep() }, true);
+
+          const imgs = await ImageDB.loadAll(state.projectId);
+          /* 구버전이 남긴 고아 이미지도 정리합니다. 데이터가 없는 단계의 이미지는 복원하지 않습니다. */
+          const orphanSlots = [];
+          if (!state.concepts.length && imgs.emotion) orphanSlots.push("emotion");
+          if (!state.perceptions.length && imgs.perception) orphanSlots.push("perception");
+          if (!state.properties.length && imgs.property) orphanSlots.push("property");
+          if (!state.interactions.length && imgs.interaction) orphanSlots.push("interaction");
+          orphanSlots.forEach(slot => { imgs[slot] = null; });
+          if (orphanSlots.length) await ImageDB.removeSlots(state.projectId, orphanSlots);
+          setState({ images: Object.assign({ emotion: null, perception: null, property: null, interaction: null }, imgs) });
+        },
+
+        deleteProject(id) {
+          if (!window.confirm("이 프로젝트와 생성된 이미지를 모두 지웁니다. 계속할까요?")) return;
+          Store.remove(id);
+          /* 지금 열려 있는 프로젝트였다면 비워 둡니다. 그러지 않으면 자동 저장이 되살립니다. */
+          if (state.projectId === id) Object.assign(state, blankProject());
+          toast("프로젝트를 삭제했습니다.");
+          render();
+        },
+
+        goHome() {
+          /* 현재 분석 진행도를 먼저 저장하고 홈으로 이동합니다.
+             이후 홈에서 자동 저장이 실행돼도 snapshot()이 progressStep()을 사용하므로 진행 단계가 1로 되돌아가지 않습니다. */
+          persist(false);
+          setState({ step: 0 }, true);
+        },
+        saveNow() { const r = persist(true); if (r === "empty") toast("아직 저장할 내용이 없습니다."); },
+
+        copyReport() {
+          const text = buildReport();
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text)
+              .then(() => toast("리포트를 클립보드에 복사했습니다."))
+              .catch(() => downloadText("interaction-report.txt", text));
+          } else {
+            downloadText("interaction-report.txt", text);
+          }
+        },
+        downloadReport() { downloadText(`interaction-report-${Date.now()}.txt`, buildReport()); },
+        async exportPdf() {
+          setState({ isAnalyzing: true, loadingMsg: "리포트를 PDF로 만들고 있습니다", errorMsg: null });
+          try {
+            await exportPdf();
+            setState({ isAnalyzing: false });
+            toast("PDF를 내려받았습니다.");
+          } catch (err) {
+            console.error(err);
+            setState({ isAnalyzing: false, errorMsg: "PDF를 만들지 못했습니다. 잠시 후 다시 시도해 주세요." });
+          }
+        },
+
+        cancel() { if (activeController) activeController.abort(); },
+
+        /* ---- 이미지 공통 ---- */
+        openLightbox(slot) { setState({ lightbox: slot }); },
+        closeLightbox() { setState({ lightbox: null }); },
+        downloadImage(slot) {
+          const url = state.images[slot];
+          if (!url) return;
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `interaction-${slot}-${Date.now()}.png`;
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        },
+        async saveImage(slot, dataUrl) {
+          state.images = Object.assign({}, state.images, { [slot]: dataUrl });
+          await ImageDB.put(state.projectId, slot, dataUrl);
+        },
+        async clearImageSlots(slots) {
+          const targets = Array.from(new Set(arr(slots).filter(slot => IMAGE_SLOTS.includes(slot))));
+          if (!targets.length) return;
+          const nextImages = Object.assign({}, state.images);
+          targets.forEach(slot => { nextImages[slot] = null; });
+          state.images = nextImages;
+          await ImageDB.removeSlots(state.projectId, targets);
+        },
+
+        /* ---- 1단계 → 감성 해석 ---- */
+        async generateConcepts(instruction) {
+          const kw = (drafts["keyword-input"] !== undefined ? drafts["keyword-input"] : state.keyword).trim();
+          const note = (drafts["note-input"] !== undefined ? drafts["note-input"] : state.note).trim();
+          if (!kw) { setState({ errorMsg: "감성 키워드를 입력해 주세요." }); return; }
+          state.keyword = kw;
+          state.note = note;
+
+          const data = await withLoading("감성을 세가지 경험으로 해석하고 있습니다", () =>
+            callText(SYSTEM, PROMPTS.EMOTION(kw, note, instruction || "")));
+          if (!data) return;
+
+          const concepts = normConcepts(data);
+          if (!concepts.length) { setState({ errorMsg: "감성 해석을 받지 못했습니다. 다시 시도해 주세요." }); return; }
+
+          await Actions.clearImageSlots(["emotion", "perception", "property", "interaction"]);
+          setState({
+            concepts,
+            conceptId: null,
+            perceptions: [], perceptionIds: [],
+            properties: [], propertyIds: [],
+            interactions: [],
+            images: { emotion: null, perception: null, property: null, interaction: null },
+            step: 2
+          }, true);
+          persist(false);
+          await Actions.generateEmotionImage();
+        },
+        async regenerateConcepts() {
+          const ins = draft("ins-emotion").trim();
+          drafts["ins-emotion"] = "";
+          await Actions.generateConcepts(ins);
+        },
+        async generateEmotionImage() {
+          if (!state.concepts.length) return;
+          const url = await withLoading("감성 해석 통합 이미지를 만들고 있습니다", () =>
+            callImage(IMG.emotion(state.concepts)));
+          if (!url) return;
+          await Actions.saveImage("emotion", url);
+          render();
+        },
+
+        /* ---- 2단계 → 지각 특성 ---- */
+        async selectConcept(id) {
+          const nextId = state.conceptId === id ? null : id;
+          const changed = nextId !== state.conceptId;
+          if (changed && (state.perceptions.length || state.properties.length || state.interactions.length)) {
+            await Actions.clearImageSlots(["perception", "property", "interaction"]);
+            setState({
+              conceptId: nextId,
+              perceptions: [], perceptionIds: [],
+              properties: [], propertyIds: [],
+              interactions: [],
+              images: Object.assign({}, state.images, { perception: null, property: null, interaction: null })
+            });
+            persist(false);
+            return;
+          }
+          setState({ conceptId: nextId });
+        },
+        async generatePerceptions(instruction) {
+          const c = selectedConcept();
+          if (!c) { setState({ errorMsg: "감성 해석을 먼저 선택해 주세요." }); return; }
+
+          const data = await withLoading("지각 특성을 정리하고 있습니다", () =>
+            callText(SYSTEM, PROMPTS.PERCEPTION(state.keyword, c, instruction || "")));
+          if (!data) return;
+
+          const perceptions = normPerceptions(data);
+          if (!perceptions.length) { setState({ errorMsg: "지각 특성을 받지 못했습니다. 다시 시도해 주세요." }); return; }
+
+          await Actions.clearImageSlots(["perception", "property", "interaction"]);
+          setState({
+            perceptions,
+            perceptionIds: [],
+            properties: [], propertyIds: [],
+            interactions: [],
+            images: Object.assign({}, state.images, { perception: null, property: null, interaction: null }),
+            step: 3
+          }, true);
+          persist(false);
+          await Actions.generatePerceptionImage();
+        },
+        async regeneratePerceptions() {
+          const ins = draft("ins-perception").trim();
+          drafts["ins-perception"] = "";
+          await Actions.generatePerceptions(ins);
+        },
+        async generatePerceptionImage() {
+          if (!state.perceptions.length) return;
+          const url = await withLoading("지각 특성 통합 이미지를 만들고 있습니다", () =>
+            callImage(IMG.perception(state.perceptions)));
+          if (!url) return;
+          await Actions.saveImage("perception", url);
+          render();
+        },
+
+        /* ---- 3단계 → 물성 정의 ---- */
+        async togglePerception(id) {
+          const on = state.perceptionIds.includes(id);
+          const nextIds = on ? state.perceptionIds.filter(x => x !== id) : state.perceptionIds.concat(id);
+          if (state.properties.length || state.interactions.length) {
+            await Actions.clearImageSlots(["property", "interaction"]);
+            setState({
+              perceptionIds: nextIds,
+              properties: [], propertyIds: [],
+              interactions: [],
+              images: Object.assign({}, state.images, { property: null, interaction: null })
+            });
+            persist(false);
+            return;
+          }
+          setState({ perceptionIds: nextIds });
+        },
+        async selectAllPerceptions() {
+          const all = state.perceptions.length === state.perceptionIds.length;
+          const nextIds = all ? [] : state.perceptions.map(p => p.id);
+          if (state.properties.length || state.interactions.length) {
+            await Actions.clearImageSlots(["property", "interaction"]);
+            setState({
+              perceptionIds: nextIds,
+              properties: [], propertyIds: [],
+              interactions: [],
+              images: Object.assign({}, state.images, { property: null, interaction: null })
+            });
+            persist(false);
+            return;
+          }
+          setState({ perceptionIds: nextIds });
+        },
+        async generateProperties(instruction) {
+          const c = selectedConcept();
+          const picked = selectedPerceptions();
+          if (!c) { setState({ errorMsg: "감성 해석을 먼저 선택해 주세요." }); return; }
+          if (!picked.length) { setState({ errorMsg: "지각 요소를 하나 이상 선택해 주세요." }); return; }
+
+          const data = await withLoading("인터랙션 물성을 정의하고 있습니다", () =>
+            callText(SYSTEM, PROMPTS.PROPERTY(c, picked, instruction || "")));
+          if (!data) return;
+
+          const properties = normProperties(data);
+          if (!properties.length) { setState({ errorMsg: "인터랙션 물성 정의를 받지 못했습니다. 다시 시도해 주세요." }); return; }
+
+          await Actions.clearImageSlots(["property", "interaction"]);
+          setState({
+            properties,
+            propertyIds: [],
+            interactions: [],
+            images: Object.assign({}, state.images, { property: null, interaction: null }),
+            step: 4
+          }, true);
+          persist(false);
+          await Actions.generatePropertyImage();
+        },
+        async regenerateProperties() {
+          const ins = draft("ins-property").trim();
+          drafts["ins-property"] = "";
+          await Actions.generateProperties(ins);
+        },
+        async generatePropertyImage() {
+          if (!state.properties.length) return;
+          const url = await withLoading("인터랙션 물성 이미지를 만들고 있습니다", () =>
+            callImage(IMG.property(state.properties)));
+          if (!url) return;
+          await Actions.saveImage("property", url);
+          render();
+        },
+
+        /* ---- 4단계 → 인터랙션 제안 ---- */
+        async toggleProperty(id) {
+          const on = state.propertyIds.includes(id);
+          const nextIds = on ? state.propertyIds.filter(x => x !== id) : state.propertyIds.concat(id);
+          if (state.interactions.length) {
+            await Actions.clearImageSlots(["interaction"]);
+            setState({
+              propertyIds: nextIds,
+              interactions: [],
+              images: Object.assign({}, state.images, { interaction: null })
+            });
+            persist(false);
+            return;
+          }
+          setState({ propertyIds: nextIds });
+        },
+        async selectAllProperties() {
+          const all = state.properties.length === state.propertyIds.length;
+          const nextIds = all ? [] : state.properties.map(p => p.id);
+          if (state.interactions.length) {
+            await Actions.clearImageSlots(["interaction"]);
+            setState({
+              propertyIds: nextIds,
+              interactions: [],
+              images: Object.assign({}, state.images, { interaction: null })
+            });
+            persist(false);
+            return;
+          }
+          setState({ propertyIds: nextIds });
+        },
+        async generateInteractions(instruction) {
+          const c = selectedConcept();
+          const picked = selectedProperties();
+          if (!picked.length) { setState({ errorMsg: "물성을 하나 이상 선택해 주세요." }); return; }
+
+          const data = await withLoading("인터랙션 제안을 만들고 있습니다", () =>
+            callText(SYSTEM, PROMPTS.INTERACTION(c || { nameKo: state.keyword, nameEn: "" }, picked, instruction || "")));
+          if (!data) return;
+
+          const interactions = normInteractions(data);
+          if (!interactions.length) { setState({ errorMsg: "인터랙션 제안을 받지 못했습니다. 다시 시도해 주세요." }); return; }
+
+          await Actions.clearImageSlots(["interaction"]);
+          setState({
+            interactions,
+            images: Object.assign({}, state.images, { interaction: null }),
+            step: 5
+          }, true);
+          persist(false);
+          await Actions.generateInteractionImage();
+        },
+        async regenerateInteractions() {
+          const ins = draft("ins-interaction").trim();
+          drafts["ins-interaction"] = "";
+          await Actions.generateInteractions(ins);
+        },
+        async generateInteractionImage() {
+          if (!state.interactions.length) return;
+          const url = await withLoading("인터랙션 컨셉 보드를 만들고 있습니다", () =>
+            callImage(IMG.interaction(state.interactions)));
+          if (!url) return;
+          await Actions.saveImage("interaction", url);
+          render();
+        },
+        openSimulation(id) {
+          const target = id || state.simulationId || (state.interactions[0] && state.interactions[0].id);
+          if (!target) { setState({ errorMsg: "시뮬레이션할 인터랙션이 없습니다." }); return; }
+          resetSimulationFor(target);
+          setState({ step: 6 }, true);
+        },
+        selectSimulationInteraction(id) {
+          if (!id) return;
+          resetSimulationFor(id);
+          render(true);
+        },
+        resetSimulation() {
+          const current = simulationInteraction();
+          resetSimulationFor(current ? current.id : null);
+          render();
+        },
+        simButtonDown() {
+          const m = simulationInteraction();
+          if (!m) return;
+          clearTimeout(simTimer);
+          setSimulationState({ active: true, pressDepth: 1, ripple: Date.now(), phase: "Acknowledge / 입력 감지" });
+          scheduleSimPhase("Resistance / 저항", 100, { active: true, pressDepth: 1 });
+        },
+        simButtonUp() {
+          const m = simulationInteraction();
+          if (!m) return;
+          clearTimeout(simTimer);
+          setSimulationState({ active: false, pressDepth: 0, phase: "Settle / 안착" });
+          scheduleSimPhase("Rest / 정지", 520, { active: false, pressDepth: 0 });
+        },
+        simToggle() {
+          const m = simulationInteraction();
+          if (!m) return;
+          const sim = simStateFor(m);
+          clearTimeout(simTimer);
+          setSimulationState({ toggleOn: !sim.toggleOn, phase: "Transition / 전환", ripple: Date.now() });
+          scheduleSimPhase("Rest / 정지", 560, { toggleOn: !sim.toggleOn });
+        },
+        simRailDown(ev) {
+          const rect = ev.currentTarget.getBoundingClientRect();
+          const ratio = clamp((ev.clientX - rect.left) / rect.width, 0, 1);
+          setSimulationState({ railValue: Math.round(ratio * 100), phase: "Resistance / 저항" });
+          beginSimulationDrag("rail", { left: rect.left, width: rect.width });
+          render();
+        },
+        simPanelToggle() {
+          const m = simulationInteraction();
+          if (!m) return;
+          const sim = simStateFor(m);
+          const next = sim.panelOpen > 0.5 ? 0.16 : 1;
+          clearTimeout(simTimer);
+          setSimulationState({ panelOpen: next, phase: "Transition / 전환", ripple: Date.now() });
+          scheduleSimPhase("Rest / 정지", 620, { panelOpen: next });
+        },
+        simPanelHandleDown(ev) {
+          ev.preventDefault();
+          const m = simulationInteraction();
+          if (!m) return;
+          const sim = simStateFor(m);
+          setSimulationState({ phase: "Resistance / 저항" });
+          beginSimulationDrag("sheet", { startY: ev.clientY, startOpen: sim.panelOpen });
+          render();
+        },
+        simCardDown(ev) {
+          ev.preventDefault();
+          clearTimeout(simTimer);
+          setSimulationState({ phase: "Acknowledge / 입력 감지", ripple: Date.now() });
+          beginSimulationDrag("card", { startX: ev.clientX, startY: ev.clientY });
+          render();
+        },
+        simLensDown(ev) {
+          ev.preventDefault();
+          const rect = ev.currentTarget.getBoundingClientRect();
+          setSimulationState({ phase: "Acknowledge / 입력 감지" });
+          beginSimulationDrag("lens", { left: rect.left, top: rect.top, width: rect.width, height: rect.height });
+          render();
+        },
+        simSurfaceDown(ev) {
+          const rect = ev.currentTarget.getBoundingClientRect();
+          const x = ((ev.clientX - rect.left) / rect.width) * 100;
+          const y = ((ev.clientY - rect.top) / rect.height) * 100;
+          clearTimeout(simTimer);
+          setSimulationState({ pointX: clamp(x, 10, 90), pointY: clamp(y, 12, 88), ripple: Date.now(), phase: "Transition / 전환" });
+          scheduleSimPhase("Rest / 정지", 760, { pointX: clamp(x, 10, 90), pointY: clamp(y, 12, 88) });
+        }
+      };
+      window.Actions = Actions;
+
+      /* =========================================================
+         15. 화면별 렌더
+         ========================================================= */
+      function optionRow(title, list, current, factory) {
+        return `<div class="mb-4">
+          <h4 class="t-meta font-bold text-slate-600 mb-2">${esc(title)}</h4>
+          <div class="grid grid-cols-1 gap-2">
+            ${list.map(m => `<button type="button" onclick="${factory(m.id)}" aria-pressed="${current === m.id}"
+              class="w-full py-3 px-4 rounded-xl font-bold t-meta border-2 text-left transition-all active:scale-[0.98] ${current === m.id ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}">${esc(m.label)}</button>`).join("")}
+          </div>
+        </div>`;
+      }
+
+      function viewAuth() {
+        return `<div class="min-h-screen flex flex-col items-center justify-center px-7 py-16 bg-white text-center animate-fade-in">
+          <div class="w-24 h-24 bg-blue-700 rounded-full flex items-center justify-center mb-9 shadow-[0_10px_24px_rgba(29,78,216,.3)]">
+            <i data-lucide="layers" class="text-white w-12 h-12"></i>
+          </div>
+          <h1 class="t-display text-slate-900 mb-3">감성 · 지각 · 인터랙션 컨셉</h1>
+          <p class="t-small text-slate-600 font-bold mb-10">감성 키워드에서 지각과 동적 물성을 거쳐 실제 인터랙션 요소까지 다섯 단계로 좁혀 갑니다</p>
+          <div class="w-full space-y-4">
+            <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" class="inline-block t-small text-blue-700 font-bold underline underline-offset-4">OpenAI API 키 발급받기</a>
+            <label for="api-input" class="sr-only">OpenAI API 키</label>
+            <input type="password" id="api-input" autocomplete="off" inputmode="text"
+              class="w-full p-5 bg-white border-2 border-slate-300 rounded-2xl text-center focus:border-blue-700 outline-none t-h3 font-medium text-slate-900 placeholder:text-slate-500 placeholder:font-normal"
+              placeholder="sk- 로 시작하는 키" value="${escAttr(state.apiKey)}">
+            <p class="t-meta text-slate-600 prose-ko">키는 이 브라우저 세션에만 임시로 보관되며, 창을 닫으면 지워집니다. 텍스트 분석은 GPT-5.6 Terra, 이미지 생성은 Image 2.5 Flare로 고정되어 있습니다.</p>
+            ${primaryBtn("시작하기", "Actions.validateKey()")}
+            <button type="button" onclick="Actions.toggleSettings()" class="w-full t-small text-slate-600 font-bold underline underline-offset-4 pt-2">${state.settingsOpen ? "이미지 설정 접기" : "이미지 설정 열기"}</button>
+            ${state.settingsOpen ? `<div class="text-left bg-slate-50 border-2 border-slate-200 rounded-3xl p-5 mt-2">
+              ${optionRow("이미지 품질", QUALITIES, state.quality, id => `Actions.pickQuality('${id}')`)}
+              ${optionRow("이미지 안 라벨", LABEL_LANGS, state.labelLang, id => `Actions.pickLabelLang('${id}')`)}
+              <p class="t-meta text-slate-500 prose-ko">이미지 품질과 이미지 안 라벨 표시만 조절할 수 있습니다. 모델은 변경할 수 없습니다.</p>
+            </div>` : ""}
+          </div>
+        </div>`;
+      }
+
+      function viewHome() {
+        const projects = Store.list();
+        return `<div class="flex flex-col min-h-screen bg-slate-900 text-white relative overflow-hidden">
+          <div class="absolute top-[-25%] left-[-20%] w-[140%] h-[55%] bg-blue-700 rounded-full blur-[110px] opacity-40"></div>
+          <div class="relative z-10 flex flex-col flex-1 px-7 pt-16 pb-12 justify-center gap-8">
+            <div class="space-y-5">
+              <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 t-meta font-bold"><i data-lucide="sparkles" class="text-yellow-300 w-4 h-4"></i> Emotion Interaction Lab</span>
+              <h1 class="t-display leading-tight">감성을<br/>느낄 수 있는<br/><span class="text-sky-300">인터랙션으로 바꿉니다</span></h1>
+              <p class="t-body text-slate-100">감성 키워드에서 출발해 감성 해석, 지각 특성, 인터랙션 물성을 거쳐 버튼·토글·슬라이더·스와이프·팝업의 움직임으로 구체화합니다.</p>
+            </div>
+
+            <button type="button" onclick="Actions.startNewProject()" class="w-full bg-white text-slate-900 py-5 rounded-2xl font-bold t-h3 flex items-center justify-center gap-2 shadow-2xl active:scale-[0.98] transition-all">
+              새 프로젝트 시작 <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </button>
+
+            <div>
+              <button type="button" onclick="Actions.toggleSettings()" class="w-full mb-4 py-3.5 rounded-2xl bg-white/10 border border-white/20 text-white font-bold t-small flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
+                <i data-lucide="sliders-horizontal" class="w-5 h-5"></i>${state.settingsOpen ? "이미지 설정 접기" : "이미지 설정"}
+              </button>
+              ${state.settingsOpen ? `<div class="text-left bg-white text-slate-900 rounded-3xl p-5 mb-6">
+                <div class="mb-4 rounded-2xl bg-slate-100 px-4 py-3">
+                  <p class="t-meta font-bold text-slate-600">고정 모델</p>
+                  <p class="t-small text-slate-800 mt-1">텍스트 · GPT-5.6 Terra<br>이미지 · Image 2.5 Flare</p>
+                </div>
+                ${optionRow("이미지 품질", QUALITIES, state.quality, id => `Actions.pickQuality('${id}')`)}
+                ${optionRow("이미지 안 라벨", LABEL_LANGS, state.labelLang, id => `Actions.pickLabelLang('${id}')`)}
+              </div>` : ""}
+            </div>
+
+            <div>
+              <h2 class="t-label text-slate-300 mb-3">저장된 프로젝트 ${projects.length}/${CONFIG.MAX_PROJECTS}</h2>
+              ${projects.length ? `<ul class="space-y-2">${projects.map(p => `
+                <li class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3">
+                  <button type="button" onclick="Actions.openProject('${escAttr(p.id)}')" class="flex-1 text-left min-w-0">
+                    <span class="block t-small font-bold text-white truncate">${esc(p.title)}</span>
+                    <span class="block t-meta text-slate-200">${esc(nowLabel(p.savedAt))} · Interaction ${(p.data && p.data.interactions ? p.data.interactions.length : 0)}안</span>
+                  </button>
+                  <button type="button" aria-label="${escAttr(p.title)} 삭제" onclick="Actions.deleteProject('${escAttr(p.id)}')" class="p-2.5 rounded-full hover:bg-white/10 text-slate-200 flex-shrink-0"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                </li>`).join("")}</ul>`
+              : `<p class="t-small text-slate-200 bg-white/5 border border-white/20 rounded-2xl px-4 py-5">아직 저장된 프로젝트가 없습니다. 키워드를 입력하면 진행 상태가 자동으로 저장됩니다.</p>`}
+            </div>
+          </div>
+        </div>`;
+      }
+
+      /* ---- 1단계 : 감성 키워드 ---- */
+      function viewKeyword() {
+        const kw = drafts["keyword-input"] !== undefined ? drafts["keyword-input"] : state.keyword;
+        return `<div class="page-top px-4 dock-space animate-fade-in">
+          ${header("감성 키워드", 0)}
+          ${sectionTitle("어떤 감성에서 시작할까요?", "느낀 그대로 적어 주세요. 형용사를 이어 붙인 문장도 좋습니다.")}
+
+          <label for="keyword-input" class="sr-only">감성 키워드</label>
+          <input type="text" id="keyword-input" value="${escAttr(kw)}" oninput="setDraft('keyword-input', this.value)"
+            class="w-full p-5 bg-white border-2 border-slate-300 rounded-2xl focus:border-blue-700 outline-none t-h3 text-slate-900 placeholder:text-slate-400 placeholder:font-normal mb-4"
+            placeholder="예: 차갑고 아름답고 무거움" />
+
+          <p class="t-meta font-bold text-slate-500 mb-2">키워드 사례</p>
+          <div class="flex flex-wrap gap-2 mb-8">
+            ${SAMPLE_KEYWORDS.map(w => `<span class="px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 t-meta text-slate-600">${esc(w)}</span>`).join("")}
+          </div>
+
+          <label for="note-input" class="t-label text-slate-500 block mb-2">연관 과제 입력 (선택)</label>
+          <textarea id="note-input" rows="3" oninput="setDraft('note-input', this.value)"
+            class="w-full p-4 bg-white border-2 border-slate-300 rounded-2xl focus:border-blue-700 outline-none t-small text-slate-900 resize-none placeholder:text-slate-400 mb-6"
+            placeholder="예: 차세대 스마트폰 인터랙션 감성, 차량 HMI 피드백 경험, AI 디바이스 조작감">${esc(drafts["note-input"] !== undefined ? drafts["note-input"] : state.note)}</textarea>
+
+
+          <section class="bg-white rounded-[2rem] p-5 border-2 border-slate-200 shadow-md">
+            <h3 class="t-label text-slate-500 mb-3">진행 순서</h3>
+            <ol class="space-y-2.5">
+              ${STAGES.map(s => `<li class="flex items-center gap-3">
+                <span class="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold t-meta flex items-center justify-center flex-shrink-0 tabular-nums">${pad2(s.n)}</span>
+                <span class="t-small text-slate-700">${esc(s.label)}</span>
+              </li>`).join("")}
+            </ol>
+          </section>
+
+          ${dock(primaryBtn("감성 해석 생성", "Actions.generateConcepts()"))}
+        </div>`;
+      }
+
+      /* ---- 2단계 : 감성 해석 ---- */
+      function viewEmotion() {
+        const chosen = selectedConcept();
+        const cards = state.concepts.map((c, i) => optionCard({
+          index: i + 1,
+          selected: state.conceptId === c.id,
+          title: c.nameKo,
+          subtitle: c.nameEn,
+          onclick: `Actions.selectConcept('${escAttr(c.id)}')`,
+          body: `
+            <p class="t-small text-slate-700 prose-ko">${esc(c.definition)}</p>
+            ${c.experience ? `<p class="t-small text-slate-600 prose-ko border-t border-slate-100 pt-3 mt-3">${esc(c.experience)}</p>` : ""}
+            ${c.subject ? `<p class="t-meta text-slate-500">대표 장면 · ${esc(c.subject)}</p>` : ""}
+            ${c.moodWords.length ? `<div class="flex flex-wrap gap-1.5 pt-1">${c.moodWords.map(w => chip(w, state.conceptId === c.id ? "blue" : "")).join("")}</div>` : ""}`
+        })).join("");
+
+        return `<div class="page-top px-4 dock-space animate-fade-in">
+          ${header("감성 해석", 1)}
+          ${sectionTitle("같은 감성을 세 가지 경험으로 해석했습니다", "각 안은 같은 감성 패밀리를 유지하면서 에너지·움직임, 분위기·공간, 감각·여운의 초점을 달리합니다. 이어서 발전시킬 하나를 골라 주세요.")}
+          ${priorChoice([
+            { label: "감성 키워드", value: state.keyword },
+            { label: "연관 과제", value: state.note },
+            { label: "선택한 감성 경험", value: chosen ? `${chosen.nameKo} (${chosen.nameEn})` : "" }
+          ])}
+
+          ${imageCard("emotion", {
+            title: "감성 해석 통합 이미지",
+            alt: "세 가지 감성 해석의 대표 이미지",
+            caption: "각 안은 단독으로 완결된 Mood Image이며, 생성은 세 장면을 위에서 아래로 배치한 통합 이미지 1장으로 진행합니다. 눌러서 크게 볼 수 있습니다.",
+            empty: "감성 해석 이미지를 아직 만들지 않았습니다.",
+            onGenerate: "Actions.generateEmotionImage()",
+            hideActions: true
+          })}
+
+          <div class="space-y-3">${cards}</div>
+          ${instructionBox("ins-emotion", "Actions.regenerateConcepts()", "예: 더 조용하고 내밀한 방향으로, 자연 대상 위주로 다시 해석해 주세요")}
+
+          ${dock(`
+            ${chosen ? `<p class="t-meta text-slate-600 mb-3 truncate">선택한 해석 · ${esc(chosen.nameKo)}</p>` : ""}
+            ${primaryBtn(chosen ? "지각 특성 분석" : "감성 경험 해석 한개를 선택하세요", "Actions.generatePerceptions()", !chosen)}
+          `)}
+        </div>`;
+      }
+
+      /* ---- 3단계 : 지각 특성 ---- */
+      function viewPerception() {
+        const picked = state.perceptionIds.length;
+        const allOn = picked > 0 && picked === state.perceptions.length;
+        const cards = state.perceptions.map((p, i) => optionCard({
+          index: i + 1,
+          selected: state.perceptionIds.includes(p.id),
+          title: p.titleKo,
+          subtitle: p.titleEn,
+          badge: p.category,
+          onclick: `Actions.togglePerception('${escAttr(p.id)}')`,
+          body: `
+            <p class="t-small text-slate-700 prose-ko">${esc(p.description)}</p>
+            ${p.cue ? `<p class="t-meta text-slate-500 prose-ko">관찰 단서 · ${esc(p.cue)}</p>` : ""}`
+        })).join("");
+
+        return `<div class="page-top px-4 dock-space animate-fade-in">
+          ${header("지각 특성", 2)}
+          ${sectionTitle("어떻게 지각되는가", "선택한 감성을 눈·손·몸으로 인식하는 서로 다른 6개의 지각 축으로 구조화했습니다. 물성으로 발전시킬 요소를 선택해 주세요.")}
+          ${(function () {
+            const c = selectedConcept();
+            return priorChoice([
+              { label: "감성 키워드", value: state.keyword },
+              { label: "선택한 감성 해석", value: c ? `${c.nameKo} (${c.nameEn})` : "" }
+            ]);
+          })()}
+
+          ${imageCard("perception", {
+            title: "지각 특성 통합 이미지",
+            alt: "지각 요소별 대표 이미지",
+            caption: "서로 다른 6개의 지각 축을 각기 다른 대상·스케일·장면으로 시각화해 하나의 통합 이미지로 묶었습니다.",
+            empty: "지각 특성 이미지를 아직 만들지 않았습니다.",
+            onGenerate: "Actions.generatePerceptionImage()"
+          })}
+
+          <div class="flex items-center justify-between gap-2 mb-3 px-1">
+            <span class="t-meta font-bold text-slate-600">${picked}개 선택됨</span>
+            ${ghostBtn(allOn ? "전체 해제" : "전체 선택", "Actions.selectAllPerceptions()", allOn ? "square" : "check-square")}
+          </div>
+
+          <div class="space-y-3">${cards}</div>
+          ${instructionBox("ins-perception", "Actions.regeneratePerceptions()", "예: 자연 이미지 반복을 줄이고 접촉 반응·공간 깊이·시간적 회복이 더 분명하도록 다시 구성해 주세요")}
+
+          ${dock(primaryBtn(picked ? "물성 정의하기" : "지각 요소를 선택해 주세요", "Actions.generateProperties()", !picked))}
+        </div>`;
+      }
+
+      /* ---- 4단계 : 물성 정의 ---- */
+      /* LOW ─●─ HIGH : 값의 위치를 점으로 분명히 찍습니다. */
+      function levelBar(value, on) {
+        const pct = Math.max(2, Math.min(98, Number(value) || 55));
+        const dot = on ? "bg-blue-700 ring-blue-700/20" : "bg-slate-900 ring-slate-900/15";
+        return `<div class="flex items-center gap-2.5 pt-2 pb-1">
+          <span class="t-meta text-slate-400 flex-shrink-0 tabular-nums">LOW</span>
+          <div class="relative flex-1 h-5 flex items-center">
+            <div class="h-[3px] w-full bg-slate-200 rounded-full"></div>
+            <span class="absolute top-1/2 w-4 h-4 rounded-full ring-4 ${dot}" style="left:${pct}%;transform:translate(-50%,-50%)"></span>
+          </div>
+          <span class="t-meta text-slate-400 flex-shrink-0 tabular-nums">HIGH</span>
+        </div>`;
+      }
+
+      function viewProperty() {
+        const picked = state.propertyIds.length;
+        const allOn = picked > 0 && picked === state.properties.length;
+        const cards = state.properties.map((p, i) => optionCard({
+          index: i + 1,
+          selected: state.propertyIds.includes(p.id),
+          title: p.titleKo,
+          subtitle: p.titleEn,
+          badge: p.axis,
+          onclick: `Actions.toggleProperty('${escAttr(p.id)}')`,
+          body: `
+            <p class="t-small text-slate-700 prose-ko">${esc(p.description)}</p>
+            ${p.interactionHint ? `<p class="t-meta text-blue-700 prose-ko"><strong>인터랙션 변환</strong> · ${esc(p.interactionHint)}</p>` : ""}
+            ${p.check ? `<p class="t-meta text-slate-500 prose-ko">확인 방법 · ${esc(p.check)}</p>` : ""}
+            ${levelBar(p.value, state.propertyIds.includes(p.id))}
+            <p class="t-meta text-slate-500">목표 수준 · ${esc(p.level)} (${esc(p.value)})</p>`
+        })).join("");
+
+        return `<div class="page-top px-4 dock-space animate-fade-in">
+          ${header("인터랙션 물성", 3)}
+          ${sectionTitle("어떤 동적 물성이 필요한가", "누르고·끌고·전환하고·놓는 과정에서 체감되는 감지, 저항, 변형, 관성, 복원, 감쇠, 광학·햅틱 반응으로 정의합니다. 필요한 물성을 여러 개 고를 수 있습니다.")}
+          ${(function () {
+            const c = selectedConcept();
+            const ps = selectedPerceptions();
+            return priorChoice([
+              { label: "감성 키워드", value: state.keyword },
+              { label: "선택한 감성 해석", value: c ? `${c.nameKo} (${c.nameEn})` : "" },
+              { label: `선택한 지각 요소 ${ps.length}개`, value: joinTitles(ps, "titleKo") }
+            ]);
+          })()}
+
+          ${imageCard("property", {
+            title: "인터랙션 물성 통합 이미지",
+            alt: "동적 인터랙션 물성별 대표 반응 이미지 통합 보드",
+            caption: "압축·저항·관성·복원·감쇠·빛·햅틱 등 동적 반응을 한눈에 비교하는 보드입니다.",
+            empty: "인터랙션 물성 이미지를 아직 만들지 않았습니다.",
+            onGenerate: "Actions.generatePropertyImage()"
+          })}
+
+          <div class="flex items-center justify-between gap-2 mb-3 px-1">
+            <span class="t-meta font-bold text-slate-600">${picked}개 선택됨</span>
+            ${ghostBtn(allOn ? "전체 해제" : "전체 선택", "Actions.selectAllProperties()", allOn ? "square" : "check-square")}
+          </div>
+
+          <div class="space-y-3">${cards}</div>
+          ${instructionBox("ins-property", "Actions.regenerateProperties()", "예: 저항·복원·감쇠·관성의 차이가 더 분명하고 실제 UI 모션으로 변환하기 쉽게 다시 구성해 주세요")}
+
+          ${dock(primaryBtn(picked ? "인터랙션 제안 받기" : "물성을 선택해 주세요", "Actions.generateInteractions()", !picked))}
+        </div>`;
+      }
+
+      /* ---- 5단계 : 인터랙션 제안 ---- */
+      /* 각 인터랙션의 Motion Grammar · Timing · Haptic · 연결 물성을 한 카드에 보여 줍니다. */
+      function motionGrammarGuide() {
+        const steps = [
+          ["01", "Rest", "정지", "기본 상태와 긴장도"],
+          ["02", "Acknowledge", "입력 감지", "접촉 즉시 첫 반응"],
+          ["03", "Resistance", "저항", "힘·드래그·변형 축적"],
+          ["04", "Transition", "전환", "임계점 통과와 주 움직임"],
+          ["05", "Settle", "안착", "감쇠·복원·여운"]
+        ];
+        return `<section class="bg-slate-900 text-white rounded-[2rem] p-5 mb-5 shadow-lg">
+          <div class="flex items-center justify-between mb-4">
+            <div><p class="t-meta font-bold text-sky-300">MOTION GRAMMAR</p><h3 class="t-h3">움직임 문법 5단계</h3></div>
+            <span class="t-meta text-slate-300">공통 프레임</span>
+          </div>
+          <div class="space-y-2">${steps.map(x => `<div class="grid grid-cols-[34px_1fr] gap-3 items-start bg-white/5 border border-white/10 rounded-xl px-3 py-2.5">
+            <span class="t-meta font-bold text-sky-300">${x[0]}</span><div><p class="t-small font-bold">${x[1]} / ${x[2]}</p><p class="t-meta text-slate-300">${x[3]}</p></div>
+          </div>`).join("")}</div>
+        </section>`;
+      }
+
+      function motionSpecBlock(m) {
+        const rows = [
+          ["Rest / 정지", m.rest],
+          ["Acknowledge / 입력 감지", m.acknowledge],
+          ["Resistance / 저항", m.resistance],
+          ["Transition / 전환", m.transition],
+          ["Settle / 안착", m.settle]
+        ];
+        return `<section class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden">
+          ${rows.map((r, j) => `<div class="grid grid-cols-[34px_1fr] gap-2 px-3.5 py-3 ${j ? "border-t border-slate-200" : ""}">
+            <span class="t-meta font-bold text-blue-700">${pad2(j + 1)}</span>
+            <div><p class="t-meta font-bold text-slate-800">${esc(r[0])}</p><p class="t-small text-slate-700 prose-ko">${esc(r[1])}</p></div>
+          </div>`).join("")}
+        </section>`;
+      }
+
+      function interactionCard(m, i) {
+        const row = (label, value) => value ? `<div class="pt-3">
+          <p class="t-meta font-bold text-slate-500 mb-0.5">${esc(label)}</p>
+          <p class="t-small text-slate-700 prose-ko">${esc(value)}</p>
+        </div>` : "";
+        const states = (m.states || []).slice(0, 3);
+        return `<article class="w-full p-5 rounded-[2rem] border-2 border-slate-200 bg-white shadow-md">
+          <div class="flex items-start gap-3 mb-2">
+            <span class="w-9 h-9 rounded-full bg-blue-700 text-white flex items-center justify-center flex-shrink-0 font-bold t-meta tabular-nums">${pad2(i + 1)}</span>
+            <div class="min-w-0 flex-1">
+              <h3 class="t-h3 text-slate-900 leading-snug">${esc(m.nameKo)}</h3>
+              <p class="t-meta text-slate-500">${esc(m.nameEn)}</p>
+            </div>
+            <span class="t-meta font-bold px-2.5 py-1 rounded-lg flex-shrink-0 bg-sky-100 text-sky-800">${esc(m.type)}</span>
+          </div>
+          ${row("UX 역할", m.role)}
+          ${m.interactionDNA ? `<div class="mt-3 bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3"><p class="t-meta font-bold text-blue-700">Interaction DNA</p><p class="t-small font-bold text-slate-900 prose-ko">${esc(m.interactionDNA)}</p></div>` : ""}
+          ${motionSpecBlock(m)}
+          <div class="grid grid-cols-3 gap-2 mt-4">${states.map((st, j) => `<div class="rounded-xl border border-slate-200 bg-white p-2.5 min-h-[92px]">
+            <p class="t-meta font-bold text-blue-700">${pad2(j + 1)} ${esc(st.labelKo)}</p>
+            <p class="t-meta text-slate-500">${esc(st.labelEn)}</p>
+            <p class="t-meta text-slate-700 mt-1 prose-ko">${esc(st.description)}</p>
+          </div>`).join("")}</div>
+          ${row("Timing / Motion", m.timing)}
+          ${row("Haptic", m.haptic)}
+          ${row("Visual Behavior", m.visualBehavior)}
+          ${m.propertyMapping && m.propertyMapping.length ? `<div class="pt-3"><p class="t-meta font-bold text-slate-500 mb-1">연결 물성</p><div class="flex flex-wrap gap-1.5">${m.propertyMapping.map(x => chip(x)).join("")}</div></div>` : ""}
+          ${row("감성 효과", m.emotionalEffect)}
+          <div class="pt-4">
+            <button type="button" onclick="Actions.openSimulation('${escAttr(m.id)}')"
+              class="w-full py-3.5 rounded-2xl font-bold t-small text-slate-800 bg-slate-100 border border-slate-200 hover:bg-slate-50 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2">
+              <i data-lucide="smartphone" class="w-5 h-5"></i>이 인터랙션 시뮬레이션
+            </button>
+          </div>
+        </article>`;
+      }
+
+      function viewInteraction() {
+        const cards = state.interactions.map((m, i) => interactionCard(m, i)).join("");
+        return `<div class="page-top px-4 dock-space animate-fade-in">
+          ${header("인터랙션 제안", 4)}
+          ${sectionTitle("물성을 어떻게 움직임으로 표현할 것인가", "선택한 동적 물성을 가장 잘 표현할 수 있는 5개 인터랙션 컨셉으로 번역해, 각 제안의 핵심 상태 변화와 물성 기반 경험이 분명히 보이도록 정리합니다.")}
+          ${(function () {
+            const c = selectedConcept();
+            const ps = selectedPerceptions();
+            const qs = selectedProperties();
+            return priorChoice([
+              { label: "선택한 감성 해석", value: c ? `${c.nameKo} (${c.nameEn})` : "" },
+              { label: `선택한 지각 요소 ${ps.length}개`, value: joinTitles(ps, "titleKo") },
+              { label: `선택한 인터랙션 물성 ${qs.length}개`, value: qs.map((q, i) => `${pad2(i + 1)} ${q.titleKo} ${q.value}`).join("   ") }
+            ]);
+          })()}
+
+          ${motionGrammarGuide()}
+
+          ${imageCard("interaction", {
+            title: "인터랙션 컨셉 보드",
+            alt: "AI가 선택한 다양한 인터랙션 컨셉의 3상태 보드",
+            caption: "선택된 감성과 인터랙션 물성을 가장 잘 표현하는 5개 인터랙션 컨셉을 각 3개 대표 상태로 비교합니다.",
+            empty: "인터랙션 컨셉 보드를 아직 만들지 않았습니다.",
+            onGenerate: "Actions.generateInteractionImage()"
+          })}
+
+          <div class="space-y-3">${cards}</div>
+          ${instructionBox("ins-interaction", "Actions.regenerateInteractions()", "예: 리퀴드 글라스처럼 물성 기반의 새 인터랙션이 더 드러나게 하고, 감성 키워드의 색감과 긴장감이 끝까지 유지되도록 다시 제안해 주세요")}
+
+          ${dock(`
+            <div class="space-y-2.5">
+              ${primaryBtn("가상 스마트폰에서 시뮬레이션", "Actions.openSimulation()")}
+              ${secondaryBtn("전체 리포트 PDF로 저장", "Actions.exportPdf()")}
+              ${secondaryBtn("리포트 텍스트 복사", "Actions.copyReport()", "copy")}
+            </div>
+          `)}
+        </div>`;
+      }
+
+      function simulationGuide(profile) {
+        switch (profile) {
+          case "button": return "가운데 요소를 눌렀다가 떼어 보세요. 감지–저항–복원의 리듬을 손끝으로 확인할 수 있습니다.";
+          case "toggle": return "토글을 눌러 상태를 전환해 보세요. 전환 속도와 안착 방식이 감성에 맞게 반응합니다.";
+          case "rail": return "노브를 좌우로 드래그해 보세요. 저항, 관성, 안착 위치의 느낌을 직접 비교할 수 있습니다.";
+          case "panel": return "열기 버튼이나 상단 핸들을 사용해 시트를 열고 닫아 보세요. 깊이와 반투명한 층의 움직임을 체감합니다.";
+          case "lens": return "렌즈 영역을 끌어 보세요. 확대, 굴절, 반투명의 상호작용이 물성처럼 반응합니다.";
+          case "surface": return "표면을 눌러 파동과 침잠 반응을 확인해 보세요. 접촉 위치에 따라 잔향이 달라집니다.";
+          default: return "카드를 눌러 들어 올리고 가볍게 끌어 보세요. 긴장, 관성, 복원이 한 흐름으로 이어집니다.";
+        }
+      }
+
+      function simulationPhaseTone(phase) {
+        if ((phase || "").includes("Resistance")) return "bg-amber-50 text-amber-800 border-amber-200";
+        if ((phase || "").includes("Transition")) return "bg-blue-50 text-blue-800 border-blue-200";
+        if ((phase || "").includes("Settle")) return "bg-emerald-50 text-emerald-800 border-emerald-200";
+        return "bg-slate-100 text-slate-700 border-slate-200";
+      }
+
+      function simStyle(theme) {
+        return `--sim-bg1:${theme.bg1};--sim-bg2:${theme.bg2};--sim-accent:${theme.accent};--sim-accent-soft:${theme.accentSoft};--sim-ink:${theme.ink};--sim-muted:${theme.muted};--sim-surface:${theme.surface};--sim-surface-strong:${theme.surfaceStrong};--sim-border:${theme.border};--sim-glow:${theme.glow};--sim-shadow:${theme.screenShadow};`;
+      }
+
+      function renderSimulationDemo(m, sim, theme) {
+        const phasePill = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border ${simulationPhaseTone(sim.phase)}"><i data-lucide="activity" class="w-4 h-4"></i>${esc(sim.phase)}</span>`;
+        const metaTop = `<div class="absolute left-4 right-4 top-12 z-10 flex items-center justify-between gap-2"><div class="px-3 py-1.5 rounded-full border sim-glass" style="background:var(--sim-surface);border-color:var(--sim-border);color:var(--sim-ink);box-shadow:0 14px 28px var(--sim-shadow);"><span class="text-[14px] font-bold">${esc(m.nameKo)}</span></div>${phasePill}</div>`;
+        const baseScreen = `style="${escAttr(simStyle(theme))} background:linear-gradient(180deg,var(--sim-bg1) 0%, var(--sim-bg2) 100%);"`;
+        const header = `<div class="sim-phone"><div class="sim-phone-screen" ${baseScreen}><div class="sim-notch"></div>${metaTop}<div class="absolute inset-x-4 top-24 z-[1] rounded-[28px] px-4 py-3 sim-glass" style="background:var(--sim-surface);border:1px solid var(--sim-border);box-shadow:0 16px 36px var(--sim-shadow);"><div class="flex items-start justify-between gap-2"><div><p class="text-[14px] font-bold" style="color:var(--sim-muted)">Material-driven Prototype</p><p class="text-[18px] font-bold mt-0.5" style="color:var(--sim-ink)">${esc(m.type)}</p></div><span class="px-2.5 py-1 rounded-full text-[13px] font-bold" style="background:rgba(255,255,255,.55);color:var(--sim-ink);border:1px solid var(--sim-border);">${esc((m.propertyMapping || []).slice(0,2).join(' · ') || 'Interaction')}</span></div><p class="text-[14px] mt-2 leading-[1.5]" style="color:var(--sim-muted)">${esc(m.visualBehavior || m.interactionDNA || m.role)}</p></div>`;
+
+        const footer = `</div></div>`;
+
+        if (sim.ripple) {
+          var ripple = `<span class="sim-ripple" style="left:${sim.pointX}%;top:${sim.pointY}%;border-color:${theme.accent};"></span>`;
+        } else {
+          var ripple = "";
+        }
+
+        if (sim.archetype === "button") {
+          const y = sim.active ? 16 : 0;
+          const scale = sim.active ? (theme.sharp ? 0.96 : 0.93) : 1;
+          const radius = Math.round(22 + theme.softness * 18);
+          return `${header}
+            <div class="absolute inset-x-0 bottom-0 top-[220px] px-6 pb-7 flex flex-col justify-between">
+              <div class="rounded-[30px] p-4 sim-glass" style="background:var(--sim-surface);border:1px solid var(--sim-border);box-shadow:0 18px 40px var(--sim-shadow);">
+                <p class="text-[14px] font-bold" style="color:var(--sim-muted)">Touch Area</p>
+                <p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.role)}</p>
+              </div>
+              <div class="relative h-[230px] flex items-center justify-center">
+                ${ripple}
+                <button type="button" class="sim-pressable sim-sheen relative w-[220px] h-[76px] font-bold text-[20px]" style="border-radius:${radius}px;background:${theme.liquid ? 'linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.46))' : 'linear-gradient(180deg, var(--sim-surface-strong), rgba(255,255,255,.7))'};border:1px solid var(--sim-border);color:var(--sim-ink);box-shadow:0 ${24 - y}px ${48 - y}px var(--sim-shadow), inset 0 1px 0 rgba(255,255,255,.7);transform:translateY(${y}px) scale(${scale});transition:transform ${theme.sharp ? 180 : 260}ms ${theme.sharp ? 'cubic-bezier(.22,.8,.2,1)' : 'cubic-bezier(.18,.9,.24,1)'};" onpointerdown="Actions.simButtonDown()" onpointerup="Actions.simButtonUp()" onpointercancel="Actions.simButtonUp()" onpointerleave="Actions.simButtonUp()">${esc(m.nameKo)}</button>
+              </div>
+              <div class="rounded-[24px] p-4" style="background:rgba(255,255,255,.52);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">현재 체감</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.emotionalEffect || m.rest)}</p></div>
+            </div>${footer}`;
+        }
+
+        if (sim.archetype === "toggle") {
+          const on = sim.toggleOn;
+          const knobX = on ? 92 : 6;
+          return `${header}
+            <div class="absolute inset-x-0 bottom-0 top-[220px] px-6 pb-8 flex flex-col justify-between">
+              <div class="rounded-[30px] p-4 sim-glass" style="background:var(--sim-surface);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">State Switching</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.role)}</p></div>
+              <div class="h-[240px] flex items-center justify-center relative">${ripple}<button type="button" onclick="Actions.simToggle()" class="relative w-[160px] h-[72px] rounded-full sim-glass" style="background:${on ? `linear-gradient(90deg, ${theme.accentSoft}, ${theme.accent})` : 'rgba(255,255,255,.55)'};border:1px solid var(--sim-border);box-shadow:0 22px 44px var(--sim-shadow);transition:background 260ms ease, box-shadow 260ms ease;"><span class="absolute top-[5px] w-[60px] h-[60px] rounded-full bg-white sim-sheen" style="left:${knobX}px;box-shadow:0 14px 24px rgba(15,23,42,.18);transition:left 280ms cubic-bezier(.2,.9,.22,1), transform 220ms ease;transform:${on ? 'scale(1.02)' : 'scale(.98)'};"></span><span class="absolute left-6 top-1/2 -translate-y-1/2 text-[15px] font-bold" style="color:${on ? 'rgba(255,255,255,.92)' : 'var(--sim-muted)'}">${on ? 'ON' : 'OFF'}</span></button></div>
+              <div class="rounded-[24px] p-4" style="background:rgba(255,255,255,.52);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">전환 메모</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.transition || m.settle)}</p></div>
+            </div>${footer}`;
+        }
+
+        if (sim.archetype === "rail") {
+          const pos = clamp(sim.railValue, 0, 100);
+          return `${header}
+            <div class="absolute inset-x-0 bottom-0 top-[220px] px-6 pb-8 flex flex-col justify-between">
+              <div class="rounded-[30px] p-4 sim-glass" style="background:var(--sim-surface);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">Drag Interaction</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.role)}</p></div>
+              <div class="relative h-[240px] flex flex-col justify-center">
+                ${ripple}
+                <div class="relative h-3 rounded-full" style="background:rgba(255,255,255,.45);box-shadow:inset 0 1px 2px rgba(15,23,42,.08);border:1px solid var(--sim-border);" onpointerdown="Actions.simRailDown(event)">
+                  <div class="absolute left-0 top-0 h-full rounded-full" style="width:${pos}%;background:linear-gradient(90deg, var(--sim-accent-soft), var(--sim-accent));"></div>
+                  <button type="button" class="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white sim-sheen" style="left:calc(${pos}% - 20px);border:1px solid var(--sim-border);box-shadow:0 14px 24px rgba(15,23,42,.16);"></button>
+                </div>
+                <div class="flex justify-between mt-3 text-[14px] font-bold" style="color:var(--sim-muted)"><span>LOW</span><span>${pos}</span><span>HIGH</span></div>
+              </div>
+              <div class="rounded-[24px] p-4" style="background:rgba(255,255,255,.52);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">저항과 안착</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.resistance || m.settle)}</p></div>
+            </div>${footer}`;
+        }
+
+        if (sim.archetype === "panel") {
+          const openPct = clamp(sim.panelOpen, 0.08, 1);
+          const translate = Math.round((1 - openPct) * 230);
+          const blur = Math.round(8 + openPct * 14);
+          return `${header}
+            <div class="absolute inset-x-0 bottom-0 top-[220px] px-5 pb-5">
+              <div class="absolute inset-x-5 top-0 h-[210px] rounded-[28px] p-5" style="background:rgba(255,255,255,.26);border:1px solid var(--sim-border);filter:blur(${Math.max(0, 10 - blur/2)}px);opacity:${0.65 - openPct * 0.15};"><div class="w-[65%] h-5 rounded-full" style="background:rgba(255,255,255,.4)"></div><div class="grid grid-cols-2 gap-3 mt-5"><div class="h-24 rounded-[22px]" style="background:rgba(255,255,255,.35)"></div><div class="h-24 rounded-[22px]" style="background:rgba(255,255,255,.25)"></div></div></div>
+              <button type="button" onclick="Actions.simPanelToggle()" class="absolute left-1/2 -translate-x-1/2 top-6 px-5 py-3 rounded-full sim-glass" style="background:var(--sim-surface);border:1px solid var(--sim-border);box-shadow:0 16px 30px var(--sim-shadow);color:var(--sim-ink);font-weight:700;">${openPct > 0.5 ? '닫기' : '열기'}</button>
+              <div class="absolute inset-x-0 bottom-0 rounded-t-[34px] pt-3 px-5 pb-6 sim-glass" style="transform:translateY(${translate}px);transition:transform ${theme.sharp ? 220 : 320}ms cubic-bezier(.2,.9,.24,1);background:${theme.liquid ? 'linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.48))' : 'linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.72))'};border-top:1px solid var(--sim-border);backdrop-filter:blur(${blur}px);-webkit-backdrop-filter:blur(${blur}px);box-shadow:0 -24px 40px rgba(15,23,42,.12);">
+                <button type="button" onpointerdown="Actions.simPanelHandleDown(event)" class="block mx-auto mb-4 w-16 h-1.5 rounded-full" style="background:rgba(100,116,139,.45)"></button>
+                <div class="rounded-[24px] p-4" style="background:rgba(255,255,255,.42);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">Floating Layer</p><p class="text-[18px] font-bold mt-1" style="color:var(--sim-ink)">${esc(m.nameKo)}</p><p class="text-[15px] mt-2 leading-[1.55]" style="color:var(--sim-muted)">${esc(m.transition || m.visualBehavior)}</p></div>
+              </div>
+            </div>${footer}`;
+        }
+
+        if (sim.archetype === "lens") {
+          const lensSize = 132 + (theme.softness * 24);
+          return `${header}
+            <div class="absolute inset-x-0 bottom-0 top-[220px] px-6 pb-8 flex flex-col justify-between">
+              <div class="rounded-[30px] p-4 sim-glass" style="background:var(--sim-surface);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">Lens Interaction</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.role)}</p></div>
+              <div class="relative h-[265px] overflow-hidden rounded-[30px] sim-glass" style="background:rgba(255,255,255,.32);border:1px solid var(--sim-border);" onpointerdown="Actions.simLensDown(event)">
+                ${ripple}
+                <div class="absolute inset-0 p-5 text-[20px] font-bold leading-[1.5] tracking-[-0.02em]" style="color:rgba(15,23,42,.16);">MATERIAL FEEL
+INTERACTION
+MOTION
+DEPTH
+TACTILE SIGNAL</div>
+                <div class="absolute rounded-full sim-glass sim-sheen" style="left:calc(${sim.lensX}% - ${lensSize/2}px);top:calc(${sim.lensY}% - ${lensSize/2}px);width:${lensSize}px;height:${lensSize}px;background:linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.26));border:1px solid rgba(255,255,255,.6);box-shadow:0 18px 34px rgba(15,23,42,.16);backdrop-filter:blur(${theme.sharp ? 8 : 14}px) saturate(125%);-webkit-backdrop-filter:blur(${theme.sharp ? 8 : 14}px) saturate(125%);display:flex;align-items:center;justify-content:center;color:var(--sim-ink);font-size:18px;font-weight:800;">ZOOM</div>
+              </div>
+              <div class="rounded-[24px] p-4" style="background:rgba(255,255,255,.52);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">광학 반응</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.visualBehavior || m.transition)}</p></div>
+            </div>${footer}`;
+        }
+
+        if (sim.archetype === "surface") {
+          const px = sim.pointX;
+          const py = sim.pointY;
+          return `${header}
+            <div class="absolute inset-x-0 bottom-0 top-[220px] px-6 pb-8 flex flex-col justify-between">
+              <div class="rounded-[30px] p-4 sim-glass" style="background:var(--sim-surface);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">Reactive Surface</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.role)}</p></div>
+              <button type="button" class="relative h-[260px] rounded-[34px] overflow-hidden sim-glass" style="background:linear-gradient(180deg, rgba(255,255,255,.38), rgba(255,255,255,.18));border:1px solid var(--sim-border);box-shadow:0 20px 36px var(--sim-shadow);" onpointerdown="Actions.simSurfaceDown(event)">
+                <div class="absolute inset-0" style="background:radial-gradient(circle at ${px}% ${py}%, ${theme.accentSoft} 0%, rgba(255,255,255,.12) 20%, transparent 48%);"></div>
+                <div class="absolute inset-x-5 top-5 text-left"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">Touch anywhere</p><p class="text-[18px] font-bold mt-1" style="color:var(--sim-ink)">${esc(m.nameKo)}</p></div>
+                ${ripple}
+              </button>
+              <div class="rounded-[24px] p-4" style="background:rgba(255,255,255,.52);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">여운</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.settle || m.emotionalEffect)}</p></div>
+            </div>${footer}`;
+        }
+
+        const y = sim.cardY;
+        const x = sim.cardX;
+        const lift = sim.cardLift;
+        const rotate = (x / 18).toFixed(1);
+        return `${header}
+          <div class="absolute inset-x-0 bottom-0 top-[220px] px-6 pb-8 flex flex-col justify-between">
+            <div class="rounded-[30px] p-4 sim-glass" style="background:var(--sim-surface);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">Lifted Card</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.role)}</p></div>
+            <div class="relative h-[250px] flex items-center justify-center">${ripple}<button type="button" class="relative w-[250px] rounded-[30px] p-5 text-left sim-glass sim-sheen" style="background:${theme.liquid ? 'linear-gradient(180deg, rgba(255,255,255,.68), rgba(255,255,255,.38))' : 'linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.72))'};border:1px solid var(--sim-border);box-shadow:0 ${20 + Math.round(lift*10)}px ${36 + Math.round(lift*10)}px rgba(15,23,42,.16);transform:translate(${x}px, ${y}px) rotate(${rotate}deg) scale(${1 + lift*0.03});transition:transform 260ms cubic-bezier(.2,.9,.24,1), box-shadow 260ms ease;" onpointerdown="Actions.simCardDown(event)"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">Card Motion</p><p class="text-[20px] font-bold mt-1" style="color:var(--sim-ink)">${esc(m.nameKo)}</p><p class="text-[15px] mt-3 leading-[1.55]" style="color:var(--sim-muted)">${esc(m.visualBehavior || m.transition)}</p></button></div>
+            <div class="rounded-[24px] p-4" style="background:rgba(255,255,255,.52);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">움직임 메모</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.settle || m.emotionalEffect)}</p></div>
+          </div>${footer}`;
+      }
+
+      function viewSimulation() {
+        const m = simulationInteraction();
+        if (!m) return fallback(5, "시뮬레이션할 인터랙션이 없습니다.");
+        const sim = simStateFor(m);
+        const theme = deriveEmotionTheme();
+        const profile = sim.archetype || simulationArchetype(m);
+        const c = selectedConcept();
+        return `<div class="page-top px-4 dock-space animate-fade-in">
+          ${header("인터랙션 시뮬레이션", 5)}
+          ${sectionTitle("가상 스마트폰에서 직접 체험하기", "최종 제안된 인터랙션 컨셉을 선택하면 가상 스마트폰 화면에서 직접 눌러 보고, 끌어 보고, 열어 보며 물성 기반의 움직임을 확인할 수 있습니다.")}
+          ${priorChoice([
+            { label: "감성 키워드", value: state.keyword },
+            { label: "선택한 감성 해석", value: c ? `${c.nameKo} (${c.nameEn})` : "" },
+            { label: "현재 시뮬레이션", value: `${m.nameKo} (${m.type})` }
+          ])}
+
+          <section class="bg-white rounded-[2rem] p-4 border-2 border-slate-200 shadow-md mb-5">
+            <div class="flex items-center justify-between gap-2 mb-3 px-1">
+              <h3 class="t-label text-slate-500">시뮬레이션할 인터랙션 선택</h3>
+              ${ghostBtn("초기화", "Actions.resetSimulation()", "rotate-ccw")}
+            </div>
+            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">${state.interactions.map((x, i) => `<button type="button" onclick="Actions.selectSimulationInteraction('${escAttr(x.id)}')" class="min-w-[152px] p-3 rounded-2xl border text-left transition-all ${x.id === m.id ? 'bg-slate-900 text-white border-slate-900 shadow-lg' : 'bg-white text-slate-800 border-slate-200'}"><p class="t-meta font-bold">${pad2(i + 1)} ${esc(x.nameKo)}</p><p class="t-meta ${x.id === m.id ? 'text-slate-300' : 'text-slate-500'}">${esc(x.type)}</p></button>`).join('')}</div>
+          </section>
+
+          <section class="bg-white rounded-[2rem] p-5 border-2 border-slate-200 shadow-md mb-5">
+            <div class="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <p class="t-meta font-bold text-slate-500">Simulation Brief</p>
+                <h3 class="t-h2 text-slate-900">${esc(m.nameKo)}</h3>
+                <p class="t-meta text-slate-500">${esc(m.nameEn)} · ${esc(m.type)}</p>
+              </div>
+              <span class="t-meta font-bold px-3 py-1.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200">${esc(profile)}</span>
+            </div>
+            <p class="t-small text-slate-700 prose-ko">${esc(simulationGuide(profile))}</p>
+            <div class="grid grid-cols-1 gap-2 mt-4">
+              <div class="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3"><p class="t-meta font-bold text-slate-500">Interaction DNA</p><p class="t-small text-slate-800 prose-ko">${esc(m.interactionDNA || m.visualBehavior)}</p></div>
+              <div class="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3"><p class="t-meta font-bold text-slate-500">연결 물성</p><div class="flex flex-wrap gap-1.5 mt-2">${(m.propertyMapping || []).map(x => chip(x, 'blue')).join('') || chip('선택된 물성 없음')}</div></div>
+              <div class="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3"><p class="t-meta font-bold text-slate-500">감성 유지 포인트</p><p class="t-small text-slate-800 prose-ko">${esc(m.emotionalEffect || m.visualBehavior || m.settle)}</p></div>
+            </div>
+          </section>
+
+          <section class="bg-white rounded-[2rem] p-4 border-2 border-slate-200 shadow-md mb-6">
+            <div class="flex items-center justify-between gap-2 mb-3 px-1">
+              <h3 class="t-label text-slate-500">가상 스마트폰 시뮬레이터</h3>
+              <span class="t-meta text-slate-500">직접 터치해 보세요</span>
+            </div>
+            ${renderSimulationDemo(m, sim, theme)}
+          </section>
+
+          ${dock(`
+            <div class="space-y-2.5">
+              ${primaryBtn("다른 인터랙션 시뮬레이션 선택", "setState({step:5}, true)")}
+              ${secondaryBtn("시뮬레이션 초기화", "Actions.resetSimulation()", "rotate-ccw")}
+              ${secondaryBtn("전체 리포트 PDF로 저장", "Actions.exportPdf()")}
+            </div>
+          `)}
+        </div>`;
+      }
+
+      /* =========================================================
+         16. 오버레이 — 로딩 / 오류 / 이미지 확대
+         ========================================================= */
+      function overlays() {
+        let html = "";
+
+        if (state.isAnalyzing) {
+          html += `<div class="fixed inset-0 z-[10000] bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center px-8 text-center max-w-[430px] mx-auto animate-fade-in" role="status" aria-live="polite">
+            <div class="spinner-ring mb-8" role="presentation"></div>
+            <h2 class="t-h2 text-slate-900 mb-2">${esc(state.loadingMsg)}</h2>
+            <p class="t-small text-slate-600 mb-8">1분 넘게 걸릴 수 있습니다</p>
+            <button type="button" onclick="Actions.cancel()" class="px-7 py-3.5 rounded-2xl border-2 border-slate-300 text-slate-700 font-bold t-small hover:bg-slate-50 active:scale-95 transition-all">취소</button>
+          </div>`;
+        }
+
+        if (state.lightbox && state.images && state.images[state.lightbox]) {
+          html += `<div class="fixed inset-0 z-[10001] bg-black/90 flex flex-col max-w-[430px] mx-auto" role="dialog" aria-modal="true" aria-label="이미지 크게 보기">
+            <div class="flex justify-end p-3">
+              <button type="button" onclick="Actions.closeLightbox()" aria-label="닫기" class="p-3 rounded-full bg-white/10 text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div class="flex-1 overflow-auto px-3 pb-6 no-scrollbar">
+              <img src="${escAttr(state.images[state.lightbox])}" alt="확대한 통합 이미지" class="w-full rounded-2xl" />
+            </div>
+          </div>`;
+        }
+
+        if (state.errorMsg) {
+          html += `<div class="fixed inset-0 z-[10002] flex items-center justify-center bg-black/50 px-6 backdrop-blur-sm" role="alertdialog" aria-modal="true" aria-labelledby="err-title">
+            <div class="bg-white p-8 rounded-3xl w-full max-w-sm text-center shadow-2xl animate-scale-in">
+              <i data-lucide="alert-triangle" class="text-red-600 mx-auto mb-4 w-12 h-12"></i>
+              <h2 id="err-title" class="t-h3 text-slate-900 mb-6 prose-ko">${esc(state.errorMsg)}</h2>
+              <button type="button" onclick="setState({errorMsg:null})" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold t-small">확인</button>
+            </div>
+          </div>`;
+        }
+        return html;
+      }
+
+      /* =========================================================
+         17. 메인 렌더 — 예외가 나도 화면이 멈추지 않도록 방어
+         ========================================================= */
+      function captureUI() {
+        const el = document.activeElement;
+        const f = (el && el.id && (el.tagName === "INPUT" || el.tagName === "TEXTAREA"))
+          ? { id: el.id, start: el.selectionStart, end: el.selectionEnd } : null;
+        return { focus: f, scrollY: window.scrollY };
+      }
+      function restoreUI(snap, resetScroll) {
+        if (snap.focus) {
+          const el = document.getElementById(snap.focus.id);
+          if (el) {
+            el.focus({ preventScroll: true });
+            try { el.setSelectionRange(snap.focus.start, snap.focus.end); } catch (e) { /* range 미지원 */ }
+          }
+        }
+        window.scrollTo(0, resetScroll ? 0 : snap.scrollY);
+      }
+
+      function fallback(backStep, msg) {
+        return `<div class="page-top px-6 min-h-screen">
+          <div class="bg-white border-2 border-slate-300 rounded-3xl p-8 text-center shadow-md">
+            <i data-lucide="compass" class="w-12 h-12 text-slate-500 mx-auto mb-4"></i>
+            <h2 class="t-h3 text-slate-900 mb-2">${esc(msg)}</h2>
+            <p class="t-small text-slate-600 mb-6">이전 단계로 돌아가 다시 실행해 주세요.</p>
+            ${primaryBtn("이전 단계로", `setState({step:${backStep}}, true)`)}
+          </div>
+        </div>`;
+      }
+
+      function body() {
+        switch (state.step) {
+          case -1: return viewAuth();
+          case 0:  return viewHome();
+          case 1:  return viewKeyword();
+          case 2:  return state.concepts.length ? viewEmotion() : fallback(1, "생성된 감성 해석이 없습니다.");
+          case 3:  return state.perceptions.length ? viewPerception() : fallback(2, "분석된 지각 특성이 없습니다.");
+          case 4:  return state.properties.length ? viewProperty() : fallback(3, "정의된 물성이 없습니다.");
+          case 5:  return state.interactions.length ? viewInteraction() : fallback(4, "제안된 인터랙션이 없습니다.");
+          case 6:  return state.interactions.length ? viewSimulation() : fallback(5, "시뮬레이션할 인터랙션이 없습니다.");
+          default: return fallback(0, "요청한 화면을 찾을 수 없습니다.");
+        }
+      }
+
+      function render(resetScroll) {
+        const root = document.getElementById("root");
+        const snap = captureUI();
+        const shell = "w-full max-w-[430px] mx-auto bg-slate-100 min-h-screen relative overflow-x-hidden shadow-2xl";
+        let inner;
+        try {
+          inner = body();
+        } catch (err) {
+          console.error("render 실패:", err);
+          inner = fallback(0, "화면을 그리는 중 문제가 발생했습니다.");
+        }
+        try {
+          root.innerHTML = `<div class="${shell}">${inner}${overlays()}</div>`;
+          if (window.lucide && typeof lucide.createIcons === "function") lucide.createIcons();
+        } catch (err) {
+          console.error("DOM 갱신 실패:", err);
+          root.innerHTML = `<div class="${shell}"><div class="p-8 t-body">화면을 표시할 수 없습니다. 새로고침해 주세요.</div></div>`;
+        }
+        restoreUI(snap, resetScroll);
+      }
+
+      /* =========================================================
+         18. 부팅
+         ========================================================= */
+      document.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape") return;
+        if (state.errorMsg) setState({ errorMsg: null });
+        else if (state.lightbox) Actions.closeLightbox();
+        else if (state.isAnalyzing) Actions.cancel();
+      });
+
+      setInterval(() => { try { persist(false); } catch (e) { console.warn("자동 저장 실패", e); } }, CONFIG.AUTOSAVE_MS);
+      window.addEventListener("beforeunload", () => { try { persist(false); } catch (e) { /* 무시 */ } });
+
+      loadSession();
+      if (state.apiKey) state.step = 0;
+      render(true);
+    })();
+  </script>
 </body>
 </html>
