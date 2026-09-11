@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>감성 · 지각 · 인터랙션 컨셉 랩 v12.2</title>
+  <title>감성 · 지각 · 인터랙션 컨셉 랩 v12.1</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -84,68 +84,6 @@
       position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
       overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
     }
-
-
-    /* ==========================================================
-       인터랙션 시뮬레이터
-       ========================================================== */
-    .sim-phone {
-      position: relative;
-      width: min(100%, 340px);
-      margin: 0 auto;
-      border-radius: 38px;
-      padding: 12px;
-      background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-      box-shadow: 0 30px 60px rgba(15,23,42,.28);
-      border: 1px solid rgba(255,255,255,.12);
-    }
-    .sim-phone-screen {
-      position: relative;
-      border-radius: 30px;
-      min-height: 620px;
-      overflow: hidden;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.38);
-      user-select: none;
-      touch-action: none;
-    }
-    .sim-notch {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 126px;
-      height: 26px;
-      border-radius: 999px;
-      background: rgba(15,23,42,.92);
-      z-index: 20;
-    }
-    .sim-glass {
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-    }
-    .sim-pressable { touch-action: none; }
-    .sim-ripple {
-      position: absolute;
-      width: 20px; height: 20px; border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.55);
-      pointer-events: none;
-      transform: translate(-50%, -50%);
-      animation: sim-ripple 0.7s ease-out forwards;
-    }
-    @keyframes sim-ripple {
-      from { opacity: .55; transform: translate(-50%, -50%) scale(0.4); }
-      to   { opacity: 0; transform: translate(-50%, -50%) scale(5.4); }
-    }
-    .sim-sheen::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(125deg, rgba(255,255,255,.22), rgba(255,255,255,0) 32%, rgba(255,255,255,.18) 65%, rgba(255,255,255,0));
-      pointer-events: none;
-      mix-blend-mode: screen;
-      opacity: .9;
-    }
-
   </style>
 </head>
 <body>
@@ -220,8 +158,7 @@
         { n: 2, label: "감성 해석" },
         { n: 3, label: "지각 특성" },
         { n: 4, label: "인터랙션 물성" },
-        { n: 5, label: "인터랙션 제안" },
-        { n: 6, label: "시뮬레이션" }
+        { n: 5, label: "인터랙션 제안" }
       ];
 
       const SAMPLE_KEYWORDS = [
@@ -791,8 +728,6 @@ The board should resemble a professional interaction design concept sheet or mot
           properties: [],
           propertyIds: [],
           interactions: [],
-          simulationId: null,
-          simulation: null,
           images: { emotion: null, perception: null, property: null, interaction: null },
           createdAt: Date.now()
         };
@@ -825,207 +760,6 @@ The board should resemble a professional interaction design concept sheet or mot
       function selectedConcept() { return state.concepts.find(c => c.id === state.conceptId) || null; }
       function selectedPerceptions() { return state.perceptions.filter(p => state.perceptionIds.includes(p.id)); }
       function selectedProperties() { return state.properties.filter(p => state.propertyIds.includes(p.id)); }
-
-      function clamp(n, min, max) {
-        return Math.max(min, Math.min(max, n));
-      }
-
-      function includesAny(text, list) {
-        return list.some(k => text.includes(k));
-      }
-
-      function simulationInteraction() {
-        const first = state.interactions[0] || null;
-        if (!first) return null;
-        return state.interactions.find(m => m.id === state.simulationId) || first;
-      }
-
-      function interactionTextBlob(m) {
-        if (!m) return "";
-        return [m.type, m.nameKo, m.nameEn, m.role, m.interactionDNA, m.rest, m.acknowledge,
-          m.resistance, m.transition, m.settle, m.visualBehavior, m.emotionalEffect,
-          Array.isArray(m.propertyMapping) ? m.propertyMapping.join(" ") : ""]
-          .join(" ").toLowerCase();
-      }
-
-      function simulationArchetype(m) {
-        const t = interactionTextBlob(m);
-        if (includesAny(t, ["toggle", "switch", "토글", "스위치"])) return "toggle";
-        if (includesAny(t, ["slider", "dial", "rail", "scrub", "swipe", "scroll", "레일", "슬라이더", "다이얼", "스크롤", "스와이프"])) return "rail";
-        if (includesAny(t, ["lens", "magnifier", "zoom", "렌즈", "돋보기", "확대"])) return "lens";
-        if (includesAny(t, ["popup", "sheet", "panel", "pane", "modal", "팝업", "시트", "패널"])) return "panel";
-        if (includesAny(t, ["card", "카드"])) return "card";
-        if (includesAny(t, ["surface", "field", "pool", "pocket", "바닥", "표면", "필드", "포켓", "ripple"])) return "surface";
-        if (includesAny(t, ["button", "press", "sinking", "침잠", "버튼"])) return "button";
-        if (includesAny(t, ["liquid", "glass", "리퀴드", "유리", "액체"])) return "panel";
-        return "card";
-      }
-
-      function deriveEmotionTheme() {
-        const c = selectedConcept();
-        const text = [state.keyword, c && c.nameKo, c && c.nameEn, c && c.definition, c && c.experience,
-          ...(c && Array.isArray(c.moodWords) ? c.moodWords : [])].filter(Boolean).join(" ").toLowerCase();
-        let theme = {
-          bg1: "#f8fafc", bg2: "#dbe7f3", hero: "rgba(255,255,255,.7)",
-          surface: "rgba(255,255,255,.72)", surfaceStrong: "rgba(255,255,255,.88)",
-          accent: "#2563eb", accentSoft: "#93c5fd", ink: "#0f172a", muted: "#64748b",
-          border: "rgba(148,163,184,.32)", glow: "rgba(37,99,235,.18)", screenShadow: "rgba(15,23,42,.14)",
-          softness: .56, liquid: false, sharp: false, heavy: false
-        };
-        if (includesAny(text, ["차갑", "날카", "세련", "cold", "sharp", "crisp", "precise"])) {
-          theme = Object.assign(theme, {
-            bg1: "#edf2f7", bg2: "#b9c7d8", hero: "rgba(255,255,255,.52)",
-            surface: "rgba(248,251,255,.58)", surfaceStrong: "rgba(255,255,255,.84)",
-            accent: "#26456b", accentSoft: "#9bb6d5", ink: "#102132", muted: "#506377",
-            border: "rgba(38,69,107,.18)", glow: "rgba(78,124,177,.16)", softness: .24, sharp: true
-          });
-        } else if (includesAny(text, ["귀엽", "향기", "부드", "따뜻", "포근", "사랑", "cute", "warm", "soft", "fragrant"])) {
-          theme = Object.assign(theme, {
-            bg1: "#fff4f7", bg2: "#f7d7e5", hero: "rgba(255,255,255,.76)",
-            surface: "rgba(255,250,252,.74)", surfaceStrong: "rgba(255,255,255,.9)",
-            accent: "#e986aa", accentSoft: "#f4bfd2", ink: "#4a3240", muted: "#8a6a7a",
-            border: "rgba(233,134,170,.22)", glow: "rgba(233,134,170,.18)", softness: .82
-          });
-        } else if (includesAny(text, ["젊", "활기", "energy", "dynamic", "vivid"])) {
-          theme = Object.assign(theme, {
-            bg1: "#ecfbff", bg2: "#d6f5ea", hero: "rgba(255,255,255,.74)",
-            surface: "rgba(255,255,255,.72)", surfaceStrong: "rgba(255,255,255,.9)",
-            accent: "#0f766e", accentSoft: "#6ee7b7", ink: "#133430", muted: "#4f6d68",
-            border: "rgba(15,118,110,.2)", glow: "rgba(16,185,129,.16)", softness: .42
-          });
-        } else if (includesAny(text, ["고요", "차분", "calm", "quiet", "still"])) {
-          theme = Object.assign(theme, {
-            bg1: "#f4f7fb", bg2: "#d8dee8", hero: "rgba(255,255,255,.78)",
-            accent: "#597492", accentSoft: "#b3c2d5", muted: "#6b7788", softness: .5
-          });
-        }
-        if (includesAny(text, ["무거", "dense", "heavy"])) theme.heavy = true;
-        if (includesAny(text, ["리퀴드", "liquid", "glass", "유리", "투명", "굴절"])) theme.liquid = true;
-        return theme;
-      }
-
-      function defaultSimulationState(m) {
-        const archetype = simulationArchetype(m);
-        return {
-          targetId: m ? m.id : null,
-          archetype,
-          phase: "Rest / 정지",
-          active: false,
-          toggleOn: false,
-          railValue: 48,
-          panelOpen: archetype === "lens" ? 0.76 : 0.16,
-          cardLift: 0,
-          cardX: 0,
-          cardY: 0,
-          lensX: 50,
-          lensY: 44,
-          ripple: 0,
-          pointX: 50,
-          pointY: 50,
-          pressDepth: 0,
-          drag: null
-        };
-      }
-
-      function simStateFor(m) {
-        if (!m) return defaultSimulationState(null);
-        if (state.simulation && state.simulation.targetId === m.id) return state.simulation;
-        return defaultSimulationState(m);
-      }
-
-      function setSimulationState(patch, resetScroll) {
-        const m = simulationInteraction();
-        const base = simStateFor(m);
-        state.simulation = Object.assign({}, base, patch, { targetId: m ? m.id : null });
-        render(resetScroll);
-      }
-
-      let simTimer = null;
-      function scheduleSimPhase(phase, ms, extra) {
-        clearTimeout(simTimer);
-        simTimer = setTimeout(() => {
-          const m = simulationInteraction();
-          if (!m) return;
-          const base = simStateFor(m);
-          state.simulation = Object.assign({}, base, extra || {}, { phase, targetId: m.id });
-          render();
-        }, ms);
-      }
-
-      function resetSimulationFor(id) {
-        const m = state.interactions.find(x => x.id === id) || state.interactions[0] || null;
-        state.simulationId = m ? m.id : null;
-        state.simulation = defaultSimulationState(m);
-      }
-
-      function beginSimulationDrag(kind, data) {
-        const m = simulationInteraction();
-        const base = simStateFor(m);
-        state.simulation = Object.assign({}, base, { drag: Object.assign({ kind }, data || {}) });
-      }
-
-      function handleSimulationPointerMove(ev) {
-        const m = simulationInteraction();
-        if (!m) return;
-        const sim = simStateFor(m);
-        const drag = sim.drag;
-        if (!drag) return;
-        if (drag.kind === "rail") {
-          const ratio = clamp((ev.clientX - drag.left) / drag.width, 0, 1);
-          setSimulationState({ railValue: Math.round(ratio * 100), phase: "Transition / 전환" });
-          return;
-        }
-        if (drag.kind === "sheet") {
-          const next = clamp(drag.startOpen + ((drag.startY - ev.clientY) / 260), 0.08, 1);
-          setSimulationState({ panelOpen: next, phase: next > sim.panelOpen ? "Transition / 전환" : "Resistance / 저항" });
-          return;
-        }
-        if (drag.kind === "card") {
-          const dx = clamp(ev.clientX - drag.startX, -64, 64);
-          const dy = clamp(ev.clientY - drag.startY, -96, 88);
-          const lift = clamp((-dy + 20) / 110, 0, 1);
-          setSimulationState({ cardX: dx, cardY: dy, cardLift: lift, phase: "Transition / 전환" });
-          return;
-        }
-        if (drag.kind === "lens") {
-          const x = clamp(((ev.clientX - drag.left) / drag.width) * 100, 18, 82);
-          const y = clamp(((ev.clientY - drag.top) / drag.height) * 100, 20, 78);
-          setSimulationState({ lensX: x, lensY: y, phase: "Transition / 전환" });
-          return;
-        }
-      }
-
-      function handleSimulationPointerUp() {
-        const m = simulationInteraction();
-        if (!m) return;
-        const sim = simStateFor(m);
-        const drag = sim.drag;
-        if (!drag) return;
-        if (drag.kind === "rail") {
-          setSimulationState({ drag: null, phase: "Settle / 안착" });
-          scheduleSimPhase("Rest / 정지", 520, { drag: null });
-          return;
-        }
-        if (drag.kind === "sheet") {
-          const open = sim.panelOpen >= 0.48 ? 1 : 0.16;
-          setSimulationState({ drag: null, panelOpen: open, phase: "Settle / 안착" });
-          scheduleSimPhase(open > 0.5 ? "Rest / 정지" : "Rest / 정지", 520, { drag: null, panelOpen: open });
-          return;
-        }
-        if (drag.kind === "card") {
-          setSimulationState({ drag: null, cardX: 0, cardY: 0, cardLift: 0, phase: "Settle / 안착" });
-          scheduleSimPhase("Rest / 정지", 520, { drag: null, cardX: 0, cardY: 0, cardLift: 0 });
-          return;
-        }
-        if (drag.kind === "lens") {
-          setSimulationState({ drag: null, phase: "Settle / 안착" });
-          scheduleSimPhase("Rest / 정지", 520, { drag: null });
-        }
-      }
-
-      window.addEventListener("pointermove", handleSimulationPointerMove, { passive: true });
-      window.addEventListener("pointerup", handleSimulationPointerUp);
-      window.addEventListener("pointercancel", handleSimulationPointerUp);
 
       /* =========================================================
          7. 세션 헬퍼 — API 키와 이미지 표시 설정만 이 브라우저 세션에 보관
@@ -1340,7 +1074,6 @@ The board should resemble a professional interaction design concept sheet or mot
           case 3: return state.perceptions.length > 0;
           case 4: return state.properties.length > 0;
           case 5: return state.interactions.length > 0;
-          case 6: return state.interactions.length > 0;
           default: return false;
         }
       }
@@ -1370,7 +1103,6 @@ The board should resemble a professional interaction design concept sheet or mot
           properties: state.properties,
           propertyIds: state.propertyIds,
           interactions: state.interactions,
-          simulationId: state.simulationId,
           createdAt: state.createdAt,
           step: progressStep()
         };
@@ -1607,15 +1339,6 @@ The board should resemble a professional interaction design concept sheet or mot
             if (m.propertyMapping && m.propertyMapping.length) L.push(`  연결 물성: ${m.propertyMapping.join(" · ")}`);
             L.push(`  감성 효과: ${m.emotionalEffect}`);
           });
-          L.push("");
-        }
-
-        if (state.interactions.length) {
-          const sim = simulationInteraction();
-          L.push(line, " 5. 인터랙션 시뮬레이션", line);
-          L.push("- 마지막 단계에서 가상 스마트폰 화면 위에서 선택한 인터랙션 컨셉을 직접 눌러 보고, 끌어 보고, 열어 보며 물성을 체감할 수 있습니다.");
-          if (sim) L.push(`- 기본 시뮬레이션 대상: ${sim.nameKo} / ${sim.nameEn} (${sim.type})`);
-          L.push("- 시뮬레이션 단계에서는 각 컨셉의 Motion Grammar와 연결 물성이 실제 터치 반응으로 어떻게 느껴지는지 확인합니다.");
           L.push("");
         }
 
@@ -1860,8 +1583,6 @@ The board should resemble a professional interaction design concept sheet or mot
             properties: arr(d.properties),
             propertyIds: arr(d.propertyIds),
             interactions: arr(d.interactions || d.materials),
-            simulationId: d.simulationId || null,
-            simulation: null,
             createdAt: d.createdAt || row.savedAt,
             images: { emotion: null, perception: null, property: null, interaction: null }
           });
@@ -2181,91 +1902,6 @@ The board should resemble a professional interaction design concept sheet or mot
           if (!url) return;
           await Actions.saveImage("interaction", url);
           render();
-        },
-        openSimulation(id) {
-          const target = id || state.simulationId || (state.interactions[0] && state.interactions[0].id);
-          if (!target) { setState({ errorMsg: "시뮬레이션할 인터랙션이 없습니다." }); return; }
-          resetSimulationFor(target);
-          setState({ step: 6 }, true);
-        },
-        selectSimulationInteraction(id) {
-          if (!id) return;
-          resetSimulationFor(id);
-          render(true);
-        },
-        resetSimulation() {
-          const current = simulationInteraction();
-          resetSimulationFor(current ? current.id : null);
-          render();
-        },
-        simButtonDown() {
-          const m = simulationInteraction();
-          if (!m) return;
-          clearTimeout(simTimer);
-          setSimulationState({ active: true, pressDepth: 1, ripple: Date.now(), phase: "Acknowledge / 입력 감지" });
-          scheduleSimPhase("Resistance / 저항", 100, { active: true, pressDepth: 1 });
-        },
-        simButtonUp() {
-          const m = simulationInteraction();
-          if (!m) return;
-          clearTimeout(simTimer);
-          setSimulationState({ active: false, pressDepth: 0, phase: "Settle / 안착" });
-          scheduleSimPhase("Rest / 정지", 520, { active: false, pressDepth: 0 });
-        },
-        simToggle() {
-          const m = simulationInteraction();
-          if (!m) return;
-          const sim = simStateFor(m);
-          clearTimeout(simTimer);
-          setSimulationState({ toggleOn: !sim.toggleOn, phase: "Transition / 전환", ripple: Date.now() });
-          scheduleSimPhase("Rest / 정지", 560, { toggleOn: !sim.toggleOn });
-        },
-        simRailDown(ev) {
-          const rect = ev.currentTarget.getBoundingClientRect();
-          const ratio = clamp((ev.clientX - rect.left) / rect.width, 0, 1);
-          setSimulationState({ railValue: Math.round(ratio * 100), phase: "Resistance / 저항" });
-          beginSimulationDrag("rail", { left: rect.left, width: rect.width });
-          render();
-        },
-        simPanelToggle() {
-          const m = simulationInteraction();
-          if (!m) return;
-          const sim = simStateFor(m);
-          const next = sim.panelOpen > 0.5 ? 0.16 : 1;
-          clearTimeout(simTimer);
-          setSimulationState({ panelOpen: next, phase: "Transition / 전환", ripple: Date.now() });
-          scheduleSimPhase("Rest / 정지", 620, { panelOpen: next });
-        },
-        simPanelHandleDown(ev) {
-          ev.preventDefault();
-          const m = simulationInteraction();
-          if (!m) return;
-          const sim = simStateFor(m);
-          setSimulationState({ phase: "Resistance / 저항" });
-          beginSimulationDrag("sheet", { startY: ev.clientY, startOpen: sim.panelOpen });
-          render();
-        },
-        simCardDown(ev) {
-          ev.preventDefault();
-          clearTimeout(simTimer);
-          setSimulationState({ phase: "Acknowledge / 입력 감지", ripple: Date.now() });
-          beginSimulationDrag("card", { startX: ev.clientX, startY: ev.clientY });
-          render();
-        },
-        simLensDown(ev) {
-          ev.preventDefault();
-          const rect = ev.currentTarget.getBoundingClientRect();
-          setSimulationState({ phase: "Acknowledge / 입력 감지" });
-          beginSimulationDrag("lens", { left: rect.left, top: rect.top, width: rect.width, height: rect.height });
-          render();
-        },
-        simSurfaceDown(ev) {
-          const rect = ev.currentTarget.getBoundingClientRect();
-          const x = ((ev.clientX - rect.left) / rect.width) * 100;
-          const y = ((ev.clientY - rect.top) / rect.height) * 100;
-          clearTimeout(simTimer);
-          setSimulationState({ pointX: clamp(x, 10, 90), pointY: clamp(y, 12, 88), ripple: Date.now(), phase: "Transition / 전환" });
-          scheduleSimPhase("Rest / 정지", 760, { pointX: clamp(x, 10, 90), pointY: clamp(y, 12, 88) });
         }
       };
       window.Actions = Actions;
@@ -2612,12 +2248,6 @@ The board should resemble a professional interaction design concept sheet or mot
           ${row("Visual Behavior", m.visualBehavior)}
           ${m.propertyMapping && m.propertyMapping.length ? `<div class="pt-3"><p class="t-meta font-bold text-slate-500 mb-1">연결 물성</p><div class="flex flex-wrap gap-1.5">${m.propertyMapping.map(x => chip(x)).join("")}</div></div>` : ""}
           ${row("감성 효과", m.emotionalEffect)}
-          <div class="pt-4">
-            <button type="button" onclick="Actions.openSimulation('${escAttr(m.id)}')"
-              class="w-full py-3.5 rounded-2xl font-bold t-small text-slate-800 bg-slate-100 border border-slate-200 hover:bg-slate-50 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2">
-              <i data-lucide="smartphone" class="w-5 h-5"></i>이 인터랙션 시뮬레이션
-            </button>
-          </div>
         </article>`;
       }
 
@@ -2652,211 +2282,8 @@ The board should resemble a professional interaction design concept sheet or mot
 
           ${dock(`
             <div class="space-y-2.5">
-              ${primaryBtn("가상 스마트폰에서 시뮬레이션", "Actions.openSimulation()")}
-              ${secondaryBtn("전체 리포트 PDF로 저장", "Actions.exportPdf()")}
+              ${primaryBtn("전체 리포트 PDF로 저장", "Actions.exportPdf()")}
               ${secondaryBtn("리포트 텍스트 복사", "Actions.copyReport()", "copy")}
-            </div>
-          `)}
-        </div>`;
-      }
-
-      function simulationGuide(profile) {
-        switch (profile) {
-          case "button": return "가운데 요소를 눌렀다가 떼어 보세요. 감지–저항–복원의 리듬을 손끝으로 확인할 수 있습니다.";
-          case "toggle": return "토글을 눌러 상태를 전환해 보세요. 전환 속도와 안착 방식이 감성에 맞게 반응합니다.";
-          case "rail": return "노브를 좌우로 드래그해 보세요. 저항, 관성, 안착 위치의 느낌을 직접 비교할 수 있습니다.";
-          case "panel": return "열기 버튼이나 상단 핸들을 사용해 시트를 열고 닫아 보세요. 깊이와 반투명한 층의 움직임을 체감합니다.";
-          case "lens": return "렌즈 영역을 끌어 보세요. 확대, 굴절, 반투명의 상호작용이 물성처럼 반응합니다.";
-          case "surface": return "표면을 눌러 파동과 침잠 반응을 확인해 보세요. 접촉 위치에 따라 잔향이 달라집니다.";
-          default: return "카드를 눌러 들어 올리고 가볍게 끌어 보세요. 긴장, 관성, 복원이 한 흐름으로 이어집니다.";
-        }
-      }
-
-      function simulationPhaseTone(phase) {
-        if ((phase || "").includes("Resistance")) return "bg-amber-50 text-amber-800 border-amber-200";
-        if ((phase || "").includes("Transition")) return "bg-blue-50 text-blue-800 border-blue-200";
-        if ((phase || "").includes("Settle")) return "bg-emerald-50 text-emerald-800 border-emerald-200";
-        return "bg-slate-100 text-slate-700 border-slate-200";
-      }
-
-      function simStyle(theme) {
-        return `--sim-bg1:${theme.bg1};--sim-bg2:${theme.bg2};--sim-accent:${theme.accent};--sim-accent-soft:${theme.accentSoft};--sim-ink:${theme.ink};--sim-muted:${theme.muted};--sim-surface:${theme.surface};--sim-surface-strong:${theme.surfaceStrong};--sim-border:${theme.border};--sim-glow:${theme.glow};--sim-shadow:${theme.screenShadow};`;
-      }
-
-      function renderSimulationDemo(m, sim, theme) {
-        const phasePill = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border ${simulationPhaseTone(sim.phase)}"><i data-lucide="activity" class="w-4 h-4"></i>${esc(sim.phase)}</span>`;
-        const metaTop = `<div class="absolute left-4 right-4 top-12 z-10 flex items-center justify-between gap-2"><div class="px-3 py-1.5 rounded-full border sim-glass" style="background:var(--sim-surface);border-color:var(--sim-border);color:var(--sim-ink);box-shadow:0 14px 28px var(--sim-shadow);"><span class="text-[14px] font-bold">${esc(m.nameKo)}</span></div>${phasePill}</div>`;
-        const baseScreen = `style="${escAttr(simStyle(theme))} background:linear-gradient(180deg,var(--sim-bg1) 0%, var(--sim-bg2) 100%);"`;
-        const header = `<div class="sim-phone"><div class="sim-phone-screen" ${baseScreen}><div class="sim-notch"></div>${metaTop}<div class="absolute inset-x-4 top-24 z-[1] rounded-[28px] px-4 py-3 sim-glass" style="background:var(--sim-surface);border:1px solid var(--sim-border);box-shadow:0 16px 36px var(--sim-shadow);"><div class="flex items-start justify-between gap-2"><div><p class="text-[14px] font-bold" style="color:var(--sim-muted)">Material-driven Prototype</p><p class="text-[18px] font-bold mt-0.5" style="color:var(--sim-ink)">${esc(m.type)}</p></div><span class="px-2.5 py-1 rounded-full text-[13px] font-bold" style="background:rgba(255,255,255,.55);color:var(--sim-ink);border:1px solid var(--sim-border);">${esc((m.propertyMapping || []).slice(0,2).join(' · ') || 'Interaction')}</span></div><p class="text-[14px] mt-2 leading-[1.5]" style="color:var(--sim-muted)">${esc(m.visualBehavior || m.interactionDNA || m.role)}</p></div>`;
-
-        const footer = `</div></div>`;
-
-        if (sim.ripple) {
-          var ripple = `<span class="sim-ripple" style="left:${sim.pointX}%;top:${sim.pointY}%;border-color:${theme.accent};"></span>`;
-        } else {
-          var ripple = "";
-        }
-
-        if (sim.archetype === "button") {
-          const y = sim.active ? 16 : 0;
-          const scale = sim.active ? (theme.sharp ? 0.96 : 0.93) : 1;
-          const radius = Math.round(22 + theme.softness * 18);
-          return `${header}
-            <div class="absolute inset-x-0 bottom-0 top-[220px] px-6 pb-7 flex flex-col justify-between">
-              <div class="rounded-[30px] p-4 sim-glass" style="background:var(--sim-surface);border:1px solid var(--sim-border);box-shadow:0 18px 40px var(--sim-shadow);">
-                <p class="text-[14px] font-bold" style="color:var(--sim-muted)">Touch Area</p>
-                <p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.role)}</p>
-              </div>
-              <div class="relative h-[230px] flex items-center justify-center">
-                ${ripple}
-                <button type="button" class="sim-pressable sim-sheen relative w-[220px] h-[76px] font-bold text-[20px]" style="border-radius:${radius}px;background:${theme.liquid ? 'linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.46))' : 'linear-gradient(180deg, var(--sim-surface-strong), rgba(255,255,255,.7))'};border:1px solid var(--sim-border);color:var(--sim-ink);box-shadow:0 ${24 - y}px ${48 - y}px var(--sim-shadow), inset 0 1px 0 rgba(255,255,255,.7);transform:translateY(${y}px) scale(${scale});transition:transform ${theme.sharp ? 180 : 260}ms ${theme.sharp ? 'cubic-bezier(.22,.8,.2,1)' : 'cubic-bezier(.18,.9,.24,1)'};" onpointerdown="Actions.simButtonDown()" onpointerup="Actions.simButtonUp()" onpointercancel="Actions.simButtonUp()" onpointerleave="Actions.simButtonUp()">${esc(m.nameKo)}</button>
-              </div>
-              <div class="rounded-[24px] p-4" style="background:rgba(255,255,255,.52);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">현재 체감</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.emotionalEffect || m.rest)}</p></div>
-            </div>${footer}`;
-        }
-
-        if (sim.archetype === "toggle") {
-          const on = sim.toggleOn;
-          const knobX = on ? 92 : 6;
-          return `${header}
-            <div class="absolute inset-x-0 bottom-0 top-[220px] px-6 pb-8 flex flex-col justify-between">
-              <div class="rounded-[30px] p-4 sim-glass" style="background:var(--sim-surface);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">State Switching</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.role)}</p></div>
-              <div class="h-[240px] flex items-center justify-center relative">${ripple}<button type="button" onclick="Actions.simToggle()" class="relative w-[160px] h-[72px] rounded-full sim-glass" style="background:${on ? `linear-gradient(90deg, ${theme.accentSoft}, ${theme.accent})` : 'rgba(255,255,255,.55)'};border:1px solid var(--sim-border);box-shadow:0 22px 44px var(--sim-shadow);transition:background 260ms ease, box-shadow 260ms ease;"><span class="absolute top-[5px] w-[60px] h-[60px] rounded-full bg-white sim-sheen" style="left:${knobX}px;box-shadow:0 14px 24px rgba(15,23,42,.18);transition:left 280ms cubic-bezier(.2,.9,.22,1), transform 220ms ease;transform:${on ? 'scale(1.02)' : 'scale(.98)'};"></span><span class="absolute left-6 top-1/2 -translate-y-1/2 text-[15px] font-bold" style="color:${on ? 'rgba(255,255,255,.92)' : 'var(--sim-muted)'}">${on ? 'ON' : 'OFF'}</span></button></div>
-              <div class="rounded-[24px] p-4" style="background:rgba(255,255,255,.52);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">전환 메모</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.transition || m.settle)}</p></div>
-            </div>${footer}`;
-        }
-
-        if (sim.archetype === "rail") {
-          const pos = clamp(sim.railValue, 0, 100);
-          return `${header}
-            <div class="absolute inset-x-0 bottom-0 top-[220px] px-6 pb-8 flex flex-col justify-between">
-              <div class="rounded-[30px] p-4 sim-glass" style="background:var(--sim-surface);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">Drag Interaction</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.role)}</p></div>
-              <div class="relative h-[240px] flex flex-col justify-center">
-                ${ripple}
-                <div class="relative h-3 rounded-full" style="background:rgba(255,255,255,.45);box-shadow:inset 0 1px 2px rgba(15,23,42,.08);border:1px solid var(--sim-border);" onpointerdown="Actions.simRailDown(event)">
-                  <div class="absolute left-0 top-0 h-full rounded-full" style="width:${pos}%;background:linear-gradient(90deg, var(--sim-accent-soft), var(--sim-accent));"></div>
-                  <button type="button" class="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white sim-sheen" style="left:calc(${pos}% - 20px);border:1px solid var(--sim-border);box-shadow:0 14px 24px rgba(15,23,42,.16);"></button>
-                </div>
-                <div class="flex justify-between mt-3 text-[14px] font-bold" style="color:var(--sim-muted)"><span>LOW</span><span>${pos}</span><span>HIGH</span></div>
-              </div>
-              <div class="rounded-[24px] p-4" style="background:rgba(255,255,255,.52);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">저항과 안착</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.resistance || m.settle)}</p></div>
-            </div>${footer}`;
-        }
-
-        if (sim.archetype === "panel") {
-          const openPct = clamp(sim.panelOpen, 0.08, 1);
-          const translate = Math.round((1 - openPct) * 230);
-          const blur = Math.round(8 + openPct * 14);
-          return `${header}
-            <div class="absolute inset-x-0 bottom-0 top-[220px] px-5 pb-5">
-              <div class="absolute inset-x-5 top-0 h-[210px] rounded-[28px] p-5" style="background:rgba(255,255,255,.26);border:1px solid var(--sim-border);filter:blur(${Math.max(0, 10 - blur/2)}px);opacity:${0.65 - openPct * 0.15};"><div class="w-[65%] h-5 rounded-full" style="background:rgba(255,255,255,.4)"></div><div class="grid grid-cols-2 gap-3 mt-5"><div class="h-24 rounded-[22px]" style="background:rgba(255,255,255,.35)"></div><div class="h-24 rounded-[22px]" style="background:rgba(255,255,255,.25)"></div></div></div>
-              <button type="button" onclick="Actions.simPanelToggle()" class="absolute left-1/2 -translate-x-1/2 top-6 px-5 py-3 rounded-full sim-glass" style="background:var(--sim-surface);border:1px solid var(--sim-border);box-shadow:0 16px 30px var(--sim-shadow);color:var(--sim-ink);font-weight:700;">${openPct > 0.5 ? '닫기' : '열기'}</button>
-              <div class="absolute inset-x-0 bottom-0 rounded-t-[34px] pt-3 px-5 pb-6 sim-glass" style="transform:translateY(${translate}px);transition:transform ${theme.sharp ? 220 : 320}ms cubic-bezier(.2,.9,.24,1);background:${theme.liquid ? 'linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.48))' : 'linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.72))'};border-top:1px solid var(--sim-border);backdrop-filter:blur(${blur}px);-webkit-backdrop-filter:blur(${blur}px);box-shadow:0 -24px 40px rgba(15,23,42,.12);">
-                <button type="button" onpointerdown="Actions.simPanelHandleDown(event)" class="block mx-auto mb-4 w-16 h-1.5 rounded-full" style="background:rgba(100,116,139,.45)"></button>
-                <div class="rounded-[24px] p-4" style="background:rgba(255,255,255,.42);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">Floating Layer</p><p class="text-[18px] font-bold mt-1" style="color:var(--sim-ink)">${esc(m.nameKo)}</p><p class="text-[15px] mt-2 leading-[1.55]" style="color:var(--sim-muted)">${esc(m.transition || m.visualBehavior)}</p></div>
-              </div>
-            </div>${footer}`;
-        }
-
-        if (sim.archetype === "lens") {
-          const lensSize = 132 + (theme.softness * 24);
-          return `${header}
-            <div class="absolute inset-x-0 bottom-0 top-[220px] px-6 pb-8 flex flex-col justify-between">
-              <div class="rounded-[30px] p-4 sim-glass" style="background:var(--sim-surface);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">Lens Interaction</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.role)}</p></div>
-              <div class="relative h-[265px] overflow-hidden rounded-[30px] sim-glass" style="background:rgba(255,255,255,.32);border:1px solid var(--sim-border);" onpointerdown="Actions.simLensDown(event)">
-                ${ripple}
-                <div class="absolute inset-0 p-5 text-[20px] font-bold leading-[1.5] tracking-[-0.02em]" style="color:rgba(15,23,42,.16);">MATERIAL FEEL
-INTERACTION
-MOTION
-DEPTH
-TACTILE SIGNAL</div>
-                <div class="absolute rounded-full sim-glass sim-sheen" style="left:calc(${sim.lensX}% - ${lensSize/2}px);top:calc(${sim.lensY}% - ${lensSize/2}px);width:${lensSize}px;height:${lensSize}px;background:linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.26));border:1px solid rgba(255,255,255,.6);box-shadow:0 18px 34px rgba(15,23,42,.16);backdrop-filter:blur(${theme.sharp ? 8 : 14}px) saturate(125%);-webkit-backdrop-filter:blur(${theme.sharp ? 8 : 14}px) saturate(125%);display:flex;align-items:center;justify-content:center;color:var(--sim-ink);font-size:18px;font-weight:800;">ZOOM</div>
-              </div>
-              <div class="rounded-[24px] p-4" style="background:rgba(255,255,255,.52);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">광학 반응</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.visualBehavior || m.transition)}</p></div>
-            </div>${footer}`;
-        }
-
-        if (sim.archetype === "surface") {
-          const px = sim.pointX;
-          const py = sim.pointY;
-          return `${header}
-            <div class="absolute inset-x-0 bottom-0 top-[220px] px-6 pb-8 flex flex-col justify-between">
-              <div class="rounded-[30px] p-4 sim-glass" style="background:var(--sim-surface);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">Reactive Surface</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.role)}</p></div>
-              <button type="button" class="relative h-[260px] rounded-[34px] overflow-hidden sim-glass" style="background:linear-gradient(180deg, rgba(255,255,255,.38), rgba(255,255,255,.18));border:1px solid var(--sim-border);box-shadow:0 20px 36px var(--sim-shadow);" onpointerdown="Actions.simSurfaceDown(event)">
-                <div class="absolute inset-0" style="background:radial-gradient(circle at ${px}% ${py}%, ${theme.accentSoft} 0%, rgba(255,255,255,.12) 20%, transparent 48%);"></div>
-                <div class="absolute inset-x-5 top-5 text-left"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">Touch anywhere</p><p class="text-[18px] font-bold mt-1" style="color:var(--sim-ink)">${esc(m.nameKo)}</p></div>
-                ${ripple}
-              </button>
-              <div class="rounded-[24px] p-4" style="background:rgba(255,255,255,.52);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">여운</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.settle || m.emotionalEffect)}</p></div>
-            </div>${footer}`;
-        }
-
-        const y = sim.cardY;
-        const x = sim.cardX;
-        const lift = sim.cardLift;
-        const rotate = (x / 18).toFixed(1);
-        return `${header}
-          <div class="absolute inset-x-0 bottom-0 top-[220px] px-6 pb-8 flex flex-col justify-between">
-            <div class="rounded-[30px] p-4 sim-glass" style="background:var(--sim-surface);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">Lifted Card</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.role)}</p></div>
-            <div class="relative h-[250px] flex items-center justify-center">${ripple}<button type="button" class="relative w-[250px] rounded-[30px] p-5 text-left sim-glass sim-sheen" style="background:${theme.liquid ? 'linear-gradient(180deg, rgba(255,255,255,.68), rgba(255,255,255,.38))' : 'linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.72))'};border:1px solid var(--sim-border);box-shadow:0 ${20 + Math.round(lift*10)}px ${36 + Math.round(lift*10)}px rgba(15,23,42,.16);transform:translate(${x}px, ${y}px) rotate(${rotate}deg) scale(${1 + lift*0.03});transition:transform 260ms cubic-bezier(.2,.9,.24,1), box-shadow 260ms ease;" onpointerdown="Actions.simCardDown(event)"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">Card Motion</p><p class="text-[20px] font-bold mt-1" style="color:var(--sim-ink)">${esc(m.nameKo)}</p><p class="text-[15px] mt-3 leading-[1.55]" style="color:var(--sim-muted)">${esc(m.visualBehavior || m.transition)}</p></button></div>
-            <div class="rounded-[24px] p-4" style="background:rgba(255,255,255,.52);border:1px solid var(--sim-border);"><p class="text-[14px] font-bold" style="color:var(--sim-muted)">움직임 메모</p><p class="text-[15px] mt-1" style="color:var(--sim-ink)">${esc(m.settle || m.emotionalEffect)}</p></div>
-          </div>${footer}`;
-      }
-
-      function viewSimulation() {
-        const m = simulationInteraction();
-        if (!m) return fallback(5, "시뮬레이션할 인터랙션이 없습니다.");
-        const sim = simStateFor(m);
-        const theme = deriveEmotionTheme();
-        const profile = sim.archetype || simulationArchetype(m);
-        const c = selectedConcept();
-        return `<div class="page-top px-4 dock-space animate-fade-in">
-          ${header("인터랙션 시뮬레이션", 5)}
-          ${sectionTitle("가상 스마트폰에서 직접 체험하기", "최종 제안된 인터랙션 컨셉을 선택하면 가상 스마트폰 화면에서 직접 눌러 보고, 끌어 보고, 열어 보며 물성 기반의 움직임을 확인할 수 있습니다.")}
-          ${priorChoice([
-            { label: "감성 키워드", value: state.keyword },
-            { label: "선택한 감성 해석", value: c ? `${c.nameKo} (${c.nameEn})` : "" },
-            { label: "현재 시뮬레이션", value: `${m.nameKo} (${m.type})` }
-          ])}
-
-          <section class="bg-white rounded-[2rem] p-4 border-2 border-slate-200 shadow-md mb-5">
-            <div class="flex items-center justify-between gap-2 mb-3 px-1">
-              <h3 class="t-label text-slate-500">시뮬레이션할 인터랙션 선택</h3>
-              ${ghostBtn("초기화", "Actions.resetSimulation()", "rotate-ccw")}
-            </div>
-            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">${state.interactions.map((x, i) => `<button type="button" onclick="Actions.selectSimulationInteraction('${escAttr(x.id)}')" class="min-w-[152px] p-3 rounded-2xl border text-left transition-all ${x.id === m.id ? 'bg-slate-900 text-white border-slate-900 shadow-lg' : 'bg-white text-slate-800 border-slate-200'}"><p class="t-meta font-bold">${pad2(i + 1)} ${esc(x.nameKo)}</p><p class="t-meta ${x.id === m.id ? 'text-slate-300' : 'text-slate-500'}">${esc(x.type)}</p></button>`).join('')}</div>
-          </section>
-
-          <section class="bg-white rounded-[2rem] p-5 border-2 border-slate-200 shadow-md mb-5">
-            <div class="flex items-start justify-between gap-3 mb-3">
-              <div>
-                <p class="t-meta font-bold text-slate-500">Simulation Brief</p>
-                <h3 class="t-h2 text-slate-900">${esc(m.nameKo)}</h3>
-                <p class="t-meta text-slate-500">${esc(m.nameEn)} · ${esc(m.type)}</p>
-              </div>
-              <span class="t-meta font-bold px-3 py-1.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200">${esc(profile)}</span>
-            </div>
-            <p class="t-small text-slate-700 prose-ko">${esc(simulationGuide(profile))}</p>
-            <div class="grid grid-cols-1 gap-2 mt-4">
-              <div class="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3"><p class="t-meta font-bold text-slate-500">Interaction DNA</p><p class="t-small text-slate-800 prose-ko">${esc(m.interactionDNA || m.visualBehavior)}</p></div>
-              <div class="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3"><p class="t-meta font-bold text-slate-500">연결 물성</p><div class="flex flex-wrap gap-1.5 mt-2">${(m.propertyMapping || []).map(x => chip(x, 'blue')).join('') || chip('선택된 물성 없음')}</div></div>
-              <div class="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3"><p class="t-meta font-bold text-slate-500">감성 유지 포인트</p><p class="t-small text-slate-800 prose-ko">${esc(m.emotionalEffect || m.visualBehavior || m.settle)}</p></div>
-            </div>
-          </section>
-
-          <section class="bg-white rounded-[2rem] p-4 border-2 border-slate-200 shadow-md mb-6">
-            <div class="flex items-center justify-between gap-2 mb-3 px-1">
-              <h3 class="t-label text-slate-500">가상 스마트폰 시뮬레이터</h3>
-              <span class="t-meta text-slate-500">직접 터치해 보세요</span>
-            </div>
-            ${renderSimulationDemo(m, sim, theme)}
-          </section>
-
-          ${dock(`
-            <div class="space-y-2.5">
-              ${primaryBtn("다른 인터랙션 시뮬레이션 선택", "setState({step:5}, true)")}
-              ${secondaryBtn("시뮬레이션 초기화", "Actions.resetSimulation()", "rotate-ccw")}
-              ${secondaryBtn("전체 리포트 PDF로 저장", "Actions.exportPdf()")}
             </div>
           `)}
         </div>`;
@@ -2940,7 +2367,6 @@ TACTILE SIGNAL</div>
           case 3:  return state.perceptions.length ? viewPerception() : fallback(2, "분석된 지각 특성이 없습니다.");
           case 4:  return state.properties.length ? viewProperty() : fallback(3, "정의된 물성이 없습니다.");
           case 5:  return state.interactions.length ? viewInteraction() : fallback(4, "제안된 인터랙션이 없습니다.");
-          case 6:  return state.interactions.length ? viewSimulation() : fallback(5, "시뮬레이션할 인터랙션이 없습니다.");
           default: return fallback(0, "요청한 화면을 찾을 수 없습니다.");
         }
       }
