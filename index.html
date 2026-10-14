@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>감성 · 지각 · 인터랙션 컨셉 랩 v12.18</title>
+  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.19</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -29,6 +29,11 @@
     }
     body * { font-size: inherit; }
     body .t-display { font-size: 34px; line-height: 1.2;  font-weight: 800; letter-spacing: -0.025em; }
+    /* 첫 화면 타이틀 — 한 줄 유지, 폭이 좁으면 글씨 크기를 줄입니다. (좌우 여백 56px 기준) */
+    body .t-title-fit {
+      font-size: min(30px, calc((min(100vw, 430px) - 56px) / 12.6));
+      line-height: 1.25; font-weight: 800; letter-spacing: -0.03em; white-space: nowrap;
+    }
     body .t-h1      { font-size: 26px; line-height: 1.35; font-weight: 800; letter-spacing: -0.015em; }
     body .t-h2      { font-size: 22px; line-height: 1.4;  font-weight: 800; letter-spacing: -0.01em; }
     body .t-h3      { font-size: 19px; line-height: 1.5;  font-weight: 700; }
@@ -100,7 +105,6 @@
       const CONFIG = {
         API_BASE: "https://api.openai.com/v1",
         SESSION_KEY_API: "interaction_lab_openai_key_v1",
-        SESSION_KEY_PREFS: "interaction_lab_image_prefs_v1",
         PROJECTS_KEY: "interaction_lab_projects_v1",
         IMAGE_DB: { name: "interaction_lab_images_v1", store: "images" },
         MAX_PROJECTS: 5,
@@ -111,6 +115,9 @@
       /* 모델은 사용자 선택 없이 아래 두 모델로 고정합니다. */
       const FIXED_TEXT_MODEL = "gpt-5.6-terra";
       const FIXED_IMAGE_MODEL = "gpt-image-2.5-flare";
+      /* 이미지 옵션도 고정합니다 — 품질: 표준(medium), 이미지 안 라벨: 한글 + 영문(ko) */
+      const FIXED_IMAGE_QUALITY = "medium";
+      const FIXED_LABEL_LANG = "ko";
       /* 감성 표현 강도를 높이기 위해 AI가 골라 쓰는 8가지 이미지 스타일 */
       const IMAGE_STYLES = {
         "Cinematic Architectural Visual":
@@ -164,16 +171,6 @@
       }
 
       const STYLE_RULE_TEXT = `입력 감성의 특성에 따라 위 8개 표현 방식 중 가장 적합한 하나를 직접 고릅니다. 감성의 의미뿐 아니라 에너지, 긴장도, 공간감, 시간성, 자연성, 추상성을 함께 고려해 결정합니다. 같은 스타일을 기계적으로 반복하지 말고, 입력된 감성을 가장 명확하게 전달하는 표현 방식을 고릅니다.`;
-
-      const LABEL_LANGS = [
-        { id: "en", label: "영문만" },
-        { id: "ko", label: "한글 + 영문" }
-      ];
-
-      const QUALITIES = [
-        { id: "medium", label: "표준" },
-        { id: "high",   label: "고품질" }
-      ];
 
       /* 감성 해석 방식 — 사용자 선택 없이 한 가지 방법론으로 고정합니다. */
       const EMOTION_METHOD = {
@@ -841,16 +838,15 @@ ${rows}`;
 
       const state = Object.assign({
         apiKey: "",
-        quality: QUALITIES[0].id,
-        labelLang: "ko",
+        quality: FIXED_IMAGE_QUALITY,
+        labelLang: FIXED_LABEL_LANG,
         step: -1,
         isAnalyzing: false,
         loadingMsg: "",
         errorMsg: null,
         lightbox: null,
         simPrompt: null,
-        editTarget: {},
-        settingsOpen: false
+        editTarget: {}
       }, blankProject());
 
       /* 입력 중인 값은 재렌더에도 유지되도록 별도 보관합니다. */
@@ -889,28 +885,19 @@ ${rows}`;
       function selectedProperties() { return state.properties.filter(p => state.propertyIds.includes(p.id)); }
 
       /* =========================================================
-         7. 세션 헬퍼 — API 키와 이미지 표시 설정만 이 브라우저 세션에 보관
-         모델은 GPT-5.6 Terra / Image 2.5 Flare로 고정합니다.
+         7. 세션 헬퍼 — API 키만 이 브라우저 세션에 보관
+         모델과 이미지 옵션(표준 품질 · 한글 + 영문 라벨)은 고정합니다.
          ========================================================= */
       function loadSession() {
         try {
           state.apiKey = sessionStorage.getItem(CONFIG.SESSION_KEY_API) || "";
-          const raw = sessionStorage.getItem(CONFIG.SESSION_KEY_PREFS);
-          if (raw) {
-            const m = JSON.parse(raw);
-            if (m && typeof m === "object") {
-              if (m.quality) state.quality = m.quality;
-              if (m.labelLang) state.labelLang = m.labelLang;
-            }
-          }
         } catch (e) { /* 세션 저장소 차단 환경 */ }
+        state.quality = FIXED_IMAGE_QUALITY;
+        state.labelLang = FIXED_LABEL_LANG;
       }
       function saveSession() {
         try {
           sessionStorage.setItem(CONFIG.SESSION_KEY_API, state.apiKey || "");
-          sessionStorage.setItem(CONFIG.SESSION_KEY_PREFS, JSON.stringify({
-            quality: state.quality, labelLang: state.labelLang
-          }));
         } catch (e) { /* 무시 */ }
       }
 
@@ -1650,7 +1637,7 @@ ${rows}`;
       function buildReport() {
         const L = [];
         const line = "==================================================";
-        L.push(line, "   감성 · 지각 · 인터랙션 컨셉 랩 · 종합 리포트", line, "");
+        L.push(line, "   감성 · 지각 · 물성 · 인터렉션 랩 · 종합 리포트", line, "");
         L.push("[감성 키워드]", `- ${state.keyword || "설정된 키워드 없음"}`);
         L.push(`- 감성 해석 방식: ${EMOTION_METHOD.label} (${EMOTION_METHOD.en})`);
         if (state.note) L.push(`- 연관 과제: ${state.note}`);
@@ -1859,7 +1846,7 @@ ${rows}`;
 
           out.push(PDF.blk(`<div style="padding-bottom:6px;">
             <div style="font-size:14px;letter-spacing:0.12em;color:#64748b;font-weight:700;">EMOTION INTERACTION LAB</div>
-            <h1 style="font-size:30px;font-weight:800;margin:6px 0 10px;letter-spacing:-0.02em;">감성 · 지각 · 인터랙션 컨셉 리포트</h1>
+            <h1 style="font-size:30px;font-weight:800;margin:6px 0 10px;letter-spacing:-0.02em;">감성 · 지각 · 물성 · 인터렉션 리포트</h1>
             <div style="font-size:20px;font-weight:700;">${esc(state.keyword || "감성 키워드 없음")}</div>
             <div style="font-size:16px;color:#1d4ed8;font-weight:700;margin-top:4px;">${esc(EMOTION_METHOD.label)}</div>
             ${state.note ? `<div style="font-size:16px;color:#475569;margin-top:4px;">${esc(state.note)}</div>` : ""}
@@ -2017,7 +2004,7 @@ ${rows}`;
       /* =========================================================
          14. ACTIONS
          ========================================================= */
-      /* 한 번에 받으면 응답이 길어 연결이 끊기기 쉬워 3개 + 2개로 나눠 요청합니다. */
+      /* 한 번에 받으면 응답이 길어 연결이 끊기기 쉬워 3개 + 3개로 나눠 요청합니다. */
       function interactionPartNote(from, count, existing) {
         const to = from + count - 1;
         let s = `[이번 요청 범위 — 반드시 지킴]\n전체 ${INTERACTION_COUNT}개 제안 중 ${from}~${to}번째 ${count}개만 반환합니다. 이번에 맡을 프레임: ${FRAMES.slice(from - 1, to).map(f => `${f.no} ${frameLabel(f)}`).join(' · ')}. "interactions" 배열에 정확히 ${count}개를 넣습니다. 앞의 '정확히 ${INTERACTION_COUNT}개' 규칙보다 이 범위 규칙이 우선합니다.`;
@@ -2129,9 +2116,6 @@ ${others}`;
           saveSession();
           setState({ step: 0, errorMsg: null }, true);
         },
-        pickQuality(id) { state.quality = id; saveSession(); render(); },
-        pickLabelLang(id) { state.labelLang = id; saveSession(); render(); },
-        toggleSettings() { setState({ settingsOpen: !state.settingsOpen }); },
         useSample(i) { if (SAMPLE_KEYWORDS[i]) { drafts["keyword-input"] = SAMPLE_KEYWORDS[i]; render(); } },
 
         startNewProject() {
@@ -2623,22 +2607,12 @@ ${others}`;
       /* =========================================================
          15. 화면별 렌더
          ========================================================= */
-      function optionRow(title, list, current, factory) {
-        return `<div class="mb-4">
-          <h4 class="t-meta font-bold text-slate-600 mb-2">${esc(title)}</h4>
-          <div class="grid grid-cols-1 gap-2">
-            ${list.map(m => `<button type="button" onclick="${factory(m.id)}" aria-pressed="${current === m.id}"
-              class="w-full py-3 px-4 rounded-xl font-bold t-meta border-2 text-left transition-all active:scale-[0.98] ${current === m.id ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}">${esc(m.label)}</button>`).join("")}
-          </div>
-        </div>`;
-      }
-
       function viewAuth() {
         return `<div class="min-h-screen flex flex-col items-center justify-center px-7 py-16 bg-white text-center animate-fade-in">
           <div class="w-24 h-24 bg-blue-700 rounded-full flex items-center justify-center mb-9 shadow-[0_10px_24px_rgba(29,78,216,.3)]">
             <i data-lucide="layers" class="text-white w-12 h-12"></i>
           </div>
-          <h1 class="t-display text-slate-900 mb-3">감성 · 지각 · 인터랙션 컨셉</h1>
+          <h1 class="t-title-fit text-slate-900 mb-3">감성 · 지각 · 물성 · 인터렉션</h1>
           <p class="t-small text-slate-600 font-bold mb-10">감성 키워드에서 지각과 동적 물성을 거쳐 실제 인터랙션 요소까지 다섯 단계로 좁혀 갑니다</p>
           <div class="w-full space-y-4">
             <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" class="inline-block t-small text-blue-700 font-bold underline underline-offset-4">OpenAI API 키 발급받기</a>
@@ -2648,12 +2622,6 @@ ${others}`;
               placeholder="sk- 로 시작하는 키" value="${escAttr(state.apiKey)}">
             <p class="t-meta text-slate-600 prose-ko">키는 이 브라우저 세션에만 임시로 보관되며, 창을 닫으면 지워집니다. 텍스트 분석은 GPT-5.6 Terra, 이미지 생성은 Image 2.5 Flare로 고정되어 있습니다.</p>
             ${primaryBtn("시작하기", "Actions.validateKey()")}
-            <button type="button" onclick="Actions.toggleSettings()" class="w-full t-small text-slate-600 font-bold underline underline-offset-4 pt-2">${state.settingsOpen ? "이미지 설정 접기" : "이미지 설정 열기"}</button>
-            ${state.settingsOpen ? `<div class="text-left bg-slate-50 border-2 border-slate-200 rounded-3xl p-5 mt-2">
-              ${optionRow("이미지 품질", QUALITIES, state.quality, id => `Actions.pickQuality('${id}')`)}
-              ${optionRow("이미지 안 라벨", LABEL_LANGS, state.labelLang, id => `Actions.pickLabelLang('${id}')`)}
-              <p class="t-meta text-slate-500 prose-ko">이미지 품질과 이미지 안 라벨 표시만 조절할 수 있습니다. 모델은 변경할 수 없습니다.</p>
-            </div>` : ""}
           </div>
         </div>`;
       }
@@ -2672,20 +2640,6 @@ ${others}`;
             <button type="button" onclick="Actions.startNewProject()" class="w-full bg-white text-slate-900 py-5 rounded-2xl font-bold t-h3 flex items-center justify-center gap-2 shadow-2xl active:scale-[0.98] transition-all">
               새 프로젝트 시작 <i data-lucide="arrow-right" class="w-5 h-5"></i>
             </button>
-
-            <div>
-              <button type="button" onclick="Actions.toggleSettings()" class="w-full mb-4 py-3.5 rounded-2xl bg-white/10 border border-white/20 text-white font-bold t-small flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
-                <i data-lucide="sliders-horizontal" class="w-5 h-5"></i>${state.settingsOpen ? "이미지 설정 접기" : "이미지 설정"}
-              </button>
-              ${state.settingsOpen ? `<div class="text-left bg-white text-slate-900 rounded-3xl p-5 mb-6">
-                <div class="mb-4 rounded-2xl bg-slate-100 px-4 py-3">
-                  <p class="t-meta font-bold text-slate-600">고정 모델</p>
-                  <p class="t-small text-slate-800 mt-1">텍스트 · GPT-5.6 Terra<br>이미지 · Image 2.5 Flare</p>
-                </div>
-                ${optionRow("이미지 품질", QUALITIES, state.quality, id => `Actions.pickQuality('${id}')`)}
-                ${optionRow("이미지 안 라벨", LABEL_LANGS, state.labelLang, id => `Actions.pickLabelLang('${id}')`)}
-              </div>` : ""}
-            </div>
 
             <div>
               <h2 class="t-label text-slate-300 mb-3">저장된 프로젝트 ${projects.length}/${CONFIG.MAX_PROJECTS}</h2>
