@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.22</title>
+  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.23</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -256,6 +256,10 @@
          ========================================================= */
       const SYSTEM = `당신은 감성 디자인, 지각심리학, 체화인지, 인터랙션 디자인, 햅틱 UX, 모션 디자인, 동적 물성 시뮬레이션을 함께 다루는 시니어 Interaction Experience Designer입니다.
 - 모든 한국어 문장은 정중하고 명확한 존댓말로 작성합니다.
+- [쉬운 말 규칙 — 모든 항목에 적용] 이름·제목·설명·이미지 라벨을 누구나 바로 그림이 떠오르는 쉬운 말로 씁니다. 한자어를 여러 개 이어 붙인 어려운 조어를 만들지 않습니다.
+  예: '심층 흑청 강재' → '심해의 다크블루' / '스틸 냉광 기념비 도자' → '차가운 기념비 같은 세라믹'.
+  색·소재는 '다크블루', '세라믹', '스틸', '젤리'처럼 익숙한 말을 써도 됩니다. 이름은 '○○ 같은 △△', '○○한 △△'처럼 풀어 쓴 짧은 구로 짓습니다.
+  전문 개념이 꼭 필요하면 탄성·관성·저항·진동처럼 널리 아는 단어만 쓰고, 처음 보는 사람도 뜻을 바로 알 수 있게 씁니다.
 - 감성 단계에서는 사람이 실제로 느끼는 정서와 몸·마음의 반응을 자연스럽고 구체적인 경험 언어로 표현합니다.
 - 지각 단계에서는 관찰 가능한 인식 과정으로, 물성 단계에서는 인터랙션의 반응을 만들어 내는 동적 성질로, 마지막 단계에서는 실제 UI 요소의 움직임과 피드백으로 구체화합니다.
 - CMF 소재 제안이나 제조 공정 제안이 아니라, 디지털 인터랙션에서 감성을 어떻게 지각시키고 움직이게 할 것인지에 집중합니다.
@@ -292,7 +296,7 @@ ${EMOTION_METHOD.guide}
 - 단, 입력 감성의 성격상 특정 초점이 부자연스러우면 억지로 맞추지 말고 가장 가까운 경험 축으로 자연스럽게 조정합니다.
 
 [감성 정의 규칙]
-- 각 안에는 한글 콘셉트명과 2~3단어의 영문 콘셉트명을 붙입니다.
+- 각 안에는 한글 콘셉트명과 2~3단어의 영문 콘셉트명을 붙입니다. 한글 콘셉트명은 '차가운 기념비 같은 세라믹', '심해의 다크블루'처럼 쉬운 말로 풀어 씁니다.
 - "definition"은 3~4문장으로 씁니다. 유사어를 나열하지 말고 사람이 실제로 느끼는 정서 상태와 몸·마음의 변화를 자연스럽게 설명합니다.
 - 에너지 수준, 긴장과 이완, 안정감, 활동성, 시간적 느낌, 공간 분위기, 감정의 온도, 반응성, 여운 중 해당 감성에 중요한 요소를 포함합니다.
 - 지나치게 시적이거나 광고 카피 같은 문구, 브랜드·시장·트렌드 분석을 피합니다.
@@ -461,9 +465,9 @@ ${perceptions.map((p, i) => `${i + 1}. [${p.category}] ${p.titleKo} — ${p.desc
 단, 감성·지각과 관련 없는 축을 억지로 넣지 않습니다.
 
 [작성 규칙]
-- "titleKo"는 인터랙션에서 체감할 수 있는 전문 물성명으로 적습니다. 예: 복원 탄성, 점진 저항, 운동 관성, 입력 감지 임계, 잔향 감쇠, 경계 변형성, 광학 확산 반응, 햅틱 펄스 완만도.
+- "titleKo"는 인터랙션에서 체감할 수 있는 물성명을 쉬운 말로 적습니다. 예: 되돌아오는 탄성, 점점 세지는 저항, 묵직한 관성, 닿는 순간의 민감도, 천천히 사라지는 여운, 휘어지는 가장자리, 번지는 빛, 부드러운 진동. '잔향 감쇠', '경계 변형성'처럼 어려운 한자 조어는 쓰지 않습니다.
 - "titleEn"은 대응되는 2~4단어 전문 영문명으로 적습니다. 예: Restorative Elasticity, Progressive Resistance, Motion Inertia, Input Detection Threshold, Residual Damping.
-- "axis"는 감지, 힘, 변형, 운동, 회복, 시간, 광학, 햅틱 중 가장 가까운 짧은 분류어를 씁니다.
+- "axis"는 감지, 힘, 변형, 움직임, 회복, 시간, 빛, 진동 중 가장 가까운 짧은 분류어를 씁니다.
 - "description"은 정확히 2문장입니다. 첫 문장은 물성이 어떤 동적 성질인지 설명하고, 둘째 문장은 선택된 지각 경험을 어떻게 만들어 내는지 설명합니다.
 - "interactionHint"는 이 물성을 UI 움직임으로 번역하는 방법을 한 문장으로 적습니다. 예: '누르는 동안 4~7% 압축되고 손을 떼면 작은 오버슈트 후 복원됩니다.'
 - "check"는 프로토타입에서 눈·손으로 비교 확인할 수 있는 테스트 방법 1문장입니다.
@@ -473,7 +477,7 @@ ${perceptions.map((p, i) => `${i + 1}. [${p.category}] ${p.titleKo} — ${p.desc
 
 ${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
 [FORMAT] 정확히 이 JSON만 반환하세요:
-{"properties":[{"axis":"회복","titleKo":"복원 탄성","titleEn":"Restorative Elasticity","description":"2문장","interactionHint":"UI 움직임으로 번역하는 1문장","check":"프로토타입 확인 방법 1문장","value":78,"level":"높음","visual":"close-up interaction study of a rounded UI control compressing under touch and springing back with a subtle overshoot"}]}`,
+{"properties":[{"axis":"회복","titleKo":"되돌아오는 탄성","titleEn":"Restorative Elasticity","description":"2문장","interactionHint":"UI 움직임으로 번역하는 1문장","check":"프로토타입 확인 방법 1문장","value":78,"level":"높음","visual":"close-up interaction study of a rounded UI control compressing under touch and springing back with a subtle overshoot"}]}`,
 
         /* 인터랙션 제안 — 물성을 메타포로 삼아 화면 속 디지털 UI 반응으로 제안 */
         INTERACTION_DIGITAL: (concept, properties, instruction, plan) => `선택된 감성 해석: ${concept.nameKo} (${concept.nameEn})
@@ -503,12 +507,12 @@ ${LG_ELEMENTS_TEXT}
 [감성 물성 시스템 — 가장 중요]
 - 먼저 앞 단계의 인터랙션 물성(목표값 포함)·지각 특성·시각 앵커를 묶어 하나의 '감성 물성 시스템'을 정의합니다. Liquid Glass가 굴절·반사·두께·블러라는 유리의 성질을 모든 요소에 일관되게 쓰듯, 이 시스템의 핵심 성질 3~4개를 6개 요소 전체에 일관되게 적용합니다.
 - 유리 효과(반투명 층, 굴절, 블러, 반사 하이라이트, 렌즈 같은 가장자리)를 써도 됩니다. 유리를 기본 표면으로 쓴다면 앞 단계 물성이 그 유리의 성격을 바꿉니다. 예: 무겁고 차가움 → 두껍고 밀도 높은 짙은 유리, 굴절이 손가락을 느리게 따라오고 착지할 때 무게감 있게 가라앉음 / 귀엽고 말랑함 → 젤리처럼 부푼 유리, 누르면 볼록하게 출렁이며 빛이 둥글게 번짐 / 날카롭고 세련됨 → 얇고 맑은 유리, 가장자리 하이라이트가 칼날처럼 빠르게 스침. 유리가 아닌 표면이 감성에 더 맞으면 그렇게 정의해도 됩니다.
-- 앞 단계 물성을 이름만 옮겨 적지 말고 창의적으로 번역합니다. 하나의 물성이 움직임뿐 아니라 빛·두께·투명도·형태·색·햅틱 같은 예상하지 못한 반응 채널에서 드러나게 하는 것도 좋습니다. 예: '잔향 감쇠'가 높으면 손을 뗀 뒤 표면의 빛 번짐이 천천히 가라앉음 / '입력 감지 임계'가 낮으면 손가락이 닿는 순간 표면이 먼저 미세하게 부풀어 오름.
+- 앞 단계 물성을 이름만 옮겨 적지 말고 창의적으로 번역합니다. 하나의 물성이 움직임뿐 아니라 빛·두께·투명도·형태·색·햅틱 같은 예상하지 못한 반응 채널에서 드러나게 하는 것도 좋습니다. 예: '천천히 사라지는 여운'이 높으면 손을 뗀 뒤 표면의 빛 번짐이 천천히 가라앉음 / '닿는 순간의 민감도'가 높으면 손가락이 닿는 순간 표면이 먼저 미세하게 부풀어 오름.
 - 물성 목표값의 높낮이가 반응의 크기에 드러나게 합니다. 값이 높을수록 더 강하고 분명하게 나타납니다.
 - 선택된 인터랙션 물성은 6개 제안 전체에서 빠짐없이 한 번 이상 쓰입니다.
 - 물성은 조금 과장합니다. 실제 물리보다 1.3~1.6배 강하게 표현해 처음 보는 사람도 바로 그 감성을 알아차리게 합니다. 예: 무거움 → 손가락보다 한 박자 늦게 출발하고, 깊게 눌리며, 착지할 때 주변 요소까지 미세하게 내려앉습니다 / 말랑함 → 누른 지점이 크게 오목해지고, 놓으면 두세 번 출렁이며 복원됩니다 / 차갑고 예리함 → 접촉 순간 날카로운 하이라이트가 가장자리를 따라 빠르게 스칩니다.
 - 과장하되 매일 반복해도 피곤하지 않고 정보가 또렷이 읽히는 수준을 지킵니다.
-- 시스템 이름은 이번 감성이 드러나게 짓습니다. 'Liquid Glass'를 그대로 쓰지 않습니다. 'Dense Frost Glass', 'Jelly Glass'처럼 감성이 붙은 이름은 좋습니다.
+- 시스템 이름은 이번 감성이 드러나게 짓습니다. 'Liquid Glass'를 그대로 쓰지 않습니다. 'Dense Frost Glass', 'Jelly Glass'처럼 감성이 붙은 이름은 좋습니다. 한글 이름은 '서리 낀 두꺼운 유리', '젤리처럼 말랑한 유리'처럼 쉬운 말로 짓습니다.
 - 각 제안의 "physicalBasis"에는 이 시스템의 어떤 성질이 이 요소에서 어떻게 과장되어 나타나는지 적고, "propertyTranslation"에는 앞 단계 물성 2~4개가 이 인터랙션의 어떤 반응으로 번역되었는지 하나씩 적습니다.
 
 [가장 중요한 원칙 — 이것은 디지털 인터랙션입니다]
@@ -553,7 +557,7 @@ ${LG_ELEMENTS_TEXT}
 - "phoneContext"는 적용 기기와 순간을 '기기 · 순간' 형식으로 짧게 적습니다. 예: 휴대폰 · 알림 정리, 휴대폰 · 카메라 셔터, 휴대폰 · 사진 넘기기.
 - "gesture"는 입력 방식을 짧게 적습니다. 예: 길게 누름, 기울이기, 두 손가락 핀치, 흔들기.
 - 아래 FORMAT의 예시 값은 형식만 보여 줍니다. 예시의 모션 원리나 맥락을 그대로 따라 쓰지 않습니다.
-- "nameKo"/"nameEn"은 감성과 움직임 특성이 함께 읽히는 짧은 제안명입니다.
+- "nameKo"/"nameEn"은 감성과 움직임 특성이 함께 읽히는 짧은 제안명입니다. nameKo는 '천천히 가라앉는 잠금 해제'처럼 쉬운 말로 씁니다.
 - "role"은 이 요소가 담당하는 UX 기능을 한 문장으로 적습니다.
 - "interactionDNA"는 제안 전체의 움직임 원리를 3~5개의 핵심어로 요약합니다.
 - "behavior"는 이 인터랙션이 입력에 어떻게 반응하고 움직이는지 2~4문장으로 씁니다. 정해진 단계 틀에 맞추지 말고, 선택된 물성이 가장 잘 체감되는 흐름만 골라 구체적으로(UI 요소의 위치·스케일·형태·투명도·블러·발광 변화와 햅틱 포함) 설명합니다.
@@ -569,7 +573,7 @@ ${LG_ELEMENTS_TEXT}
 
 ${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
 [FORMAT] 정확히 이 JSON만 반환하세요:
-{"selectedElements":[1,2,6,3,7,5],"materialSystem":{"nameKo":"감성 물성 시스템 이름","nameEn":"English System Name","surface":"기본 표면 1문장 (유리라면 어떤 유리인지)","core":["핵심 성질 1","핵심 성질 2","핵심 성질 3"],"exaggeration":"어떻게 과장해 적용하는지 1~2문장","whyKo":"이 감성과 맞는 이유 1문장"},"interactions":[{"element":1,"frame":"버튼 누르기","nameKo":"묵직한 결심 잠금 해제","nameEn":"Weighted Unlock Motion","type":"Weighted Unlock Motion","digitalPattern":"제스처 응답","physicalBasis":"무거운 금속 덩어리의 관성을 메타포로 삼습니다. 드래그 입력 후 80ms 늦게 따라오고, 강한 감쇠 스프링으로 오버슈트 없이 멈추며, 끝에서 짧고 낮은 햅틱 1회로 마무리합니다.","phoneContext":"휴대폰 · 잠금 해제","gesture":"기울이기 + 드래그","role":"잠금 해제를 무게 있는 결심의 순간으로 만듭니다.","interactionDNA":"늦은 출발 · 묵직한 활주 · 둔탁한 안착","behavior":"물성에 맞춘 동작 방식 2~4문장","timing":"420–680 ms / heavy spring / no overshoot","haptic":"끝에서 낮고 둔한 1회 thud","visualBehavior":"형태·깊이·빛의 동적 변화","propertyMapping":["운동 관성","잔향 감쇠"],"propertyTranslation":[{"property":"운동 관성","value":82,"effect":"손잡이가 손가락보다 약 90ms 늦게 따라오며 진행 방향 뒤쪽 가장자리가 두껍게 눌립니다"},{"property":"잔향 감쇠","value":70,"effect":"멈춘 뒤 표면의 빛 번짐이 0.6초에 걸쳐 천천히 가라앉습니다"}],"emotionalEffect":"원래 감성을 강화하는 설명","states":[{"labelKo":"정지","labelEn":"Rest","description":"기본 상태"},{"labelKo":"활주","labelEn":"Sliding","description":"작동 상태"},{"labelKo":"안착","labelEn":"Settle","description":"안착 상태"}],"visual":"isolated digital unlock control on a dark rounded card shown in three states: the handle lags slightly behind the finger, glides with a heavily damped motion and settles without overshoot, soft motion ghosting and a faint edge glow, cool blue-grey digital UI tone, no device frame, no physical objects"}]}`
+{"selectedElements":[1,2,6,3,7,5],"materialSystem":{"nameKo":"감성 물성 시스템 이름","nameEn":"English System Name","surface":"기본 표면 1문장 (유리라면 어떤 유리인지)","core":["핵심 성질 1","핵심 성질 2","핵심 성질 3"],"exaggeration":"어떻게 과장해 적용하는지 1~2문장","whyKo":"이 감성과 맞는 이유 1문장"},"interactions":[{"element":1,"frame":"버튼 누르기","nameKo":"묵직한 결심 잠금 해제","nameEn":"Weighted Unlock Motion","type":"Weighted Unlock Motion","digitalPattern":"제스처 응답","physicalBasis":"무거운 금속 덩어리의 관성을 메타포로 삼습니다. 드래그 입력 후 80ms 늦게 따라오고, 강한 감쇠 스프링으로 오버슈트 없이 멈추며, 끝에서 짧고 낮은 햅틱 1회로 마무리합니다.","phoneContext":"휴대폰 · 잠금 해제","gesture":"기울이기 + 드래그","role":"잠금 해제를 무게 있는 결심의 순간으로 만듭니다.","interactionDNA":"늦은 출발 · 묵직한 활주 · 둔탁한 안착","behavior":"물성에 맞춘 동작 방식 2~4문장","timing":"420–680 ms / heavy spring / no overshoot","haptic":"끝에서 낮고 둔한 1회 thud","visualBehavior":"형태·깊이·빛의 동적 변화","propertyMapping":["묵직한 관성","천천히 사라지는 여운"],"propertyTranslation":[{"property":"묵직한 관성","value":82,"effect":"손잡이가 손가락보다 약 90ms 늦게 따라오며 진행 방향 뒤쪽 가장자리가 두껍게 눌립니다"},{"property":"천천히 사라지는 여운","value":70,"effect":"멈춘 뒤 표면의 빛 번짐이 0.6초에 걸쳐 천천히 가라앉습니다"}],"emotionalEffect":"원래 감성을 강화하는 설명","states":[{"labelKo":"정지","labelEn":"Rest","description":"기본 상태"},{"labelKo":"활주","labelEn":"Sliding","description":"작동 상태"},{"labelKo":"안착","labelEn":"Settle","description":"안착 상태"}],"visual":"isolated digital unlock control on a dark rounded card shown in three states: the handle lags slightly behind the finger, glides with a heavily damped motion and settles without overshoot, soft motion ghosting and a faint edge glow, cool blue-grey digital UI tone, no device frame, no physical objects"}]}`
       };
 
       /* =========================================================
