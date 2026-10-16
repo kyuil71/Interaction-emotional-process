@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.19</title>
+  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.21</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -106,6 +106,7 @@
         API_BASE: "https://api.openai.com/v1",
         SESSION_KEY_API: "interaction_lab_openai_key_v1",
         PROJECTS_KEY: "interaction_lab_projects_v1",
+        PING_KEY: "interaction_lab_image_ping_v1",
         IMAGE_DB: { name: "interaction_lab_images_v1", store: "images" },
         MAX_PROJECTS: 5,
         AUTOSAVE_MS: 5000,
@@ -201,16 +202,50 @@
       /* 최종 인터랙션 제안 개수 */
       const INTERACTION_COUNT = 6;
 
-      /* 최종 인터랙션 6개의 프레임 — 01~05는 움직임 문법 5단계, 06은 이 감성만의 고유 인터랙션 */
-      const FRAMES = [
-        { no: "01", en: "Rest", ko: "정지", desc: "기본 상태와 긴장도" },
-        { no: "02", en: "Acknowledge", ko: "입력 감지", desc: "접촉 즉시 첫 반응" },
-        { no: "03", en: "Resistance", ko: "저항", desc: "힘·드래그·변형 축적" },
-        { no: "04", en: "Transition", ko: "전환", desc: "임계점 통과와 주 움직임" },
-        { no: "05", en: "Settle", ko: "안착", desc: "감쇠·복원·여운" },
-        { no: "06", en: "Signature", ko: "감성 고유", desc: "이 감성만의 특별한 인터랙션" }
+      /* 최종 인터랙션의 참조 구조 — 애플 Liquid Glass의 인터랙션 요소 8개.
+         이 중 분석 중인 감성에 맞는 6개를 AI가 골라, 유리 대신 이번 감성의 물성을 조금 과장해 적용합니다. */
+      const LG_ELEMENTS = [
+        { no: 1, ko: "버튼 누르기", en: "Button Press",
+          react: "누른 지점에서 반응이 시작되어 주변 요소로 퍼지고, 버튼이 배경 위에 떠 있는 존재감을 드러냅니다",
+          role: "입력이 인식됐다는 것을 시각적으로 알리고, 버튼과 콘텐츠 사이의 깊이감을 만듭니다" },
+        { no: 2, ko: "슬라이더·토글 조작", en: "Slider & Toggle",
+          react: "손잡이나 조작 부분이 움직이는 동안 물성을 강하게 띠며 강조되고, 조작이 끝나면 주변과 조화롭게 돌아갑니다",
+          role: "값이나 상태를 바꾸는 조작부에 시선을 모읍니다" },
+        { no: 3, ko: "버튼에서 메뉴·팝오버 열기", en: "Menu & Popover from Button",
+          react: "메뉴가 갑자기 나타나지 않고 그 버튼에서 이어져 나오듯 전개되며, 커질수록 두께감·그림자·물성 효과가 강해집니다",
+          role: "메뉴가 어떤 버튼에서 열렸는지 공간적으로 연결해 보여 줍니다" },
+        { no: 4, ko: "탭 막대·도구 막대·사이드바", en: "Tab Bar, Toolbar & Sidebar",
+          react: "내비게이션 요소가 콘텐츠 위에 떠 있는 층으로 표현되고, 콘텐츠는 그 아래로 스크롤되며 살짝 비쳐 보입니다",
+          role: "탐색 기능과 본문 콘텐츠를 구분하면서 콘텐츠 공간을 확보합니다" },
+        { no: 5, ko: "스크롤과 겹침", en: "Scroll & Overlap",
+          react: "콘텐츠가 떠 있는 요소 아래를 지날 때 가장자리에서 부드럽게 흐려지거나 어두워지며 가독성을 유지합니다",
+          role: "떠 있는 UI와 움직이는 콘텐츠의 경계를 만들어 요소가 배경에 묻히지 않게 합니다" },
+        { no: 6, ko: "시트·액션 시트 열기와 확장", en: "Sheet Open & Expand",
+          react: "관련 버튼이나 동작에서 이어져 열리고, 끌어 올릴수록 커지며 물성이 짙어지고 배경은 어두워집니다",
+          role: "열리는 위치와 작업의 출처를 알리고, 더 깊은 단계에 들어섰다는 느낌을 줍니다" },
+        { no: 7, ko: "화면·상태 전환", en: "Screen & State Transition",
+          react: "화면이나 상태가 바뀔 때 제어 요소가 형태를 바꾸며 하나의 유동적인 층처럼 이어집니다",
+          role: "화면 전환을 단절된 교체가 아니라 연속된 흐름으로 느끼게 합니다" },
+        { no: 8, ko: "주변 화면과 기기에 적응", en: "Adapt to Content & Device",
+          react: "뒤에 놓인 콘텐츠의 밝기·색, 화면 크기, 포커스 변화에 따라 물성의 색조·투명도·그림자가 조정됩니다",
+          role: "배경이 달라져도 조작 요소의 가독성과 계층을 유지합니다" }
       ];
-      const frameLabel = f => `${f.en} / ${f.ko}`;
+      /* AI가 요소 선택을 빠뜨렸을 때 쓰는 기본 순서 */
+      const LG_DEFAULT_ORDER = [1, 2, 6, 3, 7, 5, 4, 8];
+      const LG_ELEMENTS_TEXT = LG_ELEMENTS.map(e => `${e.no}. ${e.ko} (${e.en}) — 반응: ${e.react} / 역할: ${e.role}`).join("\n");
+      const elementName = no => { const e = LG_ELEMENTS[no - 1]; return e ? e.ko : ""; };
+
+      /* 감성 물성 시스템과 선택한 6개 요소를 다음 요청·수정 요청에 그대로 이어 줍니다. */
+      function planBlock(plan) {
+        if (!plan) return "";
+        const ms = plan.materialSystem || {};
+        return `\n[이미 정한 감성 물성 시스템 — 그대로 이어서 씀]
+- 이름: ${ms.nameKo || ""} (${ms.nameEn || ""})
+- 핵심 성질: ${(ms.core || []).join(" · ")}
+- 과장 방식: ${ms.exaggeration || ""}
+- 고른 6개 요소(제안 순서): ${plan.elements.map((n, i) => `${pad2(i + 1)} ${elementName(n)}`).join(" / ")}
+"selectedElements"와 "materialSystem"은 다시 정하지 않으며 반환하지 않아도 됩니다.\n`;
+      }
 
       const NO_DATA = "이 항목은 AI 응답에 포함되지 않았습니다. 다시 생성해 보세요.";
 
@@ -439,7 +474,7 @@ ${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
 {"properties":[{"axis":"회복","titleKo":"복원 탄성","titleEn":"Restorative Elasticity","description":"2문장","interactionHint":"UI 움직임으로 번역하는 1문장","check":"프로토타입 확인 방법 1문장","value":78,"level":"높음","visual":"close-up interaction study of a rounded UI control compressing under touch and springing back with a subtle overshoot"}]}`,
 
         /* 인터랙션 제안 — 물성을 메타포로 삼아 화면 속 디지털 UI 반응으로 제안 */
-        INTERACTION_DIGITAL: (concept, properties, instruction) => `선택된 감성 해석: ${concept.nameKo} (${concept.nameEn})
+        INTERACTION_DIGITAL: (concept, properties, instruction, plan) => `선택된 감성 해석: ${concept.nameKo} (${concept.nameEn})
 감성 정의: ${concept.definition}
 체감 설명: ${concept.experience || ""}
 대표 장면: ${concept.subject || ""}
@@ -449,17 +484,23 @@ ${anchorBlock(concept)}감성 단어: ${(concept.moodWords || []).join(", ")}
 ${properties.map((p, i) => `${i + 1}. [${p.axis}] ${p.titleKo} (${p.titleEn}) · 목표 ${p.level} ${p.value} — ${p.description} / 변환 힌트: ${p.interactionHint || ""}`).join("\n")}
 
 이 물성을 실제 휴대폰 화면에서 손으로 조작하며 체감할 수 있는 '디지털 인터랙션' 컨셉으로 반드시 정확히 6개 제안해 주세요. 6개보다 적거나 많으면 실패입니다.
+${planBlock(plan)}
+[참조 구조 — 애플 Liquid Glass의 인터랙션 요소 8개]
+Liquid Glass는 '유리'라는 하나의 물성을 아래 8개 인터랙션 요소 전체에 일관되게, 실제보다 조금 과장해 적용한 인터랙션 시스템입니다. 이번에는 유리 대신 '이번 감성에서 나온 물성'으로 같은 일을 합니다.
+${LG_ELEMENTS_TEXT}
 
-[6개 프레임 — 번호별로 반드시 지킴]
-- 01~05번은 움직임 문법 5단계를 하나씩 맡습니다. 각 제안은 해당 단계의 특성이 가장 두드러지는 인터랙션이어야 하며, 그 단계에서 이 감성과 물성이 어떻게 체감되는지를 보여 줍니다.
-  01 Rest / 정지 — 아무 입력이 없을 때의 기본 상태와 긴장도가 핵심인 인터랙션 (예: 대기 화면·잠금화면의 살아 있는 정지 상태, 앰비언트 표현)
-  02 Acknowledge / 입력 감지 — 접촉하는 순간의 즉각적인 첫 반응이 핵심인 인터랙션 (예: 탭 피드백, 터치다운 반응)
-  03 Resistance / 저항 — 누르거나 끄는 동안 힘·드래그·변형이 축적되는 느낌이 핵심인 인터랙션 (예: 길게 누름, 당기기, 값 조절)
-  04 Transition / 전환 — 임계점을 넘으며 상태와 화면이 바뀌는 주 움직임이 핵심인 인터랙션 (예: 화면 전환, 시트 열림, 앱 전환)
-  05 Settle / 안착 — 손을 뗀 뒤 감쇠·복원·여운이 정리되는 방식이 핵심인 인터랙션 (예: 삭제 후 정리, 알림 사라짐, 스크롤 정지)
-- 06번은 Signature / 감성 고유 프레임입니다. 위 5단계 틀에 묶이지 않고, 이 감성 키워드와 선택된 물성에서만 나올 수 있는 특별한 인터랙션을 자유롭게 제안합니다. 다른 감성에서는 나올 수 없는 제안이어야 합니다.
-- 각 항목의 "frame"에는 위 이름을 그대로 적습니다: "Rest / 정지", "Acknowledge / 입력 감지", "Resistance / 저항", "Transition / 전환", "Settle / 안착", "Signature / 감성 고유".
-- 6개 모두 앞 단계의 감성 해석·지각 특성·선택된 물성과 직접 연결되어야 합니다. 개수를 채우기 위한 평범한 제안은 넣지 않습니다.
+[요소 선택 — 반드시 지킴]
+- 위 8개 중 이번 감성에 가장 잘 맞는 6개를 고릅니다. 이 감성의 물성이 가장 뚜렷하고 자연스럽게 드러나는 요소를 우선하고, 물성이 잘 드러나지 않는 2개를 뺍니다.
+- 6개 제안은 고른 요소를 하나씩 맡습니다. 같은 요소를 두 번 쓰지 않습니다.
+- 각 제안의 "element"에는 요소 번호(1~8)를, "frame"에는 요소 이름을 위 표기 그대로 적습니다.
+- 각 제안은 그 요소의 '반응'과 '역할'을 그대로 수행하되, 반응을 만드는 물성을 유리가 아닌 이번 감성의 물성으로 바꿉니다.
+
+[감성 물성 시스템 — 리퀴드 글라스처럼 일관되고 조금 과장되게]
+- 먼저 공통 연상·시각 앵커와 선택된 인터랙션 물성에서 하나의 '감성 물성 시스템'을 정의합니다. Liquid Glass가 굴절·반사·두께·블러 같은 유리의 성질을 모든 요소에 일관되게 쓰듯, 이 시스템의 핵심 성질 3~4개를 6개 요소 전체에 일관되게 적용합니다.
+- 물성은 조금 과장합니다. 실제 물리보다 1.3~1.6배 강하게 표현해 처음 보는 사람도 바로 그 감성을 알아차리게 합니다. 예: 무거움 → 손가락보다 한 박자 늦게 출발하고, 깊게 눌리며, 착지할 때 주변 요소까지 미세하게 내려앉습니다 / 말랑함 → 누른 지점이 크게 오목해지고, 놓으면 두세 번 출렁이며 복원됩니다 / 차갑고 예리함 → 접촉 순간 날카로운 하이라이트가 가장자리를 따라 빠르게 스칩니다.
+- 과장하되 매일 반복해도 피곤하지 않고 정보가 또렷이 읽히는 수준을 지킵니다.
+- 시스템 이름에 Glass·Liquid Glass를 쓰지 않습니다. 유리 물성이 아니라 이번 감성의 물성입니다.
+- 6개 제안의 "physicalBasis"에는 이 시스템의 어떤 성질이 이 요소에서 어떻게 과장되어 나타나는지 적습니다.
 
 [가장 중요한 원칙 — 이것은 디지털 인터랙션입니다]
 - 제안하는 것은 실제 물체나 기계 장치가 아니라, 화면 속 UI 요소가 사용자의 입력에 반응하는 방식입니다. 결과물은 UX 디자이너와 모션 디자이너가 바로 프로토타입으로 만들 수 있는 인터랙션 스펙이어야 합니다.
@@ -473,20 +514,20 @@ ${properties.map((p, i) => `${i + 1}. [${p.axis}] ${p.titleKo} (${p.titleEn}) ·
 - "점성 유체가 흐른다", "금속이 굴러간다"처럼 물리 현상 묘사로만 끝나는 설명을 하지 않습니다. 반드시 어떤 UI 요소가 어떤 입력에 어떻게 반응하는지로 씁니다.
 - 버튼·슬라이더·토글에 스타일만 입힌 평범한 제안을 하지 않습니다. 기본 컴포넌트를 쓰더라도 감성 메타포가 반영된 고유한 반응 거동이 있어야 합니다.
 - 같은 디지털 인터랙션 패턴과 같은 모션 원리를 두 번 쓰지 않습니다. 6개는 서로 다른 패턴·서로 다른 모션 원리여야 합니다.
-- Magnifier, Liquid Glass 같은 기존 사례 이름을 그대로 반복하지 않습니다.
+- Magnifier, Liquid Glass 같은 기존 사례 이름을 제안명에 쓰지 않고, 유리의 굴절·투명 효과를 그대로 가져오지 않습니다.
 
 [감성에 따라 달라져야 함]
 - 어떤 모션 원리와 피드백을 고르는지 자체가 처음 감성 키워드에서 나와야 합니다. 다른 감성에서도 똑같이 나올 6개 세트라면 실패입니다.
-- 6개 중 최소 3개의 모션 원리는 공통 연상 대상과 시각 앵커가 주는 느낌(무게·탄성·온도·날카로움 등)을 메타포로 삼습니다. 대상을 그리지 않고 움직임 성격으로 번역합니다.
+- 6개 모두 감성 물성 시스템을 공유하며, 공통 연상 대상과 시각 앵커가 주는 느낌(무게·탄성·온도·날카로움 등)을 움직임 성격으로 번역합니다. 대상을 그리지 않습니다.
 - 색감, 광학 톤, 무게감, 속도, 감쇠 성격은 처음 감성 키워드와 끝까지 일치해야 합니다. visual과 visualBehavior는 시각 앵커의 색·빛·표면 톤만 이어받습니다.
 
 [적용 맥락과 입력의 다양성]
 - 모든 제안은 휴대폰 화면에서 손가락으로 조작하는 인터랙션입니다. TV, 리모컨, 워치, 차량 등 다른 기기는 제안하지 않습니다.
-- 각 제안은 휴대폰의 구체적인 순간에 적용합니다. 예: 잠금 해제, 알림 도착과 정리, 볼륨·밝기 조절, 카메라 셔터, 충전 연결, 알람 끄기, 앱 전환, 메시지 전송, 사진 삭제, 음악 재생, 키보드 입력, 당겨서 새로고침, 방해금지 전환, 사진 넘기기, 홈 화면 아이콘 정리. 6개는 서로 다른 맥락이어야 합니다.
+- 각 제안은 맡은 요소가 실제로 쓰이는 휴대폰의 구체적인 순간에 적용합니다. 예: 잠금 해제, 알림 도착과 정리, 볼륨·밝기 조절, 카메라 셔터, 충전 연결, 알람 끄기, 앱 전환, 메시지 전송, 사진 삭제, 음악 재생, 키보드 입력, 당겨서 새로고침, 방해금지 전환, 사진 넘기기, 홈 화면 아이콘 정리. 6개는 서로 다른 맥락이어야 합니다.
 - 입력은 화면 터치 제스처 중심으로 다양하게 씁니다: 탭, 더블 탭, 길게 누름, 드래그, 스와이프, 플릭, 당기기, 핀치, 두 손가락 회전, 가장자리 스와이프 등. 리모컨·버튼 조작은 쓰지 않습니다. 기울이기·흔들기 같은 기기 움직임은 꼭 필요한 경우에만 6개 중 최대 1개까지 화면 터치와 함께 보조로 씁니다.
 
 [물성에 최적화된 동작 구성]
-- 모든 인터랙션에 시간 단계 전체를 일괄 적용하지 않습니다. 01~05번은 맡은 프레임의 순간을 중심으로, 06번은 감성 고유의 구조로 설계합니다.
+- 모든 인터랙션에 시간 단계 전체를 일괄 적용하지 않습니다. 각 제안은 맡은 요소의 핵심 순간을 중심으로 설계합니다.
 - 각 인터랙션은 선택된 물성의 성격이 가장 잘 드러나는 구조로 자유롭게 설계합니다. 예: 어떤 물성은 입력 직후의 즉각 반응이 핵심이고, 어떤 물성은 드래그 중 저항이, 어떤 물성은 손을 뗀 뒤의 여운이 핵심입니다. 핵심이 아닌 구간은 과감히 생략합니다.
 
 [핵심 관점]
@@ -495,7 +536,7 @@ ${properties.map((p, i) => `${i + 1}. [${p.axis}] ${p.titleKo} (${p.titleEn}) ·
 - 실제 OS 수준의 비율과 정보 구조를 갖추고, 매일 반복해도 피곤하지 않은 강도로 설계합니다. 특정 OS나 브랜드 UI를 복제하지 않습니다.
 
 [작성 규칙]
-- "frame"은 위 [6개 프레임]의 이름을 번호 순서대로 정확히 적습니다.
+- "element"는 맡은 요소 번호, "frame"은 그 요소 이름입니다. 위 [요소 선택] 규칙을 따릅니다.
 - "type"은 디지털 인터랙션이 드러나는 짧은 영문 명칭입니다. 예: Weighted Unlock Motion, Elastic Pull Refresh, Damped Sheet Transition, Snap Focus Shift, Dissolve Dismiss, Settling Toast. 예시를 그대로 쓰지 말고 이번 감성에 맞게 정합니다.
 - "digitalPattern"은 이 제안이 속하는 디지털 인터랙션 패턴을 한글로 짧게 적습니다. 예: 화면 전환, 마이크로 인터랙션, 상태 피드백, 제스처 응답, 스크롤 거동, 진행 표현, 알림 등장·정리, 삭제·정리, 포커스 이동, 값 조절.
 - "physicalBasis"는 '물성 메타포 → 디지털 모션 모델'을 1~2문장으로 적습니다. 어떤 물성 느낌을 메타포로 삼았는지, 그것을 스프링·감쇠·지연·이징·스케일·블러·햅틱 같은 디지털 값으로 어떻게 구현하는지 씁니다.
@@ -517,7 +558,7 @@ ${properties.map((p, i) => `${i + 1}. [${p.axis}] ${p.titleKo} (${p.titleEn}) ·
 
 ${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
 [FORMAT] 정확히 이 JSON만 반환하세요:
-{"interactions":[{"frame":"Rest / 정지","nameKo":"묵직한 결심 잠금 해제","nameEn":"Weighted Unlock Motion","type":"Weighted Unlock Motion","digitalPattern":"제스처 응답","physicalBasis":"무거운 금속 덩어리의 관성을 메타포로 삼습니다. 드래그 입력 후 80ms 늦게 따라오고, 강한 감쇠 스프링으로 오버슈트 없이 멈추며, 끝에서 짧고 낮은 햅틱 1회로 마무리합니다.","phoneContext":"휴대폰 · 잠금 해제","gesture":"기울이기 + 드래그","role":"잠금 해제를 무게 있는 결심의 순간으로 만듭니다.","interactionDNA":"늦은 출발 · 묵직한 활주 · 둔탁한 안착","behavior":"물성에 맞춘 동작 방식 2~4문장","timing":"420–680 ms / heavy spring / no overshoot","haptic":"끝에서 낮고 둔한 1회 thud","visualBehavior":"형태·깊이·빛의 동적 변화","propertyMapping":["운동 관성","잔향 감쇠"],"emotionalEffect":"원래 감성을 강화하는 설명","states":[{"labelKo":"정지","labelEn":"Rest","description":"기본 상태"},{"labelKo":"활주","labelEn":"Sliding","description":"작동 상태"},{"labelKo":"안착","labelEn":"Settle","description":"안착 상태"}],"visual":"isolated digital unlock control on a dark rounded card shown in three states: the handle lags slightly behind the finger, glides with a heavily damped motion and settles without overshoot, soft motion ghosting and a faint edge glow, cool blue-grey digital UI tone, no device frame, no physical objects"}]}`
+{"selectedElements":[1,2,6,3,7,5],"materialSystem":{"nameKo":"감성 물성 시스템 이름","nameEn":"English System Name","core":["핵심 성질 1","핵심 성질 2","핵심 성질 3"],"exaggeration":"어떻게 과장해 적용하는지 1~2문장","whyKo":"이 감성과 맞는 이유 1문장"},"interactions":[{"element":1,"frame":"버튼 누르기","nameKo":"묵직한 결심 잠금 해제","nameEn":"Weighted Unlock Motion","type":"Weighted Unlock Motion","digitalPattern":"제스처 응답","physicalBasis":"무거운 금속 덩어리의 관성을 메타포로 삼습니다. 드래그 입력 후 80ms 늦게 따라오고, 강한 감쇠 스프링으로 오버슈트 없이 멈추며, 끝에서 짧고 낮은 햅틱 1회로 마무리합니다.","phoneContext":"휴대폰 · 잠금 해제","gesture":"기울이기 + 드래그","role":"잠금 해제를 무게 있는 결심의 순간으로 만듭니다.","interactionDNA":"늦은 출발 · 묵직한 활주 · 둔탁한 안착","behavior":"물성에 맞춘 동작 방식 2~4문장","timing":"420–680 ms / heavy spring / no overshoot","haptic":"끝에서 낮고 둔한 1회 thud","visualBehavior":"형태·깊이·빛의 동적 변화","propertyMapping":["운동 관성","잔향 감쇠"],"emotionalEffect":"원래 감성을 강화하는 설명","states":[{"labelKo":"정지","labelEn":"Rest","description":"기본 상태"},{"labelKo":"활주","labelEn":"Sliding","description":"작동 상태"},{"labelKo":"안착","labelEn":"Settle","description":"안착 상태"}],"visual":"isolated digital unlock control on a dark rounded card shown in three states: the handle lags slightly behind the finger, glides with a heavily damped motion and settles without overshoot, soft motion ghosting and a faint edge glow, cool blue-grey digital UI tone, no device frame, no physical objects"}]}`
       };
 
       /* =========================================================
@@ -636,7 +677,7 @@ Render only the specified card titles/badges and no extra paragraphs.${anchorImg
           const rows = items.map((m, i) => {
             const states = Array.isArray(m.states) ? m.states : [];
             const st = j => states[j] || {};
-            return `Row ${pad2(base + i + 1)} — ${m.type} / ${m.nameKo} / ${m.nameEn}.${m.frame ? `\n  Frame label shown small under the concept name: ${m.frame}.` : ""}
+            return `Row ${pad2(base + i + 1)} — ${m.type} / ${m.nameKo} / ${m.nameEn}.${m.frame ? `\n  Interaction element label shown small under the concept name: ${m.frame}.` : ""}
   Use context (meaning only — do not draw the device): ${m.phoneContext || "smartphone"}. Input: ${m.gesture || "touch"}.
   Digital interaction pattern: ${m.digitalPattern || ""}. Motion model (material feeling is only a metaphor): ${m.physicalBasis || m.visualBehavior || ""}
   Show THREE sequential states of the SAME isolated UI element from left to right.
@@ -647,7 +688,9 @@ Render only the specified card titles/badges and no extra paragraphs.${anchorImg
   Specific direction: ${m.visual || ""}`;
           }).join("\n");
           const c = selectedConcept();
-          const tone = c && c.visualAnchor ? `\nColour, light and surface tone borrowed from the chosen emotion (tone only — never draw these objects): ${c.visualAnchor}` : "";
+          const ms = state.interactionPlan && state.interactionPlan.materialSystem;
+          const tone = (c && c.visualAnchor ? `\nColour, light and surface tone borrowed from the chosen emotion (tone only — never draw these objects): ${c.visualAnchor}` : "") +
+            (ms && ms.nameEn ? `\nOne shared signature UI material applied consistently to every row, rendered slightly exaggerated so the emotion is obvious at a glance (like a system-wide UI material, but NOT glass): ${ms.nameEn} — ${(ms.core || []).join(", ")}.` : "");
           return `Interaction design concept board in a clean editorial style, like a professional motion-spec review sheet. High-quality UI rendering, no watermark, no real brand logos, no app names.
 Create ONE single vertical 2:3 board with exactly ${items.length} horizontal rows separated by thin light-grey lines, numbered ${pad2(base + 1)} to ${pad2(base + items.length)} in this order, on a white or very light grey background.
 Left column of each row: a very large row number, the English concept name in bold, a short dash, then the Korean concept name with its English subtitle beneath.
@@ -703,8 +746,15 @@ ${rows}`;
       }
 
       /* =========================================================
-         5. 저장소 — 프로젝트 텍스트는 localStorage, 이미지는 IndexedDB
-         이미지는 base64라 용량이 커서 localStorage에 넣으면 곧 넘칩니다.
+         5. 저장소
+         - 프로젝트 데이터: localStorage(빠른 목록) + IndexedDB 사본.
+           휴대폰 앱(WebView)·모바일 브라우저는 localStorage를 디스크에 늦게 기록하므로
+           앱을 바로 닫으면 마지막 변경이 사라질 수 있습니다. 같은 데이터를 IndexedDB에
+           트랜잭션으로 함께 기록하고, 불러올 때 두 곳 중 더 최신(rev)을 씁니다.
+         - 저장할 때마다 rev(저장 번호)를 올립니다. 다른 창이 더 최신 rev를 저장했으면
+           오래된 창이 그 위에 덮어쓰지 못하게 막습니다.
+         - 이미지는 IndexedDB에 저장하고, 생성 당시 내용의 서명(sig)을 함께 남겨
+           내용이 수정된 뒤 아직 갱신되지 않은 옛 이미지를 구분합니다.
          ========================================================= */
       const Store = {
         list() {
@@ -717,85 +767,173 @@ ${rows}`;
             return [];
           }
         },
+        get(id) { return Store.list().find(p => p.id === id) || null; },
         _write(list) {
           try { localStorage.setItem(CONFIG.PROJECTS_KEY, JSON.stringify(list)); return true; }
           catch (e) { return false; }
         },
+        /* meta.baseRev: 이 창이 마지막으로 읽거나 저장한 rev. 저장된 rev가 더 크면 다른 창이 먼저 저장한 것입니다. */
         save(snapshot, meta) {
-          let list = Store.list().filter(p => p.id !== meta.id);
-          list.unshift({ id: meta.id, title: meta.title, savedAt: Date.now(), data: snapshot });
+          const all = Store.list();
+          const prev = all.find(p => p.id === meta.id);
+          const prevRev = prev ? (prev.rev || 0) : 0;
+          if (prev && prevRev > (meta.baseRev || 0)) return { ok: false, conflict: true, row: prev };
+          const row = JSON.parse(JSON.stringify({
+            id: meta.id, title: meta.title, savedAt: Date.now(),
+            rev: Math.max(prevRev, meta.baseRev || 0) + 1, data: snapshot
+          }));
+          let list = [row].concat(all.filter(p => p.id !== meta.id));
+          const evicted = [];
           if (list.length > CONFIG.MAX_PROJECTS) {
-            list.slice(CONFIG.MAX_PROJECTS).forEach(p => ImageDB.removeProject(p.id));
+            evicted.push.apply(evicted, list.slice(CONFIG.MAX_PROJECTS));
             list = list.slice(0, CONFIG.MAX_PROJECTS);
           }
-          if (Store._write(list)) return { ok: true };
-          const reduced = list.slice(0, Math.max(1, list.length - 1));
-          if (Store._write(reduced)) { list.slice(reduced.length).forEach(p => ImageDB.removeProject(p.id)); return { ok: true, pruned: "oldest" }; }
-          return { ok: false };
+          let pruned = null;
+          if (!Store._write(list)) {
+            const reduced = list.slice(0, Math.max(1, list.length - 1));
+            if (Store._write(reduced)) {
+              evicted.push.apply(evicted, list.slice(reduced.length));
+              pruned = "oldest";
+            } else {
+              /* localStorage가 가득 차도 IndexedDB 사본은 남깁니다. */
+              ProjectDB.put(row);
+              return { ok: false, idbOnly: true, row };
+            }
+          }
+          evicted.forEach(p => { ImageDB.removeProject(p.id); ProjectDB.remove(p.id); });
+          ProjectDB.put(row);
+          return { ok: true, row, pruned };
+        },
+        /* rev를 바꾸지 않고 목록의 한 행만 교체합니다. (IndexedDB 사본이 더 최신일 때) */
+        putRow(row) {
+          const list = Store.list();
+          const i = list.findIndex(p => p.id === row.id);
+          if (i >= 0) list[i] = row; else list.unshift(row);
+          list.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+          return Store._write(list.slice(0, CONFIG.MAX_PROJECTS));
         },
         remove(id) {
           ImageDB.removeProject(id);
+          ProjectDB.remove(id);
           return Store._write(Store.list().filter(p => p.id !== id));
+        },
+        /* 시작할 때 IndexedDB 사본이 더 최신인 프로젝트를 목록에 되살립니다. */
+        async reconcile() {
+          const rows = await ProjectDB.all();
+          if (!rows.length) return false;
+          const list = Store.list();
+          let changed = false;
+          rows.forEach(r => {
+            if (!r || !r.id || !r.data) return;
+            const i = list.findIndex(p => p.id === r.id);
+            if (i < 0) { list.push(r); changed = true; }
+            else if ((r.rev || 0) > (list[i].rev || 0)) { list[i] = r; changed = true; }
+          });
+          if (!changed) return false;
+          list.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+          list.slice(CONFIG.MAX_PROJECTS).forEach(p => { ImageDB.removeProject(p.id); ProjectDB.remove(p.id); });
+          return Store._write(list.slice(0, CONFIG.MAX_PROJECTS));
         }
       };
 
       const IMAGE_SLOTS = ["emotion", "perception", "property", "interaction", "interactionB"];
-      let imageDbPromise = null;
+      const DB_STORES = { images: CONFIG.IMAGE_DB.store, projects: "projects" };
+      let dbPromise = null;
+
+      function openDB() {
+        if (!("indexedDB" in window)) return Promise.reject(new Error("IDB_UNAVAILABLE"));
+        if (dbPromise) return dbPromise;
+        dbPromise = new Promise((res, rej) => {
+          let req;
+          try { req = indexedDB.open(CONFIG.IMAGE_DB.name, 2); } catch (e) { rej(e); return; }
+          req.onupgradeneeded = () => {
+            const db = req.result;
+            Object.keys(DB_STORES).forEach(k => {
+              if (!db.objectStoreNames.contains(DB_STORES[k])) db.createObjectStore(DB_STORES[k], { keyPath: "id" });
+            });
+          };
+          req.onsuccess = () => {
+            const db = req.result;
+            /* 새 버전이 열리면 이 연결을 닫아 업그레이드를 막지 않습니다. */
+            db.onversionchange = () => { try { db.close(); } catch (e) { /* 무시 */ } dbPromise = null; };
+            res(db);
+          };
+          req.onerror = () => rej(req.error || new Error("IDB_OPEN_FAILED"));
+          /* 이전 버전 창이 열려 있으면 그 창이 닫힐 때까지 기다립니다. (아래 시간 제한까지) */
+          setTimeout(() => rej(new Error("IDB_TIMEOUT")), TIMEOUT.idbWrite);
+        });
+        /* 실패하면 다음 호출에서 다시 열 수 있게 비웁니다. */
+        dbPromise.catch(() => { dbPromise = null; });
+        return dbPromise;
+      }
+
+      /* 쓰기는 트랜잭션이 완료(oncomplete)되어야 성공으로 봅니다. durability: strict로 디스크 기록까지 기다립니다. */
+      function idbAct(storeName, mode, fn) {
+        return openDB().then(db => new Promise((res, rej) => {
+          let tx;
+          try { tx = mode === "readwrite" ? db.transaction(storeName, mode, { durability: "strict" }) : db.transaction(storeName, mode); }
+          catch (e) { tx = db.transaction(storeName, mode); }
+          const rq = fn(tx.objectStore(storeName));
+          let result;
+          rq.onsuccess = () => { result = rq.result; if (mode !== "readwrite") res(result); };
+          rq.onerror = () => rej(rq.error || new Error("IDB_REQUEST_FAILED"));
+          if (mode === "readwrite") {
+            tx.oncomplete = () => res(result);
+            tx.onabort = tx.onerror = () => rej(tx.error || new Error("IDB_TX_FAILED"));
+          }
+          setTimeout(() => rej(new Error("IDB_TIMEOUT")), mode === "readwrite" ? TIMEOUT.idbWrite : TIMEOUT.idb);
+        }));
+      }
+
+      const ProjectDB = {
+        async put(row) {
+          try { await idbAct(DB_STORES.projects, "readwrite", st => st.put(row)); return true; }
+          catch (e) { console.warn("프로젝트 사본 저장 실패", e); return false; }
+        },
+        async get(id) {
+          try { return (await idbAct(DB_STORES.projects, "readonly", st => st.get(id))) || null; }
+          catch (e) { return null; }
+        },
+        async all() {
+          try { return (await idbAct(DB_STORES.projects, "readonly", st => st.getAll())) || []; }
+          catch (e) { return []; }
+        },
+        remove(id) {
+          return idbAct(DB_STORES.projects, "readwrite", st => st.delete(id)).catch(() => {});
+        }
+      };
 
       const ImageDB = {
-        open() {
-          if (!("indexedDB" in window)) return Promise.reject(new Error("IDB_UNAVAILABLE"));
-          if (imageDbPromise) return imageDbPromise;
-          imageDbPromise = new Promise((res, rej) => {
-            const req = indexedDB.open(CONFIG.IMAGE_DB.name, 1);
-            req.onupgradeneeded = () => {
-              const db = req.result;
-              if (!db.objectStoreNames.contains(CONFIG.IMAGE_DB.store)) {
-                db.createObjectStore(CONFIG.IMAGE_DB.store, { keyPath: "id" });
-              }
-            };
-            req.onsuccess = () => res(req.result);
-            req.onerror = () => rej(req.error || new Error("IDB_OPEN_FAILED"));
-            req.onblocked = () => rej(new Error("IDB_BLOCKED"));
-            setTimeout(() => rej(new Error("IDB_TIMEOUT")), TIMEOUT.idb);
-          });
-          /* 실패하면 다음 호출에서 다시 열 수 있게 비웁니다. */
-          imageDbPromise.catch(() => { imageDbPromise = null; });
-          return imageDbPromise;
-        },
-        _act(mode, fn) {
-          return ImageDB.open().then(db => new Promise((res, rej) => {
-            const tx = db.transaction(CONFIG.IMAGE_DB.store, mode);
-            const rq = fn(tx.objectStore(CONFIG.IMAGE_DB.store));
-            rq.onsuccess = () => res(rq.result);
-            rq.onerror = () => rej(rq.error || new Error("IDB_REQUEST_FAILED"));
-            setTimeout(() => rej(new Error("IDB_TIMEOUT")), TIMEOUT.idb);
-          }));
-        },
         key: (projectId, slot) => `${projectId}::${slot}`,
-        async put(projectId, slot, dataUrl) {
+        async put(projectId, slot, dataUrl, sig) {
           try {
-            await ImageDB._act("readwrite", st => st.put({
-              id: ImageDB.key(projectId, slot), projectId, slot, dataUrl, savedAt: Date.now()
+            await idbAct(DB_STORES.images, "readwrite", st => st.put({
+              id: ImageDB.key(projectId, slot), projectId, slot, dataUrl, sig: sig || "", savedAt: Date.now()
             }));
+            /* 같은 프로젝트를 연 다른 창에 새 이미지를 알립니다. */
+            try { localStorage.setItem(CONFIG.PING_KEY, JSON.stringify({ projectId, slot, t: Date.now() })); } catch (e) { /* 무시 */ }
             return true;
           } catch (e) { console.warn("이미지 저장 실패", e); return false; }
         },
         async get(projectId, slot) {
           try {
-            const row = await ImageDB._act("readonly", st => st.get(ImageDB.key(projectId, slot)));
-            return row && row.dataUrl ? row.dataUrl : null;
+            const row = await idbAct(DB_STORES.images, "readonly", st => st.get(ImageDB.key(projectId, slot)));
+            return row && row.dataUrl ? { dataUrl: row.dataUrl, sig: row.sig || "" } : null;
           } catch (e) { return null; }
         },
         async loadAll(projectId) {
-          const out = {};
-          for (const slot of IMAGE_SLOTS) out[slot] = await ImageDB.get(projectId, slot);
-          return out;
+          const images = {}, sigs = {};
+          for (const slot of IMAGE_SLOTS) {
+            const r = await ImageDB.get(projectId, slot);
+            images[slot] = r ? r.dataUrl : null;
+            if (r && r.sig) sigs[slot] = r.sig;
+          }
+          return { images, sigs };
         },
         async remove(projectId, slot) {
           if (!IMAGE_SLOTS.includes(slot)) return false;
           try {
-            await ImageDB._act("readwrite", st => st.delete(ImageDB.key(projectId, slot)));
+            await idbAct(DB_STORES.images, "readwrite", st => st.delete(ImageDB.key(projectId, slot)));
             return true;
           } catch (e) {
             console.warn("이미지 삭제 실패", slot, e);
@@ -808,7 +946,7 @@ ${rows}`;
         },
         removeProject(projectId) {
           IMAGE_SLOTS.forEach(slot => {
-            ImageDB._act("readwrite", st => st.delete(ImageDB.key(projectId, slot))).catch(() => {});
+            idbAct(DB_STORES.images, "readwrite", st => st.delete(ImageDB.key(projectId, slot))).catch(() => {});
           });
         }
       };
@@ -829,9 +967,11 @@ ${rows}`;
           properties: [],
           propertyIds: [],
           interactions: [],
+          interactionPlan: null,
           interactionMode: "digital",
           interactionsMode: "digital",
           images: { emotion: null, perception: null, property: null, interaction: null, interactionB: null },
+          imageSigs: {},
           createdAt: Date.now()
         };
       }
@@ -855,9 +995,13 @@ ${rows}`;
       function setDraft(id, v) { drafts[id] = v; }
       window.setDraft = setDraft;
 
+      /* 화면이 바뀔 때마다 잠시 뒤 저장합니다. 내용이 그대로면 저장하지 않습니다. */
+      let persistTimer = null;
       function setState(patch, resetScroll) {
         Object.assign(state, patch);
         render(resetScroll);
+        clearTimeout(persistTimer);
+        persistTimer = setTimeout(() => { try { persist(false); } catch (e) { console.warn("자동 저장 실패", e); } }, 700);
       }
       window.setState = setState;
 
@@ -954,7 +1098,7 @@ ${rows}`;
         }
       }
 
-      const TIMEOUT = { textIdle: 120000, textTotal: 240000, image: 300000, fetchImage: 30000, idb: 6000 };
+      const TIMEOUT = { textIdle: 120000, textTotal: 240000, image: 300000, fetchImage: 30000, idb: 6000, idbWrite: 20000 };
       /* 테스트용 재정의 지점 */
       if (window.__labTimeout) Object.assign(TIMEOUT, window.__labTimeout);
       const TIMEOUT_MSG = "AI 응답이 너무 오래 멈춰 있어 중단했습니다. 네트워크를 확인한 뒤 다시 시도해 주세요.";
@@ -1345,11 +1489,30 @@ ${rows}`;
         }));
       }
 
+      function normPlan(raw) {
+        const picked = [];
+        arr(raw && raw.selectedElements).forEach(v => {
+          const n = parseInt(v, 10);
+          if (n >= 1 && n <= 8 && !picked.includes(n)) picked.push(n);
+        });
+        LG_DEFAULT_ORDER.forEach(n => { if (picked.length < INTERACTION_COUNT && !picked.includes(n)) picked.push(n); });
+        const ms = (raw && raw.materialSystem) || {};
+        return {
+          elements: picked.slice(0, INTERACTION_COUNT),
+          materialSystem: {
+            nameKo: str(ms.nameKo), nameEn: str(ms.nameEn),
+            core: arr(ms.core).map(str).filter(Boolean).slice(0, 5),
+            exaggeration: str(ms.exaggeration), whyKo: str(ms.whyKo)
+          }
+        };
+      }
+
       function normInteractions(raw) {
         const source = arr(raw && (raw.interactions || raw.materials));
         return source.slice(0, INTERACTION_COUNT).map((m, i) => ({
           id: uid("int"),
           index: i + 1,
+          element: Math.max(0, Math.min(8, parseInt(m.element, 10) || 0)),
           frame: str(m.frame),
           nameKo: str(m.nameKo) || `인터랙션 ${i + 1}`,
           nameEn: str(m.nameEn) || `Interaction ${i + 1}`,
@@ -1420,6 +1583,7 @@ ${rows}`;
           properties: state.properties,
           propertyIds: state.propertyIds,
           interactions: state.interactions,
+          interactionPlan: state.interactionPlan,
           interactionMode: state.interactionMode,
           interactionsMode: state.interactionsMode,
           createdAt: state.createdAt,
@@ -1441,23 +1605,92 @@ ${rows}`;
 
       let quotaWarned = false;
       let lastSavedSig = "";
+      let knownRev = 0;   /* 이 창이 마지막으로 읽거나 저장한 저장 번호(rev) */
+      const currentSig = () => JSON.stringify(snapshot()) + "|" + projectTitle();
+
       function persist(showToast) {
         if (!hasContent()) return "empty";
         const snap = snapshot();
-        const sig = JSON.stringify(snap) + "|" + projectTitle();
+        const title = projectTitle();
+        const sig = JSON.stringify(snap) + "|" + title;
         if (sig === lastSavedSig && !showToast) return "ok";
-        const r = Store.save(snap, { id: state.projectId, title: projectTitle() });
-        if (r.ok) lastSavedSig = sig;
+        const r = Store.save(snap, { id: state.projectId, title, baseRev: knownRev });
+        if (r.conflict) {
+          /* 다른 창이 이 프로젝트를 더 최근에 저장했습니다. 오래된 화면으로 덮어쓰지 않고 최신 상태를 불러옵니다. */
+          adoptRow(r.row, "다른 창에서 수정된 최신 상태를 불러왔습니다. 이 창의 마지막 변경은 반영되지 않았습니다.");
+          return "remote";
+        }
+        if (r.row) knownRev = r.row.rev;
         if (r.ok) {
+          lastSavedSig = sig;
           if (showToast) toast("진행 상태를 저장했습니다.");
           if (r.pruned === "oldest") toast("저장 공간이 부족해 가장 오래된 프로젝트를 정리했습니다.");
           return "ok";
         }
+        if (r.idbOnly) lastSavedSig = sig;
         if (!quotaWarned) {
           quotaWarned = true;
           toast("저장 공간이 부족해 자동 저장이 중단되었습니다. 리포트를 파일로 내려받아 주세요.", "error");
         }
         return "full";
+      }
+
+      /* 저장된 행(row)의 데이터를 화면 상태로 옮깁니다. */
+      function applyProjectData(row) {
+        const d = row.data || {};
+        Object.assign(state, blankProject(), {
+          projectId: d.projectId || row.id,
+          keyword: d.keyword || "",
+          note: d.note || "",
+          associations: arr(d.associations),
+          concepts: arr(d.concepts),
+          conceptIds: arr(d.conceptIds).length ? arr(d.conceptIds) : (d.conceptId ? [d.conceptId] : []),
+          perceptions: arr(d.perceptions),
+          perceptionIds: arr(d.perceptionIds),
+          properties: arr(d.properties),
+          propertyIds: arr(d.propertyIds),
+          interactions: arr(d.interactions || d.materials),
+          interactionPlan: d.interactionPlan && arr(d.interactionPlan.elements).length ? d.interactionPlan : null,
+          interactionMode: d.interactionMode === "physical" ? "physical" : "digital",
+          /* 이전 버전 프로젝트는 디지털 패턴 항목 유무로 생성 방식을 판단합니다. */
+          interactionsMode: d.interactionsMode || (arr(d.interactions).some(m => m && m.digitalPattern) ? "digital" : "physical"),
+          createdAt: d.createdAt || row.savedAt
+        });
+        drafts["keyword-input"] = state.keyword;
+        drafts["note-input"] = state.note;
+        knownRev = row.rev || 0;
+        lastSavedSig = currentSig();
+      }
+
+      /* IndexedDB에서 이 프로젝트의 이미지와 서명을 읽어 옵니다. 데이터가 없는 단계의 이미지는 정리합니다. */
+      async function loadImagesFor(projectId) {
+        const got = await ImageDB.loadAll(projectId);
+        if (state.projectId !== projectId) return;
+        const imgs = got.images;
+        const orphanSlots = [];
+        if (!state.concepts.length && imgs.emotion) orphanSlots.push("emotion");
+        if (!state.perceptions.length && imgs.perception) orphanSlots.push("perception");
+        if (!state.properties.length && imgs.property) orphanSlots.push("property");
+        if (!state.interactions.length && imgs.interaction) orphanSlots.push("interaction");
+        if (state.interactions.length <= INTERACTION_COUNT && imgs.interactionB) orphanSlots.push("interactionB");
+        orphanSlots.forEach(slot => { imgs[slot] = null; delete got.sigs[slot]; });
+        if (orphanSlots.length) await ImageDB.removeSlots(projectId, orphanSlots);
+        if (state.projectId !== projectId) return;
+        setState({
+          images: Object.assign({ emotion: null, perception: null, property: null, interaction: null, interactionB: null }, imgs),
+          imageSigs: got.sigs
+        });
+      }
+
+      /* 다른 창이 저장한 최신 상태로 이 창을 갱신합니다. 보고 있던 단계는 가능한 한 유지합니다. */
+      function adoptRow(row, msg) {
+        const keepStep = state.step;
+        const keep = { lightbox: null, simPrompt: null, editTarget: state.editTarget };
+        applyProjectData(row);
+        const step = keepStep <= 0 ? keepStep : Math.min(keepStep, progressStep());
+        setState(Object.assign(keep, { step }));
+        loadImagesFor(state.projectId);
+        if (msg) toast(msg);
       }
 
       /* =========================================================
@@ -1554,34 +1787,66 @@ ${rows}`;
         } catch (e) { return d; }
       }
 
+      /* 이미지 서명 — 이미지를 만들 때 쓴 항목 내용을 짧게 요약한 값입니다.
+         지금 내용과 서명이 다르면 수정 뒤 아직 갱신되지 않은 이미지입니다. */
+      function hashStr(str) {
+        let h = 5381;
+        for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+        return (h >>> 0).toString(36) + "." + str.length.toString(36);
+      }
+      function boardItems(slot) {
+        const all = state.interactions;
+        if (slot === "interaction") return all.length > INTERACTION_COUNT ? all.slice(0, 4) : all;
+        return all.length > INTERACTION_COUNT ? all.slice(4, 8) : [];
+      }
+      function imageSig(slot) {
+        let items;
+        if (slot === "emotion") items = state.concepts.map(c => [c.nameKo, c.nameEn, c.visual, c.style, c.anchor, c.visualAnchor]);
+        else if (slot === "perception") items = state.perceptions.map(p => [p.titleKo, p.titleEn, p.category, p.visual, p.style]);
+        else if (slot === "property") items = state.properties.map(p => [p.titleKo, p.titleEn, p.axis, p.visual, p.interactionHint]);
+        else items = boardItems(slot).map(m => [m.nameKo, m.nameEn, m.type, m.frame, m.visual, (m.states || []).map(x => x.labelKo + x.description).join("|")]);
+        return hashStr(JSON.stringify(items));
+      }
+      /* 서명이 없는 이전 버전 이미지는 판단할 수 없으므로 최신으로 간주합니다. */
+      function imageStale(slot) {
+        const sig = state.imageSigs && state.imageSigs[slot];
+        return !!(state.images && state.images[slot] && sig && sig !== imageSig(slot));
+      }
+
       /* 단계별 통합 이미지 카드 */
       function imageCard(slot, opts) {
         const url = viewUrl(slot);
-        const caption = opts.caption || "";
-        const genBtn = opts.onGenerate
-          ? `<button type="button" onclick="${opts.onGenerate}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white text-slate-700 t-meta font-bold hover:bg-slate-50 active:scale-[0.98] transition-all"><i data-lucide="${url ? "refresh-cw" : "image-plus"}" class="w-4 h-4"></i>${url ? "다시 생성" : "이미지 생성"}</button>`
-          : "";
+        const stale = imageStale(slot);
+        const smallBtn = "inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white text-slate-700 t-meta font-bold hover:bg-slate-50 active:scale-[0.98] transition-all";
         const saveBtn = url
-          ? `<button type="button" onclick="Actions.downloadImage('${slot}')"
-               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white text-slate-700 t-meta font-bold hover:bg-slate-50 active:scale-[0.98] transition-all">
-               <i data-lucide="download" class="w-4 h-4"></i>저장
-             </button>`
+          ? `<button type="button" onclick="Actions.downloadImage('${slot}')" class="${smallBtn} flex-shrink-0"><i data-lucide="download" class="w-4 h-4"></i>저장</button>`
+          : "";
+        /* 이미지가 없거나(생성 실패·중단) 수정 전 이미지일 때만 만들기 버튼을 보여 줍니다. */
+        const makeBtn = label => opts.onGenerate
+          ? `<button type="button" onclick="${opts.onGenerate}" class="${smallBtn} mt-3"><i data-lucide="image-plus" class="w-4 h-4"></i>${label}</button>`
           : "";
         const inner = url
           ? `<button type="button" onclick="Actions.openLightbox('${slot}')" class="block w-full">
                <img src="${escAttr(url)}" alt="${escAttr(opts.alt || "생성된 통합 이미지")}" class="w-full rounded-2xl bg-slate-100" />
              </button>`
-          : `<div class="w-full rounded-2xl bg-slate-100 border-2 border-dashed border-slate-300 px-5 py-12 text-center">
+          : `<div class="w-full rounded-2xl bg-slate-100 border-2 border-dashed border-slate-300 px-5 py-10 text-center">
                <i data-lucide="image" class="w-10 h-10 text-slate-400 mx-auto mb-3"></i>
                <p class="t-small text-slate-600">${esc(opts.empty || "아직 이미지를 생성하지 않았습니다.")}</p>
+               ${makeBtn("이미지 만들기")}
              </div>`;
         return `<section class="bg-white rounded-[2rem] p-4 border-2 border-slate-200 shadow-md mb-6">
-          <div class="flex flex-wrap items-center justify-between gap-3 mb-3 px-1">
-            <h3 class="t-label text-slate-500">${esc(opts.title)}</h3>
-            <div class="flex items-center gap-2">${genBtn}${saveBtn}</div>
+          <div class="flex items-center justify-between gap-3 mb-3 px-1">
+            <h3 class="t-label text-slate-500 min-w-0">${esc(opts.title)}</h3>
+            ${saveBtn}
           </div>
+          ${stale ? `<div class="bg-amber-50 border-2 border-amber-300 text-amber-900 rounded-2xl px-4 py-3 mb-3" role="note">
+            <div class="flex items-start gap-2">
+              <i data-lucide="alert-circle" class="w-5 h-5 flex-shrink-0 mt-1"></i>
+              <p class="t-meta prose-ko">내용을 수정하기 전에 만든 이미지입니다. 수정된 내용이 아직 반영되지 않았습니다.</p>
+            </div>
+            ${makeBtn("이미지 새로 만들기")}
+          </div>` : ""}
           ${inner}
-          ${caption ? `<p class="t-meta text-slate-500 mt-3 px-1 prose-ko">${esc(caption)}</p>` : ""}
         </section>`;
       }
 
@@ -1687,9 +1952,16 @@ ${rows}`;
 
         if (state.interactions.length) {
           L.push(line, " 4. 인터랙션 제안", line);
+          const ms = state.interactionPlan && state.interactionPlan.materialSystem;
+          if (ms && (ms.nameKo || ms.nameEn)) {
+            L.push("", `[감성 물성 시스템] ${ms.nameKo} / ${ms.nameEn}`);
+            if (ms.core.length) L.push(`  핵심 성질: ${ms.core.join(" · ")}`);
+            if (ms.exaggeration) L.push(`  과장 방식: ${ms.exaggeration}`);
+            L.push(`  적용 요소(리퀴드 글라스 8개 중 6개): ${state.interactionPlan.elements.map(elementName).join(" · ")}`);
+          }
           state.interactions.forEach((m, i) => {
             L.push("", `${pad2(i + 1)}. ${m.nameKo} / ${m.nameEn}  (${m.type})`);
-            if (m.frame) L.push(`  프레임: ${m.frame}`);
+            if (m.frame) L.push(`  적용 요소: ${m.frame}`);
             L.push(`  역할: ${m.role}`);
             if (m.digitalPattern) L.push(`  디지털 패턴: ${m.digitalPattern}`);
             if (m.physicalBasis) L.push(`  ${state.interactionsMode === "physical" ? "물리 현상" : "물성 메타포 → 모션 모델"}: ${m.physicalBasis}`);
@@ -1735,6 +2007,15 @@ ${rows}`;
           if (c.visualAnchor) L.push(`- 색·빛·표면 톤 기준(톤으로만 사용, 대상을 그리지 않음): ${c.visualAnchor}`);
           if (c.moodWords && c.moodWords.length) L.push(`- 감성 단어: ${c.moodWords.join(", ")}`);
         }
+        const ms = state.interactionPlan && state.interactionPlan.materialSystem;
+        if (ms && (ms.nameKo || ms.nameEn)) {
+          L.push("");
+          L.push("# 감성 물성 시스템 (모든 인터랙션에 일관되게, 조금 과장해 적용)");
+          L.push(`- 이름: ${ms.nameKo} (${ms.nameEn})`);
+          if (ms.core.length) L.push(`- 핵심 성질: ${ms.core.join(", ")}`);
+          if (ms.exaggeration) L.push(`- 과장 방식: ${ms.exaggeration}`);
+          L.push("- 애플 Liquid Glass가 유리 물성을 모든 요소에 적용하듯, 이 물성을 6개 인터랙션 전체에 같은 언어로 적용합니다. 유리 효과는 쓰지 않습니다.");
+        }
         if (props.length) {
           L.push("");
           L.push("# 인터랙션 물성 (LOW 0 – HIGH 100 목표값)");
@@ -1745,7 +2026,7 @@ ${rows}`;
         list.forEach((m, i) => {
           L.push("");
           L.push(`## ${pad2(i + 1)}. ${m.nameKo} / ${m.nameEn}`);
-          if (m.frame) L.push(`- 프레임: ${m.frame}`);
+          if (m.frame) L.push(`- 적용 요소 (리퀴드 글라스 인터랙션 요소): ${m.frame}`);
           if (m.type) L.push(`- 유형: ${m.type}`);
           if (m.digitalPattern) L.push(`- 디지털 패턴: ${m.digitalPattern}`);
           if (m.phoneContext) L.push(`- 적용 맥락: ${m.phoneContext}`);
@@ -1819,7 +2100,7 @@ ${rows}`;
           const url = state.images && state.images[slot];
           if (!url) return "";
           return PDF.blk(`<img src="${escAttr(url)}" style="width:520px;display:block;margin:0 auto 8px;border:1px solid #e2e8f0;" />
-            <p style="font-size:14px;color:#64748b;text-align:center;margin:0;">${esc(caption)}</p>`);
+            <p style="font-size:14px;color:#64748b;text-align:center;margin:0;">${esc(caption)}${imageStale(slot) ? " · 수정 전 이미지(내용과 다를 수 있음)" : ""}</p>`);
         },
         card(inner) {
           return PDF.blk(`<div style="border:1px solid #cbd5e1;border-radius:14px;padding:16px 18px;">${inner}</div>`, "0 0 10px 0");
@@ -1904,6 +2185,13 @@ ${rows}`;
 
           if (state.interactions.length) {
             out.push(PDF.heading("04", "인터랙션 제안", "Digital Interaction"));
+            const ms = state.interactionPlan && state.interactionPlan.materialSystem;
+            if (ms && (ms.nameKo || ms.nameEn)) out.push(PDF.card(`<div style="font-size:14px;font-weight:700;color:#1d4ed8;">감성 물성 시스템</div>
+              <div style="font-size:18px;font-weight:800;">${esc(ms.nameKo)}</div>
+              <div style="font-size:15px;color:#64748b;">${esc(ms.nameEn)}</div>
+              ${PDF.kv("핵심 성질", ms.core.join(" · "))}
+              ${PDF.kv("과장 방식", ms.exaggeration)}
+              ${PDF.kv("적용 요소 (리퀴드 글라스 8개 중 6개)", state.interactionPlan.elements.map(elementName).join(" · "))}`));
             out.push(PDF.image("interaction", state.interactions.length > INTERACTION_COUNT ? "인터랙션 컨셉 보드 01–04" : "인터랙션 컨셉 보드"));
             if (state.interactions.length > INTERACTION_COUNT) out.push(PDF.image("interactionB", "인터랙션 컨셉 보드 05–08"));
             state.interactions.forEach((x, i) => {
@@ -1911,7 +2199,7 @@ ${rows}`;
                 <div style="font-size:18px;font-weight:800;">${pad2(i + 1)}  ${esc(x.nameKo)}
                   <span style="font-size:14px;color:#64748b;font-weight:700;margin-left:6px;">${esc(x.type)}</span></div>
                 <div style="font-size:15px;color:#64748b;">${esc(x.nameEn)}</div>
-                ${PDF.kv("프레임", x.frame)}
+                ${PDF.kv("적용 요소", x.frame)}
                 ${PDF.kv("역할", x.role)}
                 ${PDF.kv("디지털 패턴", x.digitalPattern)}
                 ${PDF.kv(state.interactionsMode === "physical" ? "물리 현상" : "물성 메타포 → 모션 모델", x.physicalBasis)}
@@ -2005,12 +2293,17 @@ ${rows}`;
          14. ACTIONS
          ========================================================= */
       /* 한 번에 받으면 응답이 길어 연결이 끊기기 쉬워 3개 + 3개로 나눠 요청합니다. */
-      function interactionPartNote(from, count, existing) {
+      function interactionPartNote(from, count, existing, plan) {
         const to = from + count - 1;
-        let s = `[이번 요청 범위 — 반드시 지킴]\n전체 ${INTERACTION_COUNT}개 제안 중 ${from}~${to}번째 ${count}개만 반환합니다. 이번에 맡을 프레임: ${FRAMES.slice(from - 1, to).map(f => `${f.no} ${frameLabel(f)}`).join(' · ')}. "interactions" 배열에 정확히 ${count}개를 넣습니다. 앞의 '정확히 ${INTERACTION_COUNT}개' 규칙보다 이 범위 규칙이 우선합니다.`;
+        let s;
+        if (!plan) {
+          s = `[이번 요청 범위 — 반드시 지킴]\n먼저 8개 요소 중 이번 감성에 맞는 6개를 골라 "selectedElements"에 제안 순서대로 번호 6개를 넣고, "materialSystem"을 정의합니다. 그다음 "interactions"에는 selectedElements의 앞 ${count}개 요소에 해당하는 제안 ${count}개만 순서대로 넣습니다. 앞의 '정확히 ${INTERACTION_COUNT}개' 규칙보다 이 범위 규칙이 우선합니다.`;
+        } else {
+          s = `[이번 요청 범위 — 반드시 지킴]\n전체 ${INTERACTION_COUNT}개 제안 중 ${from}~${to}번째 ${count}개만 반환합니다. 이번에 맡을 요소(순서대로): ${plan.elements.slice(from - 1, to).map(n => `${n}. ${elementName(n)}`).join(" / ")}. "interactions" 배열에 정확히 ${count}개를 넣습니다. 앞의 '정확히 ${INTERACTION_COUNT}개' 규칙보다 이 범위 규칙이 우선합니다.`;
+        }
         if (existing.length) {
-          s += `\n이미 제안된 항목입니다. 이것과 겹치지 않는 다른 원리(물리 원리 또는 디지털 패턴·모션 원리)·적용 맥락·입력 방식을 씁니다:\n` +
-            existing.map((m, i) => `${i + 1}. ${m.nameKo} — ${m.type} / ${m.digitalPattern || ""} / ${m.phoneContext || ""} / ${m.gesture || ""}`).join("\n") +
+          s += `\n이미 제안된 항목입니다. 이것과 겹치지 않는 다른 모션 원리·적용 맥락·입력 방식을 씁니다:\n` +
+            existing.map((m, i) => `${i + 1}. [${m.frame || ""}] ${m.nameKo} — ${m.type} / ${m.digitalPattern || ""} / ${m.phoneContext || ""} / ${m.gesture || ""}`).join("\n") +
             `\n모든 항목은 휴대폰 화면 터치 조작 중심으로 하고, 앞 항목과 다른 제스처를 씁니다.`;
         } else {
           s += `\n이번 ${count}개는 모두 휴대폰 화면 터치 조작 중심으로 하고, 서로 다른 제스처를 씁니다.`;
@@ -2067,7 +2360,7 @@ ${rows}`;
           list: () => state.interactions,
           title: it => it.nameKo,
           norm: d => normInteractions(d),
-          prompt: ins => PROMPTS.INTERACTION_DIGITAL(selectedConcept() || { nameKo: state.keyword, nameEn: "" }, selectedProperties(), ins),
+          prompt: ins => PROMPTS.INTERACTION_DIGITAL(selectedConcept() || { nameKo: state.keyword, nameEn: "" }, selectedProperties(), ins, state.interactionPlan),
           cap: 14000,
           isSelected: () => false,
           hasDown: () => false,
@@ -2093,7 +2386,7 @@ ${rows}`;
       function reviseNote(def, idx, ins) {
         const list = def.list();
         const others = list.map((it, i) => i === idx ? null : `${pad2(i + 1)}. ${def.title(it)}`).filter(Boolean).join("\n");
-        const frameNote = list[idx] && list[idx].frame ? `\n이 항목은 "${list[idx].frame}" 프레임을 맡습니다. 수정 후에도 같은 프레임의 특성이 핵심이 되게 합니다.` : "";
+        const frameNote = list[idx] && list[idx].frame ? `\n이 항목은 인터랙션 요소 "${list[idx].frame}"에 적용됩니다. 수정 후에도 같은 요소를 맡고, 같은 감성 물성 시스템을 조금 과장해 적용합니다.` : "";
         return `[항목 단위 수정 — 이 규칙이 앞의 개수 규칙보다 우선합니다]
 전체 ${list.length}개 중 ${pad2(idx + 1)}번 항목 하나만 아래 수정 지시에 따라 다시 작성합니다. "${def.key}" 배열에 정확히 1개만 넣습니다. 같은 형식(JSON 키)을 그대로 지킵니다.${frameNote}
 수정 지시: ${ins || "지시가 따로 없습니다. 같은 역할을 유지하면서 더 완성도 있고 분명하게 다시 작성합니다."}
@@ -2122,59 +2415,32 @@ ${others}`;
           persist(false);
           state.simPrompt = null; state.editTarget = {}; state.lightbox = null;
           Object.assign(state, blankProject());
+          knownRev = 0; lastSavedSig = "";
           drafts["keyword-input"] = "";
           drafts["note-input"] = "";
           setState({ step: 1 }, true);
         },
 
         async openProject(id) {
-          const row = Store.list().find(p => p.id === id);
-          if (!row || !row.data) { toast("프로젝트를 찾지 못했습니다.", "error"); return; }
           persist(false);
+          let row = Store.get(id);
+          /* 앱이 바로 종료되어 localStorage 기록이 늦었던 경우, IndexedDB 사본이 더 최신일 수 있습니다. */
+          const copy = await ProjectDB.get(id);
+          if (copy && copy.data && (!row || (copy.rev || 0) > (row.rev || 0))) { row = copy; Store.putRow(copy); }
+          if (!row || !row.data) { toast("프로젝트를 찾지 못했습니다.", "error"); return; }
           state.simPrompt = null; state.editTarget = {}; state.lightbox = null;
-          const d = row.data;
-          Object.assign(state, blankProject(), {
-            projectId: d.projectId || row.id,
-            keyword: d.keyword || "",
-            note: d.note || "",
-            associations: arr(d.associations),
-            concepts: arr(d.concepts),
-            conceptIds: arr(d.conceptIds).length ? arr(d.conceptIds) : (d.conceptId ? [d.conceptId] : []),
-            perceptions: arr(d.perceptions),
-            perceptionIds: arr(d.perceptionIds),
-            properties: arr(d.properties),
-            propertyIds: arr(d.propertyIds),
-            interactions: arr(d.interactions || d.materials),
-            interactionMode: d.interactionMode === "physical" ? "physical" : "digital",
-            /* 이전 버전 프로젝트는 디지털 패턴 항목 유무로 생성 방식을 판단합니다. */
-            interactionsMode: d.interactionsMode || (arr(d.interactions).some(m => m && m.digitalPattern) ? "digital" : "physical"),
-            createdAt: d.createdAt || row.savedAt,
-            images: { emotion: null, perception: null, property: null, interaction: null, interactionB: null }
-          });
-          drafts["keyword-input"] = state.keyword;
-          drafts["note-input"] = state.note;
+          applyProjectData(row);
 
           /* 구버전에서 step이 1로 잘못 저장된 프로젝트도 데이터 기준으로 정상 복구합니다. */
           setState({ step: progressStep() }, true);
-
-          const imgs = await ImageDB.loadAll(state.projectId);
-          /* 구버전이 남긴 고아 이미지도 정리합니다. 데이터가 없는 단계의 이미지는 복원하지 않습니다. */
-          const orphanSlots = [];
-          if (!state.concepts.length && imgs.emotion) orphanSlots.push("emotion");
-          if (!state.perceptions.length && imgs.perception) orphanSlots.push("perception");
-          if (!state.properties.length && imgs.property) orphanSlots.push("property");
-          if (!state.interactions.length && imgs.interaction) orphanSlots.push("interaction");
-          if (!state.interactions.length && imgs.interactionB) orphanSlots.push("interactionB");
-          orphanSlots.forEach(slot => { imgs[slot] = null; });
-          if (orphanSlots.length) await ImageDB.removeSlots(state.projectId, orphanSlots);
-          setState({ images: Object.assign({ emotion: null, perception: null, property: null, interaction: null, interactionB: null }, imgs) });
+          await loadImagesFor(state.projectId);
         },
 
         deleteProject(id) {
           if (!window.confirm("이 프로젝트와 생성된 이미지를 모두 지웁니다. 계속할까요?")) return;
           Store.remove(id);
           /* 지금 열려 있는 프로젝트였다면 비워 둡니다. 그러지 않으면 자동 저장이 되살립니다. */
-          if (state.projectId === id) Object.assign(state, blankProject());
+          if (state.projectId === id) { Object.assign(state, blankProject()); knownRev = 0; lastSavedSig = ""; }
           toast("프로젝트를 삭제했습니다.");
           render();
         },
@@ -2213,7 +2479,7 @@ ${others}`;
           if (!fresh) { setState({ errorMsg: "수정된 항목을 받지 못했습니다. 다시 시도해 주세요." }); return; }
           fresh.id = item.id;
           fresh.index = item.index;
-          if (stage === "interaction" && item.frame) fresh.frame = item.frame;
+          if (stage === "interaction" && item.frame) { fresh.frame = item.frame; fresh.element = item.element; }
           const next = list.slice();
           next[target] = fresh;
           const patch = { [def.key]: next };
@@ -2288,16 +2554,19 @@ ${others}`;
           a.download = `interaction-${slot}-${Date.now()}.png`;
           document.body.appendChild(a); a.click(); document.body.removeChild(a);
         },
-        async saveImage(slot, dataUrl) {
+        async saveImage(slot, dataUrl, sig) {
           state.images = Object.assign({}, state.images, { [slot]: dataUrl });
-          ImageDB.put(state.projectId, slot, dataUrl).then(ok => { if (!ok) toast("이 기기에 이미지를 저장하지 못했습니다. 이미지 '저장' 버튼으로 내려받아 두세요.", "error"); });
+          state.imageSigs = Object.assign({}, state.imageSigs, { [slot]: sig || imageSig(slot) });
+          ImageDB.put(state.projectId, slot, dataUrl, state.imageSigs[slot]).then(ok => { if (!ok) toast("이 기기에 이미지를 저장하지 못했습니다. 이미지 '저장' 버튼으로 내려받아 두세요.", "error"); });
         },
         async clearImageSlots(slots) {
           const targets = Array.from(new Set(arr(slots).filter(slot => IMAGE_SLOTS.includes(slot))));
           if (!targets.length) return;
           const nextImages = Object.assign({}, state.images);
-          targets.forEach(slot => { nextImages[slot] = null; });
+          const nextSigs = Object.assign({}, state.imageSigs);
+          targets.forEach(slot => { nextImages[slot] = null; delete nextSigs[slot]; });
           state.images = nextImages;
+          state.imageSigs = nextSigs;
           await ImageDB.removeSlots(state.projectId, targets);
         },
 
@@ -2338,10 +2607,11 @@ ${others}`;
         },
         async generateEmotionImage() {
           if (!state.concepts.length) return;
+          const sig = imageSig("emotion");
           const url = await withLoading("감성 해석 통합 이미지를 만들고 있습니다", () =>
             callImage(IMG.emotion(state.concepts)));
           if (!url) return;
-          await Actions.saveImage("emotion", url);
+          await Actions.saveImage("emotion", url, sig);
           render();
         },
 
@@ -2400,10 +2670,11 @@ ${others}`;
         },
         async generatePerceptionImage() {
           if (!state.perceptions.length) return;
+          const sig = imageSig("perception");
           const url = await withLoading("지각 특성 통합 이미지를 만들고 있습니다", () =>
             callImage(IMG.perception(state.perceptions)));
           if (!url) return;
-          await Actions.saveImage("perception", url);
+          await Actions.saveImage("perception", url, sig);
           render();
         },
 
@@ -2473,10 +2744,11 @@ ${others}`;
         },
         async generatePropertyImage() {
           if (!state.properties.length) return;
+          const sig = imageSig("property");
           const url = await withLoading("인터랙션 물성 이미지를 만들고 있습니다", () =>
             callImage(IMG.property(state.properties)));
           if (!url) return;
-          await Actions.saveImage("property", url);
+          await Actions.saveImage("property", url, sig);
           render();
         },
 
@@ -2513,23 +2785,28 @@ ${others}`;
           }
           setState({ propertyIds: nextIds });
         },
-        async fetchInteractionPart(c, picked, instruction, from, count, existing, mode) {
-          const fixFrames = arr => arr.map((m, k) => Object.assign(m, { frame: FRAMES[from - 1 + k] ? frameLabel(FRAMES[from - 1 + k]) : m.frame, index: from + k }));
-          const promptFn = PROMPTS.INTERACTION_DIGITAL;
+        async fetchInteractionPart(c, picked, instruction, from, count, existing, plan) {
           const concept = c || { nameKo: state.keyword, nameEn: "" };
-          const ins = [instruction || "", interactionPartNote(from, count, existing)].filter(Boolean).join("\n\n");
-          const range = `${pad2(from)}–${pad2(from + count - 1)}`;
-          const data = await withLoading(`인터랙션 제안 ${range}를 만들고 있습니다`, () =>
-            callText(SYSTEM, promptFn(concept, picked, ins), 14000));
+          const ins = [instruction || "", interactionPartNote(from, count, existing, plan)].filter(Boolean).join("\n\n");
+          const ask = extra => withLoading("인터랙션 제안을 만들고 있습니다", () =>
+            callText(SYSTEM, PROMPTS.INTERACTION_DIGITAL(concept, picked, extra ? `${ins}\n${extra}` : ins, plan), 14000));
+          const data = await ask();
           if (!data) return null;
+          const usePlan = plan || normPlan(data);
           let list = normInteractions(data).slice(0, count);
           if (list.length < count) {
-            const more = await withLoading(`인터랙션 제안 ${range}를 다시 요청하고 있습니다`, () =>
-              callText(SYSTEM, promptFn(concept, picked, `${ins}\n이전 응답은 ${list.length}개뿐이었습니다. 반드시 정확히 ${count}개를 반환합니다.`), 14000));
+            const more = await ask(`이전 응답은 ${list.length}개뿐이었습니다. 반드시 정확히 ${count}개를 반환합니다.`);
             const again = more ? normInteractions(more).slice(0, count) : [];
             if (again.length > list.length) list = again;
           }
-          return fixFrames(list);
+          /* 요소 번호와 이름은 정한 계획대로 맞춥니다. */
+          const els = usePlan.elements.slice(from - 1, from - 1 + count);
+          list.forEach((m, k) => {
+            const n = els[k];
+            if (n) { m.element = n; m.frame = elementName(n); }
+            m.index = from + k;
+          });
+          return { list, plan: usePlan };
         },
         async generateInteractions(instruction) {
           const c = selectedConcept();
@@ -2537,25 +2814,26 @@ ${others}`;
           if (!picked.length) { setState({ errorMsg: "물성을 하나 이상 선택해 주세요." }); return; }
 
           const mode = "digital";
-          loadingHold = `인터랙션 제안 01–${pad2(INTERACTION_COUNT)}를 만들고 있습니다`;
+          loadingHold = "인터랙션 제안을 만들고 있습니다";
           try {
-          const first = await Actions.fetchInteractionPart(c, picked, instruction, 1, 3, [], mode);
+          const first = await Actions.fetchInteractionPart(c, picked, instruction, 1, 3, [], null);
           if (!first) return;
-          if (!first.length) { setState({ errorMsg: "인터랙션 제안을 받지 못했습니다. 다시 시도해 주세요." }); return; }
+          if (!first.list.length) { setState({ errorMsg: "인터랙션 제안을 받지 못했습니다. 다시 시도해 주세요." }); return; }
 
           await Actions.clearImageSlots(["interaction", "interactionB"]);
           setState({
-            interactions: first,
+            interactions: first.list,
+            interactionPlan: first.plan,
             interactionsMode: mode,
             images: Object.assign({}, state.images, { interaction: null, interactionB: null }),
             step: 5
           }, true);
           persist(false);
 
-          const second = await Actions.fetchInteractionPart(c, picked, instruction, first.length + 1, INTERACTION_COUNT - first.length, first, mode);
+          const second = await Actions.fetchInteractionPart(c, picked, instruction, first.list.length + 1, INTERACTION_COUNT - first.list.length, first.list, first.plan);
           if (!second) return true;   /* 오류 안내를 그대로 보여 주고, '나머지 이어서 생성'으로 이어 갈 수 있습니다. */
-          if (second.length) {
-            state.interactions = first.concat(second);
+          if (second.list.length) {
+            state.interactions = first.list.concat(second.list);
             persist(false);
           }
           } finally {
@@ -2570,9 +2848,10 @@ ${others}`;
           const picked = selectedProperties();
           const have = state.interactions;
           if (have.length >= INTERACTION_COUNT || !picked.length) return;
-          const more = await Actions.fetchInteractionPart(c, picked, "", have.length + 1, INTERACTION_COUNT - have.length, have, state.interactionsMode);
-          if (!more || !more.length) return;
-          setState({ interactions: have.concat(more) });
+          const plan = state.interactionPlan || normPlan({ selectedElements: have.map(m => m.element).filter(Boolean) });
+          const more = await Actions.fetchInteractionPart(c, picked, "", have.length + 1, INTERACTION_COUNT - have.length, have, plan);
+          if (!more || !more.list.length) return;
+          setState({ interactions: have.concat(more.list), interactionPlan: plan });
           persist(false);
           await Actions.generateInteractionImage();
         },
@@ -2594,10 +2873,11 @@ ${others}`;
             const range = `${pad2(h.offset + 1)}–${pad2(h.offset + h.items.length)}`;
             const prompt = IMG.interaction(h.items, h.offset);
             const ref = h.offset > 0 ? state.images.interaction : null;
-            const url = await withLoading(`인터랙션 컨셉 보드 ${range}를 만들고 있습니다`, () =>
+            const sig = imageSig(h.slot);
+            const url = await withLoading("인터랙션 컨셉 보드를 만들고 있습니다", () =>
               ref ? callImageWithRef(prompt, ref) : callImage(prompt));
             if (!url) return;
-            await Actions.saveImage(h.slot, url);
+            await Actions.saveImage(h.slot, url, sig);
             render();
           }
         }
@@ -2634,7 +2914,7 @@ ${others}`;
             <div class="space-y-5">
               <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 t-meta font-bold"><i data-lucide="sparkles" class="text-yellow-300 w-4 h-4"></i> Emotion Interaction Lab</span>
               <h1 class="t-display leading-tight">감성을<br/>느낄 수 있는<br/><span class="text-sky-300">인터랙션으로 바꿉니다</span></h1>
-              <p class="t-body text-slate-100">감성 키워드에서 출발해 감성 해석, 지각 특성, 인터랙션 물성을 거쳐 실제 휴대폰 화면에 들어갈 수 있는 물성 기반 인터랙션 6가지(움직임 문법 5단계 + 감성 고유 1)로 구체화합니다.</p>
+              <p class="t-body text-slate-100">감성 키워드에서 출발해 감성 해석, 지각 특성, 인터랙션 물성을 거쳐 실제 휴대폰 화면에 들어갈 수 있는 물성 기반 인터랙션 6가지로 구체화합니다. 리퀴드 글라스의 인터랙션 요소 8개 중 감성에 맞는 6개를 골라, 감성의 물성을 조금 과장해 적용합니다.</p>
             </div>
 
             <button type="button" onclick="Actions.startNewProject()" class="w-full bg-white text-slate-900 py-5 rounded-2xl font-bold t-h3 flex items-center justify-center gap-2 shadow-2xl active:scale-[0.98] transition-all">
@@ -2737,7 +3017,6 @@ ${others}`;
           ${imageCard("emotion", {
             title: "감성 해석 통합 이미지",
             alt: "세 가지 감성 해석의 대표 이미지",
-            caption: "각 안은 단독으로 완결된 Mood Image이며, 생성은 세 장면을 위에서 아래로 배치한 통합 이미지 1장으로 진행합니다. 눌러서 크게 볼 수 있습니다.",
             empty: "감성 해석 이미지를 아직 만들지 않았습니다.",
             onGenerate: "Actions.generateEmotionImage()"
           })}
@@ -2787,7 +3066,6 @@ ${others}`;
           ${imageCard("perception", {
             title: "지각 특성 통합 이미지",
             alt: "지각 요소별 대표 이미지",
-            caption: "서로 다른 지각 축을 각기 다른 대상·스케일·장면으로 시각화해 하나의 통합 이미지로 묶었습니다.",
             empty: "지각 특성 이미지를 아직 만들지 않았습니다.",
             onGenerate: "Actions.generatePerceptionImage()"
           })}
@@ -2853,7 +3131,6 @@ ${others}`;
           ${imageCard("property", {
             title: "인터랙션 물성 통합 이미지",
             alt: "동적 인터랙션 물성별 대표 반응 이미지 통합 보드",
-            caption: "압축·저항·관성·복원·감쇠·빛·햅틱 등 동적 반응을 한눈에 비교하는 보드입니다.",
             empty: "인터랙션 물성 이미지를 아직 만들지 않았습니다.",
             onGenerate: "Actions.generatePropertyImage()"
           })}
@@ -2878,15 +3155,28 @@ ${others}`;
         return legacy.join("\n");
       }
 
-      function frameGuide() {
-        if (!state.interactions.some(m => m.frame)) return "";
+      /* 리퀴드 글라스의 인터랙션 요소 8개 중 고른 6개와 감성 물성 시스템을 보여 줍니다. */
+      function elementGuide() {
+        const plan = state.interactionPlan;
+        if (!plan) return "";
+        const ms = plan.materialSystem || {};
+        const order = plan.elements;
         return `<section class="bg-white border-2 border-slate-200 rounded-[2rem] p-5 mb-5 shadow-sm">
-          <p class="t-meta font-bold text-blue-700">INTERACTION FRAME</p>
-          <h3 class="t-h3 text-slate-900 mb-3">움직임 문법 5단계 + 감성 고유 1</h3>
-          <div class="space-y-1.5">${FRAMES.map(f => `<div class="grid grid-cols-[34px_1fr] gap-2 items-start">
-            <span class="t-meta font-bold ${f.no === "06" ? "text-amber-600" : "text-blue-700"}">${f.no}</span>
-            <p class="t-meta text-slate-700"><strong class="text-slate-900">${f.en} / ${f.ko}</strong> · ${f.desc}</p>
-          </div>`).join("")}</div>
+          <p class="t-meta font-bold text-blue-700">EMOTION MATERIAL SYSTEM</p>
+          ${ms.nameKo || ms.nameEn ? `<h3 class="t-h3 text-slate-900">${esc(ms.nameKo || ms.nameEn)}</h3>
+          ${ms.nameEn && ms.nameKo ? `<p class="t-meta text-slate-500">${esc(ms.nameEn)}</p>` : ""}` : ""}
+          ${ms.core && ms.core.length ? `<div class="flex flex-wrap gap-1.5 mt-2">${ms.core.map(x => chip(x, "blue")).join("")}</div>` : ""}
+          ${ms.exaggeration ? `<p class="t-small text-slate-700 mt-3 prose-ko">${esc(ms.exaggeration)}</p>` : ""}
+          ${ms.whyKo ? `<p class="t-meta text-slate-500 mt-1 prose-ko">${esc(ms.whyKo)}</p>` : ""}
+          <p class="t-meta font-bold text-slate-500 mt-4 mb-2">리퀴드 글라스 인터랙션 요소 8개 중 이 감성에 맞는 6개</p>
+          <div class="space-y-1.5">${LG_ELEMENTS.map(e => {
+            const k = order.indexOf(e.no);
+            const on = k >= 0;
+            return `<div class="grid grid-cols-[40px_1fr] gap-2 items-start ${on ? "" : "opacity-50"}">
+              <span class="t-meta font-bold tabular-nums ${on ? "text-blue-700" : "text-slate-400"}">${on ? pad2(k + 1) : "—"}</span>
+              <p class="t-meta ${on ? "text-slate-800" : "text-slate-500"}"><strong class="${on ? "text-slate-900" : ""}">${esc(e.ko)}</strong>${on ? "" : " · 제외"}</p>
+            </div>`;
+          }).join("")}</div>
         </section>`;
       }
 
@@ -2905,7 +3195,7 @@ ${others}`;
               ${m.type ? `<span class="inline-block max-w-full mt-2 t-meta font-bold px-2.5 py-1 rounded-lg bg-sky-100 text-sky-800" style="overflow-wrap:anywhere">${esc(m.type)}</span>` : ""}
             </div>
           </div>
-          ${m.frame ? `<p class="t-meta font-bold mt-1 mb-1 ${/Signature|고유/.test(m.frame) ? "text-amber-700" : "text-blue-700"}">프레임 · ${esc(m.frame)}</p>` : ""}
+          ${m.frame ? `<p class="t-meta font-bold mt-1 mb-1 text-blue-700">적용 요소 · ${esc(m.frame)}</p>` : ""}
           ${row("UX 역할", m.role)}
           ${m.physicalBasis ? `<div class="mt-3 bg-slate-900 text-white rounded-2xl px-4 py-3"><p class="t-meta font-bold text-sky-300">${state.interactionsMode === "physical" ? "물리 현상 · Physical Basis" : "물성 메타포 → 디지털 모션 모델"}</p><p class="t-small prose-ko">${esc(m.physicalBasis)}</p></div>` : ""}
           ${(m.digitalPattern || m.phoneContext || m.gesture) ? `<div class="flex flex-wrap gap-1.5 mt-3">${m.digitalPattern ? chip("디지털 패턴 · " + m.digitalPattern, "blue") : ""}${m.phoneContext ? chip("적용 맥락 · " + m.phoneContext, "blue") : ""}${m.gesture ? chip("입력 · " + m.gesture) : ""}</div>` : ""}
@@ -2928,7 +3218,7 @@ ${others}`;
         const cards = state.interactions.map((m, i) => interactionCard(m, i)).join("");
         return `<div class="page-top px-4 dock-space animate-fade-in">
           ${header("인터랙션 제안", 4)}
-          ${sectionTitle("물성을 어떻게 움직임으로 표현할 것인가", state.interactionsMode === "physical" ? "선택한 물성의 물리 현상 자체를 작동 원리로 삼아, 휴대폰·TV에 적용되는 물리적 인터랙션으로 번역합니다." : "선택한 물성을 메타포로 삼아, 휴대폰 화면에서 손으로 조작하는 디지털 인터랙션 6개로 번역합니다. 01~05는 움직임 문법 5단계를 하나씩 맡고, 06은 이 감성만의 고유 인터랙션입니다. 앞 단계의 연상 비주얼은 색·빛·질감 톤으로만 남기고, 실제 제품 기능처럼 보이도록 제안합니다.")}
+          ${sectionTitle("물성을 어떻게 움직임으로 표현할 것인가", state.interactionsMode === "physical" ? "선택한 물성의 물리 현상 자체를 작동 원리로 삼아, 휴대폰·TV에 적용되는 물리적 인터랙션으로 번역합니다." : "리퀴드 글라스가 유리라는 하나의 물성을 모든 인터랙션 요소에 적용하듯, 이 감성에서 나온 물성을 하나의 시스템으로 정리해 조금 과장되게 적용합니다. 리퀴드 글라스의 인터랙션 요소 8개 중 이 감성에 맞는 6개를 골라 휴대폰 화면의 디지털 인터랙션으로 제안합니다.")}
           ${(function () {
             const c = selectedConcept();
             const ps = selectedPerceptions();
@@ -2941,14 +3231,13 @@ ${others}`;
           })()}
 
 
-          ${frameGuide()}
+          ${elementGuide()}
 
           ${state.interactions.length < INTERACTION_COUNT ? `<div class="mb-5">${secondaryBtn(`나머지 ${INTERACTION_COUNT - state.interactions.length}개 이어서 생성`, "Actions.continueInteractions()", "plus")}</div>` : ""}
 
           ${imageCard("interaction", {
             title: state.interactions.length > INTERACTION_COUNT ? "인터랙션 컨셉 보드 01–04" : "인터랙션 컨셉 보드",
             alt: "AI가 선택한 다양한 인터랙션 컨셉의 3상태 보드",
-            caption: state.interactions.length > INTERACTION_COUNT ? "01–04번 인터랙션 요소의 3개 상태 변화를 보여 줍니다." : `${state.interactions.length}개 인터랙션 요소의 3개 상태 변화를 한 장으로 보여 줍니다.`,
             empty: "인터랙션 컨셉 보드를 아직 만들지 않았습니다.",
             onGenerate: "Actions.generateInteractionImage(0)"
           })}
@@ -2956,7 +3245,6 @@ ${others}`;
           ${state.interactions.length > INTERACTION_COUNT ? imageCard("interactionB", {
             title: "인터랙션 컨셉 보드 05–08",
             alt: "05번부터 08번 인터랙션 컨셉의 3상태 보드",
-            caption: "05–08번 인터랙션 요소의 3개 상태 변화를 보여 줍니다.",
             empty: "두 번째 인터랙션 컨셉 보드를 아직 만들지 않았습니다.",
             onGenerate: "Actions.generateInteractionImage(1)"
           }) : ""}
@@ -3110,11 +3398,35 @@ ${others}`;
       });
 
       setInterval(() => { try { persist(false); } catch (e) { console.warn("자동 저장 실패", e); } }, CONFIG.AUTOSAVE_MS);
-      window.addEventListener("beforeunload", () => { try { persist(false); } catch (e) { /* 무시 */ } });
+
+      /* 휴대폰에서는 beforeunload가 거의 실행되지 않습니다. 화면을 벗어나는 순간마다 바로 저장합니다. */
+      const flush = () => { try { persist(false); } catch (e) { /* 무시 */ } };
+      window.addEventListener("beforeunload", flush);
+      window.addEventListener("pagehide", flush);
+      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(); });
+
+      /* 같은 프로젝트를 연 다른 창이 저장하면, 오래된 화면을 최신 상태로 바꿉니다.
+         그러지 않으면 오래된 창의 자동 저장이 방금 수정한 결과를 덮어씁니다. */
+      window.addEventListener("storage", (e) => {
+        if (e.key === CONFIG.PROJECTS_KEY) {
+          const row = Store.get(state.projectId);
+          if (row && (row.rev || 0) > knownRev && !state.isAnalyzing) {
+            adoptRow(row, state.step >= 1 ? "다른 창에서 수정된 최신 상태를 불러왔습니다." : "");
+          } else if (state.step === 0 && !state.isAnalyzing) {
+            render();
+          }
+        } else if (e.key === CONFIG.PING_KEY && e.newValue) {
+          let ping = null;
+          try { ping = JSON.parse(e.newValue); } catch (err) { ping = null; }
+          if (ping && ping.projectId === state.projectId && !state.isAnalyzing) loadImagesFor(state.projectId);
+        }
+      });
 
       loadSession();
       if (state.apiKey) state.step = 0;
       render(true);
+      /* 지난 실행에서 localStorage 기록이 늦어 사라진 변경을 IndexedDB 사본으로 되살립니다. */
+      Store.reconcile().then(changed => { if (changed && state.step <= 0) render(); }).catch(() => {});
     })();
   </script>
 </body>
