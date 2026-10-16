@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.24</title>
+  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.25</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -531,7 +531,8 @@ ${LG_ELEMENTS_TEXT}
 4. 구체적인 움직임 수치: 앞 단계 물성의 '움직임 수치'를 이어받아 접촉 반응 ms, 최대 눌림 %, 복원 시간과 출렁임 횟수, 잔광 시간, 파동이 퍼지는 시간과 반경을 적습니다.
 5. 물성이 보이는 그래픽: 형태(유기적 곡선 등), 눌릴 때의 찌그러짐, 그림자 변화, 빛 번짐·잔광, 투명도, 질감, 색이 감성 물성을 그대로 보여 줍니다. 앞 단계 물성의 '그래픽'을 이어받습니다.
 6. 손을 뗀 뒤의 여운: 바로 끝나지 않고 잠깐 머문 뒤 출렁이며 돌아오거나, 빛이 천천히 사라지는 식으로 감성에 맞는 여운이 남습니다.
-7. 감성 언어로 된 상태: 대표 상태 이름을 '고요히 기다리는 중', '살며시 받아들이는 중', '손길의 여운이 남아요'처럼 이번 감성의 말투로 짓습니다.
+7. 감성에 맞는 기호(또는 기호 없음): 버튼·손잡이 위에 들어가는 기호는 이번 감성에서 직접 고릅니다. 예: 말랑한 미소 → 작은 미소 곡선, 차갑고 무거움 → 짧고 굵은 가로선, 고요함 → 작은 점 하나. 형상만으로 충분하면 기호를 넣지 않습니다. 종이비행기·전송 화살표·하트·체크·플러스·톱니바퀴·종 같은 흔한 시스템 아이콘을 기본값처럼 쓰지 않습니다.
+8. 감성 언어로 된 상태: 대표 상태 이름을 '고요히 기다리는 중', '살며시 받아들이는 중', '손길의 여운이 남아요'처럼 이번 감성의 말투로 짓습니다.
 
 [가장 중요한 원칙 — 이것은 디지털 인터랙션입니다]
 - 제안하는 것은 실제 물체나 기계 장치가 아니라, 화면 속 UI 요소가 사용자의 입력에 반응하는 방식입니다. 결과물은 UX 디자이너와 모션 디자이너가 바로 프로토타입으로 만들 수 있는 인터랙션 스펙이어야 합니다.
@@ -555,7 +556,7 @@ ${LG_ELEMENTS_TEXT}
 
 [적용 맥락과 입력의 다양성]
 - 모든 제안은 휴대폰 화면에서 손가락으로 조작하는 인터랙션입니다. TV, 리모컨, 워치, 차량 등 다른 기기는 제안하지 않습니다.
-- 각 제안은 맡은 요소가 실제로 쓰이는 휴대폰의 구체적인 순간에 적용합니다. 예: 잠금 해제, 알림 도착과 정리, 볼륨·밝기 조절, 카메라 셔터, 충전 연결, 알람 끄기, 앱 전환, 메시지 전송, 사진 삭제, 음악 재생, 키보드 입력, 당겨서 새로고침, 방해금지 전환, 사진 넘기기, 홈 화면 아이콘 정리. 6개는 서로 다른 맥락이어야 합니다.
+- 각 제안은 맡은 요소가 실제로 쓰이는 휴대폰의 구체적인 순간에 적용합니다. 예: 잠금 해제, 알림 도착과 정리, 볼륨·밝기 조절, 카메라 셔터, 충전 연결, 알람 끄기, 앱 전환, 사진 삭제, 음악 재생, 키보드 입력, 당겨서 새로고침, 방해금지 전환, 사진 넘기기, 홈 화면 아이콘 정리. 6개는 서로 다른 맥락이어야 합니다.
 - 입력은 화면 터치 제스처 중심으로 다양하게 씁니다: 탭, 더블 탭, 길게 누름, 드래그, 스와이프, 플릭, 당기기, 핀치, 두 손가락 회전, 가장자리 스와이프 등. 리모컨·버튼 조작은 쓰지 않습니다. 기울이기·흔들기 같은 기기 움직임은 꼭 필요한 경우에만 6개 중 최대 1개까지 화면 터치와 함께 보조로 씁니다.
 
 [물성에 최적화된 동작 구성]
@@ -586,6 +587,7 @@ ${LG_ELEMENTS_TEXT}
 - "propertyTranslation"은 연결한 물성마다 {"property":"물성명","value":목표값,"effect":"이 인터랙션에서 어떤 반응으로 나타나는지 1문장"}을 2~4개 적습니다. effect에는 ms·%·px·횟수 같은 구체적인 크기나, 어떤 반응 채널(움직임·빛·두께·투명도·형태·햅틱)에서 드러나는지를 넣습니다.
 - "emotionalEffect"는 이 인터랙션이 원래 감성을 어떻게 강화하는지 1~2문장으로 설명합니다. 특히 왜 이 제안이 처음 감성 키워드와 어울리는지 드러내야 합니다.
 - "themedObject"는 이 UI 요소가 주제에서 어떤 대상의 형상을 띠는지를 '○○ 모양의 △△' 형태로 짧게 적습니다. 예: 봉오리 모양 확인 버튼, 이슬 방울이 구르는 선택 레일.
+- "glyph"는 이 UI 요소 위에 들어갈 기호나 작은 형상을 짧게 적습니다. 이번 감성에 맞는 것이어야 하며, 필요 없으면 "없음"이라고 적습니다. 종이비행기·전송 화살표 같은 흔한 아이콘을 기본으로 넣지 않습니다.
 - "function"은 실제로 작동하는 기능과 조작이 끝난 뒤 남는 결과를 1문장으로 적습니다.
 - "inputToOutcome"은 누른 시간·깊이·속도·거리가 결과를 어떻게 바꾸는지 1문장으로 적습니다.
 - "graphic"은 형태·찌그러짐·그림자·빛 번짐·투명도·질감·색이 어떻게 변하며 물성을 보여 주는지 1~2문장으로 적습니다.
@@ -596,7 +598,7 @@ ${LG_ELEMENTS_TEXT}
 
 ${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
 [FORMAT] 정확히 이 JSON만 반환하세요:
-{"selectedElements":[1,2,6,3,7,5],"materialSystem":{"nameKo":"감성 물성 시스템 이름","nameEn":"English System Name","surface":"기본 표면 1문장 (유리라면 어떤 유리인지)","core":["핵심 성질 1","핵심 성질 2","핵심 성질 3"],"exaggeration":"어떻게 과장해 적용하는지 1~2문장","whyKo":"이 감성과 맞는 이유 1문장"},"interactions":[{"element":1,"frame":"버튼 누르기","nameKo":"묵직한 결심 잠금 해제","nameEn":"Weighted Unlock Motion","type":"Weighted Unlock Motion","digitalPattern":"제스처 응답","physicalBasis":"무거운 금속 덩어리의 관성을 메타포로 삼습니다. 드래그 입력 후 80ms 늦게 따라오고, 강한 감쇠 스프링으로 오버슈트 없이 멈추며, 끝에서 짧고 낮은 햅틱 1회로 마무리합니다.","phoneContext":"휴대폰 · 잠금 해제","gesture":"기울이기 + 드래그","role":"잠금 해제를 무게 있는 결심의 순간으로 만듭니다.","themedObject":"묵직한 강철 추 모양의 잠금 손잡이","function":"끝까지 끌면 잠금이 풀리고 홈 화면이 아래에서 떠오릅니다","inputToOutcome":"빠르게 끌수록 손잡이가 늦게 출발하지만 더 멀리 미끄러져 한 번에 풀립니다","graphic":"손잡이는 아래가 두꺼운 둥근 형태이고, 끄는 동안 진행 방향 뒤쪽이 납작해지며 그림자가 길게 끌립니다","params":["출발 지연 80ms","최대 눌림 세로 -12%","미끄러짐 420–680ms","착지 후 머묾 120ms","오버슈트 없음","저음 진동 1회 30ms"],"interactionDNA":"늦은 출발 · 묵직한 활주 · 둔탁한 안착","behavior":"물성에 맞춘 동작 방식 2~4문장","timing":"420–680 ms / heavy spring / no overshoot","haptic":"끝에서 낮고 둔한 1회 thud","visualBehavior":"형태·깊이·빛의 동적 변화","propertyMapping":["묵직한 관성","천천히 사라지는 여운"],"propertyTranslation":[{"property":"묵직한 관성","value":82,"effect":"손잡이가 손가락보다 약 90ms 늦게 따라오며 진행 방향 뒤쪽 가장자리가 두껍게 눌립니다"},{"property":"천천히 사라지는 여운","value":70,"effect":"멈춘 뒤 표면의 빛 번짐이 0.6초에 걸쳐 천천히 가라앉습니다"}],"emotionalEffect":"원래 감성을 강화하는 설명","states":[{"labelKo":"정지","labelEn":"Rest","description":"기본 상태"},{"labelKo":"활주","labelEn":"Sliding","description":"작동 상태"},{"labelKo":"안착","labelEn":"Settle","description":"안착 상태"}],"visual":"isolated digital unlock control on a dark rounded card shown in three states: the handle lags slightly behind the finger, glides with a heavily damped motion and settles without overshoot, soft motion ghosting and a faint edge glow, cool blue-grey digital UI tone, no device frame, no physical objects"}]}`
+{"selectedElements":[1,2,6,3,7,5],"materialSystem":{"nameKo":"감성 물성 시스템 이름","nameEn":"English System Name","surface":"기본 표면 1문장 (유리라면 어떤 유리인지)","core":["핵심 성질 1","핵심 성질 2","핵심 성질 3"],"exaggeration":"어떻게 과장해 적용하는지 1~2문장","whyKo":"이 감성과 맞는 이유 1문장"},"interactions":[{"element":1,"frame":"버튼 누르기","nameKo":"묵직한 결심 잠금 해제","nameEn":"Weighted Unlock Motion","type":"Weighted Unlock Motion","digitalPattern":"제스처 응답","physicalBasis":"무거운 금속 덩어리의 관성을 메타포로 삼습니다. 드래그 입력 후 80ms 늦게 따라오고, 강한 감쇠 스프링으로 오버슈트 없이 멈추며, 끝에서 짧고 낮은 햅틱 1회로 마무리합니다.","phoneContext":"휴대폰 · 잠금 해제","gesture":"기울이기 + 드래그","role":"잠금 해제를 무게 있는 결심의 순간으로 만듭니다.","themedObject":"묵직한 강철 추 모양의 잠금 손잡이","glyph":"없음","function":"끝까지 끌면 잠금이 풀리고 홈 화면이 아래에서 떠오릅니다","inputToOutcome":"빠르게 끌수록 손잡이가 늦게 출발하지만 더 멀리 미끄러져 한 번에 풀립니다","graphic":"손잡이는 아래가 두꺼운 둥근 형태이고, 끄는 동안 진행 방향 뒤쪽이 납작해지며 그림자가 길게 끌립니다","params":["출발 지연 80ms","최대 눌림 세로 -12%","미끄러짐 420–680ms","착지 후 머묾 120ms","오버슈트 없음","저음 진동 1회 30ms"],"interactionDNA":"늦은 출발 · 묵직한 활주 · 둔탁한 안착","behavior":"물성에 맞춘 동작 방식 2~4문장","timing":"420–680 ms / heavy spring / no overshoot","haptic":"끝에서 낮고 둔한 1회 thud","visualBehavior":"형태·깊이·빛의 동적 변화","propertyMapping":["묵직한 관성","천천히 사라지는 여운"],"propertyTranslation":[{"property":"묵직한 관성","value":82,"effect":"손잡이가 손가락보다 약 90ms 늦게 따라오며 진행 방향 뒤쪽 가장자리가 두껍게 눌립니다"},{"property":"천천히 사라지는 여운","value":70,"effect":"멈춘 뒤 표면의 빛 번짐이 0.6초에 걸쳐 천천히 가라앉습니다"}],"emotionalEffect":"원래 감성을 강화하는 설명","states":[{"labelKo":"정지","labelEn":"Rest","description":"기본 상태"},{"labelKo":"활주","labelEn":"Sliding","description":"작동 상태"},{"labelKo":"안착","labelEn":"Settle","description":"안착 상태"}],"visual":"isolated digital unlock control on a dark rounded card shown in three states: the handle lags slightly behind the finger, glides with a heavily damped motion and settles without overshoot, soft motion ghosting and a faint edge glow, cool blue-grey digital UI tone, no device frame, no physical objects"}]}`
       };
 
       /* =========================================================
@@ -723,6 +725,7 @@ Render only the specified card titles/badges and no extra paragraphs.${anchorImg
   State 2: ${st(1).labelKo || "작동 중"} / ${st(1).labelEn || "Transition"} — ${st(1).description || m.transition || m.behavior || ""}
   State 3: ${st(2).labelKo || "안착"} / ${st(2).labelEn || "Settle"} — ${st(2).description || m.settle || ""}
   Themed UI shape: ${m.themedObject || ""}
+  Glyph on the element: ${!m.glyph || /^없음|^none/i.test(m.glyph) ? "none — no icon or symbol at all; the shape alone carries the meaning" : m.glyph}
   Graphic behaviour: ${m.graphic || m.visualBehavior || ""}
   Visual behavior: ${m.visualBehavior || ""}
   Specific direction: ${m.visual || ""}`;
@@ -739,7 +742,7 @@ Each panel shows ONLY the interaction element itself as an isolated UI component
 These are screen-based digital interactions. Render every element as clean digital interface graphics — flat or glassy UI surfaces with light, shadow, blur and glow layers — never as a photo-real object, material sample or mechanical part. Each UI element may take a simple stylised shape inspired by the theme (for example a bud-shaped button, a dew-drop slider handle, a soft lens-shaped magnifier) as described in its direction.
 Make the motion model readable through the element itself: position change, sinking depth, compression, stretch, resistance, overshoot, settling, blur, glow or ripple. Use restrained motion trails, ghosted previous positions or a small touch-point marker where helpful.
 Keep one consistent visual language across the whole board (same card style, same lighting), and keep each row's element identical across its three states except for the state change itself.
-Do NOT paint realistic scenes or photo-real objects. Express the emotion through the themed UI shape, its squash and stretch when pressed, shadow changes, light bloom and afterglow, translucency, texture and colour.
+Do NOT paint realistic scenes or photo-real objects. Never add a paper-plane, send arrow or any other generic system icon (heart, check mark, plus, gear, bell) to a button or handle; draw only the glyph specified for each row, or no glyph when it says none. Express the emotion through the themed UI shape, its squash and stretch when pressed, shadow changes, light bloom and afterglow, translucency, texture and colour.
 Fixed board design system — keep it identical on every board this program generates:
 - Canvas: pure white background, generous equal outer margins, thin light-grey (#E2E8F0) horizontal dividers between rows, every row exactly the same height.
 - Left label column: 30% of the width. Row number in a bold geometric sans-serif, very large, near-black navy (#0F172A). Below it the English concept name in bold sans-serif, a short dash, then the Korean concept name in a clean Korean sans-serif (Pretendard-like) with its English subtitle in medium grey beneath.
@@ -1565,6 +1568,7 @@ ${rows}`;
           gesture: str(m.gesture),
           role: str(m.role) || NO_DATA,
           themedObject: str(m.themedObject),
+          glyph: str(m.glyph),
           func: str(m.function || m.func),
           inputToOutcome: str(m.inputToOutcome),
           graphic: str(m.graphic),
@@ -2024,6 +2028,7 @@ ${rows}`;
             if (m.gesture) L.push(`  입력 방식: ${m.gesture}`);
             L.push(`  Interaction DNA: ${m.interactionDNA}`);
             if (m.themedObject) L.push(`  주제의 형상: ${m.themedObject}`);
+            if (m.glyph) L.push(`  기호: ${m.glyph}`);
             if (m.func) L.push(`  실제 기능과 결과: ${m.func}`);
             if (m.inputToOutcome) L.push(`  입력 → 결과: ${m.inputToOutcome}`);
             if (behaviorText(m)) L.push(`  동작 방식: ${behaviorText(m)}`);
@@ -2098,6 +2103,7 @@ ${rows}`;
           if (v(m.role)) L.push(`- UX 역할: ${m.role}`);
           if (m.physicalBasis) L.push(`- 물성 메타포 → 모션 모델: ${m.physicalBasis}`);
           if (m.themedObject) L.push(`- 주제의 형상 (UI 요소를 이 모양으로 그림): ${m.themedObject}`);
+          if (m.glyph) L.push(`- 요소 위 기호: ${/^없음/.test(m.glyph) ? "넣지 않음 (형상만으로 표현)" : m.glyph}`);
           if (m.func) L.push(`- 실제 기능과 결과 (반드시 작동): ${m.func}`);
           if (m.inputToOutcome) L.push(`- 입력 → 결과 (누른 시간·깊이·속도에 비례): ${m.inputToOutcome}`);
           if (m.graphic) L.push(`- 그래픽 물성: ${m.graphic}`);
@@ -2143,7 +2149,8 @@ ${rows}`;
         L.push(`11-1. 각 인터랙션의 '실제 기능과 결과'를 실제로 작동하게 만듭니다: 확인 표시, 선택 확정, 패널 열림, 숨은 내용 드러남, 메모 저장, 확대 미리보기 등. 결과로 보이는 내용(문구·그림)도 이번 감성 주제에 맞게 직접 지어 넣습니다.`);
         L.push(`11-2. '입력 → 결과'대로 누른 시간·깊이·끄는 속도가 결과 크기를 바꾸게 합니다(예: 오래 누를수록 깊이 눌리고 패널이 더 크게 펼쳐짐).`);
         L.push(`11-3. '핵심 수치'를 코드 상수로 그대로 옮기고, 눌림은 가로·세로 비율을 다르게 찌그러뜨리며(squash), 눌릴수록 그림자를 짧고 흐리게, 누른 지점에서 빛이 번지고, 놓은 뒤 잠깐 머물렀다가 감쇠 진동으로 복원되며 잔광이 천천히 사라지게 합니다.`);
-        L.push(`11-4. 상태 표시줄의 한글 문구는 각 인터랙션의 '대표 상태' 이름처럼 이번 감성의 말투로 씁니다(예: 고요히 기다리는 중 → 살며시 받아들이는 중 → 손길의 여운이 남아요).`);
+        L.push(`11-4. 버튼·손잡이 위의 기호는 각 인터랙션의 '요소 위 기호'를 따릅니다. 적혀 있지 않거나 '넣지 않음'이면 기호 없이 형상만 그리고, 종이비행기·전송 화살표 같은 기본 아이콘을 임의로 넣지 않습니다.`);
+        L.push(`11-5. 상태 표시줄의 한글 문구는 각 인터랙션의 '대표 상태' 이름처럼 이번 감성의 말투로 씁니다(예: 고요히 기다리는 중 → 살며시 받아들이는 중 → 손길의 여운이 남아요).`);
         L.push(`12. 결과가 열리는 인터랙션(카드 펼침, 패널 등장 등)은 체험 영역 안의 패널로 열고 × 버튼과 Esc로 닫습니다. 패널 등장 애니메이션도 해당 인터랙션의 스프링 성격을 따릅니다.`);
         L.push(`13. 색 팔레트는 위 색·빛·표면 톤 기준에서 뽑아 CSS 변수로 정의하고, 밝음/어두움 두 테마를 모두 지원합니다. prefers-reduced-motion에서는 진폭을 줄입니다.`);
         L.push(`14. 모든 문구는 한국어 존댓말로, 제목·힌트·상태 문구는 감성 키워드의 분위기에 맞춥니다.`);
@@ -2286,6 +2293,7 @@ ${rows}`;
                 ${PDF.kv("입력 방식", x.gesture)}
                 ${PDF.kv("Interaction DNA", x.interactionDNA)}
                 ${PDF.kv("주제의 형상", x.themedObject)}
+                ${PDF.kv("기호", x.glyph)}
                 ${PDF.kv("실제 기능과 결과", x.func)}
                 ${PDF.kv("입력 → 결과", x.inputToOutcome)}
                 ${PDF.kv("동작 방식", behaviorText(x))}
@@ -3290,6 +3298,7 @@ ${others}`;
           ${(m.digitalPattern || m.phoneContext || m.gesture) ? `<div class="flex flex-wrap gap-1.5 mt-3">${m.digitalPattern ? chip("디지털 패턴 · " + m.digitalPattern, "blue") : ""}${m.phoneContext ? chip("적용 맥락 · " + m.phoneContext, "blue") : ""}${m.gesture ? chip("입력 · " + m.gesture) : ""}</div>` : ""}
           ${m.interactionDNA ? `<div class="mt-3 bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3"><p class="t-meta font-bold text-blue-700">Interaction DNA</p><p class="t-small font-bold text-slate-900 prose-ko">${esc(m.interactionDNA)}</p></div>` : ""}
           ${row("주제의 형상", m.themedObject)}
+          ${row("기호", m.glyph)}
           ${row("실제 기능과 결과", m.func)}
           ${row("입력 → 결과", m.inputToOutcome)}
           ${row("동작 방식", behaviorText(m))}
