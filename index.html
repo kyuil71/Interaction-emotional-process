@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.21</title>
+  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.22</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -203,7 +203,8 @@
       const INTERACTION_COUNT = 6;
 
       /* 최종 인터랙션의 참조 구조 — 애플 Liquid Glass의 인터랙션 요소 8개.
-         이 중 분석 중인 감성에 맞는 6개를 AI가 골라, 유리 대신 이번 감성의 물성을 조금 과장해 적용합니다. */
+         이 중 분석 중인 감성에 맞는 6개를 AI가 골라, 앞 단계에서 정의한 물성을 실제 반응 속에 창의적으로·조금 과장해 적용합니다.
+         유리 효과는 써도 되지만, 그 유리의 성격(두께·굴절·움직임)은 앞 단계 물성이 정합니다. */
       const LG_ELEMENTS = [
         { no: 1, ko: "버튼 누르기", en: "Button Press",
           react: "누른 지점에서 반응이 시작되어 주변 요소로 퍼지고, 버튼이 배경 위에 떠 있는 존재감을 드러냅니다",
@@ -241,6 +242,7 @@
         const ms = plan.materialSystem || {};
         return `\n[이미 정한 감성 물성 시스템 — 그대로 이어서 씀]
 - 이름: ${ms.nameKo || ""} (${ms.nameEn || ""})
+- 기본 표면: ${ms.surface || ""}
 - 핵심 성질: ${(ms.core || []).join(" · ")}
 - 과장 방식: ${ms.exaggeration || ""}
 - 고른 6개 요소(제안 순서): ${plan.elements.map((n, i) => `${pad2(i + 1)} ${elementName(n)}`).join(" / ")}
@@ -480,27 +482,34 @@ ${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
 대표 장면: ${concept.subject || ""}
 ${anchorBlock(concept)}감성 단어: ${(concept.moodWords || []).join(", ")}
 
-사용자가 선택한 인터랙션 물성:
+사용자가 선택한 지각 특성 (3단계):
+${selectedPerceptions().map((p, i) => `${i + 1}. [${p.category}] ${p.titleKo} — ${p.description}`).join("\n") || "-"}
+
+사용자가 선택한 인터랙션 물성 (4단계 — 이번 제안의 재료):
 ${properties.map((p, i) => `${i + 1}. [${p.axis}] ${p.titleKo} (${p.titleEn}) · 목표 ${p.level} ${p.value} — ${p.description} / 변환 힌트: ${p.interactionHint || ""}`).join("\n")}
 
 이 물성을 실제 휴대폰 화면에서 손으로 조작하며 체감할 수 있는 '디지털 인터랙션' 컨셉으로 반드시 정확히 6개 제안해 주세요. 6개보다 적거나 많으면 실패입니다.
 ${planBlock(plan)}
 [참조 구조 — 애플 Liquid Glass의 인터랙션 요소 8개]
-Liquid Glass는 '유리'라는 하나의 물성을 아래 8개 인터랙션 요소 전체에 일관되게, 실제보다 조금 과장해 적용한 인터랙션 시스템입니다. 이번에는 유리 대신 '이번 감성에서 나온 물성'으로 같은 일을 합니다.
+Liquid Glass는 '유리'라는 하나의 물성을 아래 8개 인터랙션 요소 전체에 일관되게, 실제보다 조금 과장해 적용한 인터랙션 시스템입니다. 우리가 할 일도 같습니다. 이 프로그램의 앞 단계에서 정의한 지각 특성과 인터랙션 물성을 아래 요소들의 실제 반응 속에 창의적으로 녹여 넣습니다.
 ${LG_ELEMENTS_TEXT}
 
 [요소 선택 — 반드시 지킴]
-- 위 8개 중 이번 감성에 가장 잘 맞는 6개를 고릅니다. 이 감성의 물성이 가장 뚜렷하고 자연스럽게 드러나는 요소를 우선하고, 물성이 잘 드러나지 않는 2개를 뺍니다.
+- 위 8개 중 이번 감성에 가장 잘 맞는 6개를 고릅니다. 앞 단계 물성이 가장 뚜렷하고 자연스럽게 드러나는 요소를 우선하고, 물성이 잘 드러나지 않는 2개를 뺍니다.
 - 6개 제안은 고른 요소를 하나씩 맡습니다. 같은 요소를 두 번 쓰지 않습니다.
 - 각 제안의 "element"에는 요소 번호(1~8)를, "frame"에는 요소 이름을 위 표기 그대로 적습니다.
-- 각 제안은 그 요소의 '반응'과 '역할'을 그대로 수행하되, 반응을 만드는 물성을 유리가 아닌 이번 감성의 물성으로 바꿉니다.
+- 각 제안은 그 요소의 '반응'과 '역할'을 수행하되, 그 반응이 어떻게 일어나는지는 앞 단계 물성이 결정합니다.
 
-[감성 물성 시스템 — 리퀴드 글라스처럼 일관되고 조금 과장되게]
-- 먼저 공통 연상·시각 앵커와 선택된 인터랙션 물성에서 하나의 '감성 물성 시스템'을 정의합니다. Liquid Glass가 굴절·반사·두께·블러 같은 유리의 성질을 모든 요소에 일관되게 쓰듯, 이 시스템의 핵심 성질 3~4개를 6개 요소 전체에 일관되게 적용합니다.
+[감성 물성 시스템 — 가장 중요]
+- 먼저 앞 단계의 인터랙션 물성(목표값 포함)·지각 특성·시각 앵커를 묶어 하나의 '감성 물성 시스템'을 정의합니다. Liquid Glass가 굴절·반사·두께·블러라는 유리의 성질을 모든 요소에 일관되게 쓰듯, 이 시스템의 핵심 성질 3~4개를 6개 요소 전체에 일관되게 적용합니다.
+- 유리 효과(반투명 층, 굴절, 블러, 반사 하이라이트, 렌즈 같은 가장자리)를 써도 됩니다. 유리를 기본 표면으로 쓴다면 앞 단계 물성이 그 유리의 성격을 바꿉니다. 예: 무겁고 차가움 → 두껍고 밀도 높은 짙은 유리, 굴절이 손가락을 느리게 따라오고 착지할 때 무게감 있게 가라앉음 / 귀엽고 말랑함 → 젤리처럼 부푼 유리, 누르면 볼록하게 출렁이며 빛이 둥글게 번짐 / 날카롭고 세련됨 → 얇고 맑은 유리, 가장자리 하이라이트가 칼날처럼 빠르게 스침. 유리가 아닌 표면이 감성에 더 맞으면 그렇게 정의해도 됩니다.
+- 앞 단계 물성을 이름만 옮겨 적지 말고 창의적으로 번역합니다. 하나의 물성이 움직임뿐 아니라 빛·두께·투명도·형태·색·햅틱 같은 예상하지 못한 반응 채널에서 드러나게 하는 것도 좋습니다. 예: '잔향 감쇠'가 높으면 손을 뗀 뒤 표면의 빛 번짐이 천천히 가라앉음 / '입력 감지 임계'가 낮으면 손가락이 닿는 순간 표면이 먼저 미세하게 부풀어 오름.
+- 물성 목표값의 높낮이가 반응의 크기에 드러나게 합니다. 값이 높을수록 더 강하고 분명하게 나타납니다.
+- 선택된 인터랙션 물성은 6개 제안 전체에서 빠짐없이 한 번 이상 쓰입니다.
 - 물성은 조금 과장합니다. 실제 물리보다 1.3~1.6배 강하게 표현해 처음 보는 사람도 바로 그 감성을 알아차리게 합니다. 예: 무거움 → 손가락보다 한 박자 늦게 출발하고, 깊게 눌리며, 착지할 때 주변 요소까지 미세하게 내려앉습니다 / 말랑함 → 누른 지점이 크게 오목해지고, 놓으면 두세 번 출렁이며 복원됩니다 / 차갑고 예리함 → 접촉 순간 날카로운 하이라이트가 가장자리를 따라 빠르게 스칩니다.
 - 과장하되 매일 반복해도 피곤하지 않고 정보가 또렷이 읽히는 수준을 지킵니다.
-- 시스템 이름에 Glass·Liquid Glass를 쓰지 않습니다. 유리 물성이 아니라 이번 감성의 물성입니다.
-- 6개 제안의 "physicalBasis"에는 이 시스템의 어떤 성질이 이 요소에서 어떻게 과장되어 나타나는지 적습니다.
+- 시스템 이름은 이번 감성이 드러나게 짓습니다. 'Liquid Glass'를 그대로 쓰지 않습니다. 'Dense Frost Glass', 'Jelly Glass'처럼 감성이 붙은 이름은 좋습니다.
+- 각 제안의 "physicalBasis"에는 이 시스템의 어떤 성질이 이 요소에서 어떻게 과장되어 나타나는지 적고, "propertyTranslation"에는 앞 단계 물성 2~4개가 이 인터랙션의 어떤 반응으로 번역되었는지 하나씩 적습니다.
 
 [가장 중요한 원칙 — 이것은 디지털 인터랙션입니다]
 - 제안하는 것은 실제 물체나 기계 장치가 아니라, 화면 속 UI 요소가 사용자의 입력에 반응하는 방식입니다. 결과물은 UX 디자이너와 모션 디자이너가 바로 프로토타입으로 만들 수 있는 인터랙션 스펙이어야 합니다.
@@ -514,7 +523,8 @@ ${LG_ELEMENTS_TEXT}
 - "점성 유체가 흐른다", "금속이 굴러간다"처럼 물리 현상 묘사로만 끝나는 설명을 하지 않습니다. 반드시 어떤 UI 요소가 어떤 입력에 어떻게 반응하는지로 씁니다.
 - 버튼·슬라이더·토글에 스타일만 입힌 평범한 제안을 하지 않습니다. 기본 컴포넌트를 쓰더라도 감성 메타포가 반영된 고유한 반응 거동이 있어야 합니다.
 - 같은 디지털 인터랙션 패턴과 같은 모션 원리를 두 번 쓰지 않습니다. 6개는 서로 다른 패턴·서로 다른 모션 원리여야 합니다.
-- Magnifier, Liquid Glass 같은 기존 사례 이름을 제안명에 쓰지 않고, 유리의 굴절·투명 효과를 그대로 가져오지 않습니다.
+- Magnifier, Liquid Glass 같은 기존 사례 이름을 제안명으로 그대로 쓰지 않습니다.
+- 유리 효과만 입히고 앞 단계 물성이 반응에 드러나지 않는 제안은 실패입니다. 유리를 쓰든 쓰지 않든, 어떤 물성이 어떤 반응을 만드는지 분명해야 합니다.
 
 [감성에 따라 달라져야 함]
 - 어떤 모션 원리와 피드백을 고르는지 자체가 처음 감성 키워드에서 나와야 합니다. 다른 감성에서도 똑같이 나올 6개 세트라면 실패입니다.
@@ -551,6 +561,7 @@ ${LG_ELEMENTS_TEXT}
 - "haptic"은 필요한 경우 진동 패턴을 구체적으로 적고, 불필요하면 '없음'이라고 적습니다.
 - "visualBehavior"는 형태, 위치, 스케일, 블러, 투명도, 깊이, 발광, 파동 등 시각적 변화의 조합을 1~2문장으로 적습니다. 이때 색감과 광학 톤도 반드시 원래 감성을 반영합니다.
 - "propertyMapping"은 사용한 물성명을 2~4개 배열로 적습니다.
+- "propertyTranslation"은 연결한 물성마다 {"property":"물성명","value":목표값,"effect":"이 인터랙션에서 어떤 반응으로 나타나는지 1문장"}을 2~4개 적습니다. effect에는 ms·%·px·횟수 같은 구체적인 크기나, 어떤 반응 채널(움직임·빛·두께·투명도·형태·햅틱)에서 드러나는지를 넣습니다.
 - "emotionalEffect"는 이 인터랙션이 원래 감성을 어떻게 강화하는지 1~2문장으로 설명합니다. 특히 왜 이 제안이 처음 감성 키워드와 어울리는지 드러내야 합니다.
 - "states"는 이미지와 검증에 사용할 3개 대표 상태를 정확히 3개 만듭니다. 정해진 흐름 없이 이 인터랙션의 핵심 변화가 가장 잘 보이는 3개 순간을 고르고, 각 상태에는 labelKo, labelEn, description을 넣습니다.
 - "visual"은 이 디지털 인터랙션이 3개 상태로 변하는 모습을 보여 주는 영어 이미지 지시입니다. 휴대폰 본체나 전체 화면은 그리지 않고, isolated digital UI element on a rounded card, three sequential states, motion cues such as ghosting, blur, glow, scale change를 포함합니다. 실제 물체나 소재로 그리지 않고, 감성은 디지털 UI의 색·빛·톤으로만 표현합니다.
@@ -558,7 +569,7 @@ ${LG_ELEMENTS_TEXT}
 
 ${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
 [FORMAT] 정확히 이 JSON만 반환하세요:
-{"selectedElements":[1,2,6,3,7,5],"materialSystem":{"nameKo":"감성 물성 시스템 이름","nameEn":"English System Name","core":["핵심 성질 1","핵심 성질 2","핵심 성질 3"],"exaggeration":"어떻게 과장해 적용하는지 1~2문장","whyKo":"이 감성과 맞는 이유 1문장"},"interactions":[{"element":1,"frame":"버튼 누르기","nameKo":"묵직한 결심 잠금 해제","nameEn":"Weighted Unlock Motion","type":"Weighted Unlock Motion","digitalPattern":"제스처 응답","physicalBasis":"무거운 금속 덩어리의 관성을 메타포로 삼습니다. 드래그 입력 후 80ms 늦게 따라오고, 강한 감쇠 스프링으로 오버슈트 없이 멈추며, 끝에서 짧고 낮은 햅틱 1회로 마무리합니다.","phoneContext":"휴대폰 · 잠금 해제","gesture":"기울이기 + 드래그","role":"잠금 해제를 무게 있는 결심의 순간으로 만듭니다.","interactionDNA":"늦은 출발 · 묵직한 활주 · 둔탁한 안착","behavior":"물성에 맞춘 동작 방식 2~4문장","timing":"420–680 ms / heavy spring / no overshoot","haptic":"끝에서 낮고 둔한 1회 thud","visualBehavior":"형태·깊이·빛의 동적 변화","propertyMapping":["운동 관성","잔향 감쇠"],"emotionalEffect":"원래 감성을 강화하는 설명","states":[{"labelKo":"정지","labelEn":"Rest","description":"기본 상태"},{"labelKo":"활주","labelEn":"Sliding","description":"작동 상태"},{"labelKo":"안착","labelEn":"Settle","description":"안착 상태"}],"visual":"isolated digital unlock control on a dark rounded card shown in three states: the handle lags slightly behind the finger, glides with a heavily damped motion and settles without overshoot, soft motion ghosting and a faint edge glow, cool blue-grey digital UI tone, no device frame, no physical objects"}]}`
+{"selectedElements":[1,2,6,3,7,5],"materialSystem":{"nameKo":"감성 물성 시스템 이름","nameEn":"English System Name","surface":"기본 표면 1문장 (유리라면 어떤 유리인지)","core":["핵심 성질 1","핵심 성질 2","핵심 성질 3"],"exaggeration":"어떻게 과장해 적용하는지 1~2문장","whyKo":"이 감성과 맞는 이유 1문장"},"interactions":[{"element":1,"frame":"버튼 누르기","nameKo":"묵직한 결심 잠금 해제","nameEn":"Weighted Unlock Motion","type":"Weighted Unlock Motion","digitalPattern":"제스처 응답","physicalBasis":"무거운 금속 덩어리의 관성을 메타포로 삼습니다. 드래그 입력 후 80ms 늦게 따라오고, 강한 감쇠 스프링으로 오버슈트 없이 멈추며, 끝에서 짧고 낮은 햅틱 1회로 마무리합니다.","phoneContext":"휴대폰 · 잠금 해제","gesture":"기울이기 + 드래그","role":"잠금 해제를 무게 있는 결심의 순간으로 만듭니다.","interactionDNA":"늦은 출발 · 묵직한 활주 · 둔탁한 안착","behavior":"물성에 맞춘 동작 방식 2~4문장","timing":"420–680 ms / heavy spring / no overshoot","haptic":"끝에서 낮고 둔한 1회 thud","visualBehavior":"형태·깊이·빛의 동적 변화","propertyMapping":["운동 관성","잔향 감쇠"],"propertyTranslation":[{"property":"운동 관성","value":82,"effect":"손잡이가 손가락보다 약 90ms 늦게 따라오며 진행 방향 뒤쪽 가장자리가 두껍게 눌립니다"},{"property":"잔향 감쇠","value":70,"effect":"멈춘 뒤 표면의 빛 번짐이 0.6초에 걸쳐 천천히 가라앉습니다"}],"emotionalEffect":"원래 감성을 강화하는 설명","states":[{"labelKo":"정지","labelEn":"Rest","description":"기본 상태"},{"labelKo":"활주","labelEn":"Sliding","description":"작동 상태"},{"labelKo":"안착","labelEn":"Settle","description":"안착 상태"}],"visual":"isolated digital unlock control on a dark rounded card shown in three states: the handle lags slightly behind the finger, glides with a heavily damped motion and settles without overshoot, soft motion ghosting and a faint edge glow, cool blue-grey digital UI tone, no device frame, no physical objects"}]}`
       };
 
       /* =========================================================
@@ -690,7 +701,7 @@ Render only the specified card titles/badges and no extra paragraphs.${anchorImg
           const c = selectedConcept();
           const ms = state.interactionPlan && state.interactionPlan.materialSystem;
           const tone = (c && c.visualAnchor ? `\nColour, light and surface tone borrowed from the chosen emotion (tone only — never draw these objects): ${c.visualAnchor}` : "") +
-            (ms && ms.nameEn ? `\nOne shared signature UI material applied consistently to every row, rendered slightly exaggerated so the emotion is obvious at a glance (like a system-wide UI material, but NOT glass): ${ms.nameEn} — ${(ms.core || []).join(", ")}.` : "");
+            (ms && ms.nameEn ? `\nOne shared signature UI material applied consistently to every row, rendered slightly exaggerated so the emotion is obvious at a glance (like a system-wide UI material; glass-like translucent layers, refraction and highlights are welcome, but their thickness, motion and light must clearly follow this emotion's properties): ${ms.nameEn}${ms.surface ? ` (${ms.surface})` : ""} — ${(ms.core || []).join(", ")}.` : "");
           return `Interaction design concept board in a clean editorial style, like a professional motion-spec review sheet. High-quality UI rendering, no watermark, no real brand logos, no app names.
 Create ONE single vertical 2:3 board with exactly ${items.length} horizontal rows separated by thin light-grey lines, numbered ${pad2(base + 1)} to ${pad2(base + items.length)} in this order, on a white or very light grey background.
 Left column of each row: a very large row number, the English concept name in bold, a short dash, then the Korean concept name with its English subtitle beneath.
@@ -1500,7 +1511,7 @@ ${rows}`;
         return {
           elements: picked.slice(0, INTERACTION_COUNT),
           materialSystem: {
-            nameKo: str(ms.nameKo), nameEn: str(ms.nameEn),
+            nameKo: str(ms.nameKo), nameEn: str(ms.nameEn), surface: str(ms.surface),
             core: arr(ms.core).map(str).filter(Boolean).slice(0, 5),
             exaggeration: str(ms.exaggeration), whyKo: str(ms.whyKo)
           }
@@ -1532,7 +1543,12 @@ ${rows}`;
           timing: str(m.timing) || NO_DATA,
           haptic: str(m.haptic) || "없음",
           visualBehavior: str(m.visualBehavior) || NO_DATA,
-          propertyMapping: arr(m.propertyMapping).map(str).filter(Boolean).slice(0, 4),
+          propertyTranslation: arr(m.propertyTranslation).map(x => ({
+            property: str(x && x.property),
+            value: Number.isFinite(Number(x && x.value)) && str(x && x.value) !== "" ? Math.round(Number(x.value)) : "",
+            effect: str(x && x.effect)
+          })).filter(x => x.property && x.effect).slice(0, 4),
+          propertyMapping: (arr(m.propertyMapping).length ? arr(m.propertyMapping) : arr(m.propertyTranslation).map(x => x && x.property)).map(str).filter(Boolean).slice(0, 4),
           emotionalEffect: str(m.emotionalEffect) || NO_DATA,
           states: [0, 1, 2].map(j => arr(m.states)[j] || null).map((x, j) => ({
             labelKo: str(x && x.labelKo) || ["시작", "입력 중", "안착"][j],
@@ -1955,6 +1971,7 @@ ${rows}`;
           const ms = state.interactionPlan && state.interactionPlan.materialSystem;
           if (ms && (ms.nameKo || ms.nameEn)) {
             L.push("", `[감성 물성 시스템] ${ms.nameKo} / ${ms.nameEn}`);
+            if (ms.surface) L.push(`  기본 표면: ${ms.surface}`);
             if (ms.core.length) L.push(`  핵심 성질: ${ms.core.join(" · ")}`);
             if (ms.exaggeration) L.push(`  과장 방식: ${ms.exaggeration}`);
             L.push(`  적용 요소(리퀴드 글라스 8개 중 6개): ${state.interactionPlan.elements.map(elementName).join(" · ")}`);
@@ -1972,7 +1989,10 @@ ${rows}`;
             L.push(`  Timing: ${m.timing}`);
             L.push(`  Haptic: ${m.haptic}`);
             L.push(`  Visual Behavior: ${m.visualBehavior}`);
-            if (m.propertyMapping && m.propertyMapping.length) L.push(`  연결 물성: ${m.propertyMapping.join(" · ")}`);
+            if (m.propertyTranslation && m.propertyTranslation.length) {
+              L.push("  물성 → 반응:");
+              m.propertyTranslation.forEach(t => L.push(`    · ${t.property}${t.value !== "" ? ` ${t.value}` : ""} → ${t.effect}`));
+            } else if (m.propertyMapping && m.propertyMapping.length) L.push(`  연결 물성: ${m.propertyMapping.join(" · ")}`);
             L.push(`  감성 효과: ${m.emotionalEffect}`);
           });
           L.push("");
@@ -2014,7 +2034,8 @@ ${rows}`;
           L.push(`- 이름: ${ms.nameKo} (${ms.nameEn})`);
           if (ms.core.length) L.push(`- 핵심 성질: ${ms.core.join(", ")}`);
           if (ms.exaggeration) L.push(`- 과장 방식: ${ms.exaggeration}`);
-          L.push("- 애플 Liquid Glass가 유리 물성을 모든 요소에 적용하듯, 이 물성을 6개 인터랙션 전체에 같은 언어로 적용합니다. 유리 효과는 쓰지 않습니다.");
+          if (ms.surface) L.push(`- 기본 표면: ${ms.surface}`);
+          L.push("- 애플 Liquid Glass가 유리 물성을 모든 요소에 적용하듯, 이 물성을 6개 인터랙션 전체에 같은 언어로 적용합니다. 유리 효과(반투명·굴절·블러·하이라이트)를 써도 되지만, 그 두께·굴절·움직임은 아래 물성 값이 정합니다.");
         }
         if (props.length) {
           L.push("");
@@ -2039,7 +2060,10 @@ ${rows}`;
           if (v(m.haptic)) L.push(`- 햅틱: ${m.haptic}`);
           if (v(m.visualBehavior)) L.push(`- 시각 변화: ${m.visualBehavior}`);
           if (m.states && m.states.length) L.push(`- 대표 상태: ${m.states.map(s => `${s.labelKo}(${s.labelEn}) ${s.description}`).join(" → ")}`);
-          if (m.propertyMapping && m.propertyMapping.length) L.push(`- 연결 물성: ${m.propertyMapping.join(", ")}`);
+          if (m.propertyTranslation && m.propertyTranslation.length) {
+            L.push("- 물성 → 반응 번역 (반드시 구현):");
+            m.propertyTranslation.forEach(t => L.push(`  · ${t.property}${t.value !== "" ? ` ${t.value}` : ""} → ${t.effect}`));
+          } else if (m.propertyMapping && m.propertyMapping.length) L.push(`- 연결 물성: ${m.propertyMapping.join(", ")}`);
           if (v(m.emotionalEffect)) L.push(`- 감성 효과: ${m.emotionalEffect}`);
         });
         const twoBoards = list.length > INTERACTION_COUNT;
@@ -2189,6 +2213,7 @@ ${rows}`;
             if (ms && (ms.nameKo || ms.nameEn)) out.push(PDF.card(`<div style="font-size:14px;font-weight:700;color:#1d4ed8;">감성 물성 시스템</div>
               <div style="font-size:18px;font-weight:800;">${esc(ms.nameKo)}</div>
               <div style="font-size:15px;color:#64748b;">${esc(ms.nameEn)}</div>
+              ${PDF.kv("기본 표면", ms.surface)}
               ${PDF.kv("핵심 성질", ms.core.join(" · "))}
               ${PDF.kv("과장 방식", ms.exaggeration)}
               ${PDF.kv("적용 요소 (리퀴드 글라스 8개 중 6개)", state.interactionPlan.elements.map(elementName).join(" · "))}`));
@@ -2210,7 +2235,9 @@ ${rows}`;
                 ${PDF.kv("Timing", x.timing)}
                 ${PDF.kv("Haptic", x.haptic)}
                 ${PDF.kv("Visual Behavior", x.visualBehavior)}
-                ${x.propertyMapping && x.propertyMapping.length ? `<div style="font-size:14px;color:#64748b;margin-top:8px;">연결 물성 · ${esc(x.propertyMapping.join(" · "))}</div>` : ""}
+                ${x.propertyTranslation && x.propertyTranslation.length
+                  ? PDF.kv("물성 → 반응", x.propertyTranslation.map(t => `${t.property}${t.value !== "" ? ` ${t.value}` : ""} → ${t.effect}`).join("\n"))
+                  : (x.propertyMapping && x.propertyMapping.length ? `<div style="font-size:14px;color:#64748b;margin-top:8px;">연결 물성 · ${esc(x.propertyMapping.join(" · "))}</div>` : "")}
                 ${PDF.kv("감성 효과", x.emotionalEffect)}`));
             });
           }
@@ -3165,6 +3192,7 @@ ${others}`;
           <p class="t-meta font-bold text-blue-700">EMOTION MATERIAL SYSTEM</p>
           ${ms.nameKo || ms.nameEn ? `<h3 class="t-h3 text-slate-900">${esc(ms.nameKo || ms.nameEn)}</h3>
           ${ms.nameEn && ms.nameKo ? `<p class="t-meta text-slate-500">${esc(ms.nameEn)}</p>` : ""}` : ""}
+          ${ms.surface ? `<p class="t-small text-slate-700 mt-2 prose-ko"><strong>기본 표면</strong> · ${esc(ms.surface)}</p>` : ""}
           ${ms.core && ms.core.length ? `<div class="flex flex-wrap gap-1.5 mt-2">${ms.core.map(x => chip(x, "blue")).join("")}</div>` : ""}
           ${ms.exaggeration ? `<p class="t-small text-slate-700 mt-3 prose-ko">${esc(ms.exaggeration)}</p>` : ""}
           ${ms.whyKo ? `<p class="t-meta text-slate-500 mt-1 prose-ko">${esc(ms.whyKo)}</p>` : ""}
@@ -3209,7 +3237,12 @@ ${others}`;
           ${row("Timing / Motion", m.timing)}
           ${row("Haptic", m.haptic)}
           ${row("Visual Behavior", m.visualBehavior)}
-          ${m.propertyMapping && m.propertyMapping.length ? `<div class="pt-3"><p class="t-meta font-bold text-slate-500 mb-1">연결 물성</p><div class="flex flex-wrap gap-1.5">${m.propertyMapping.map(x => chip(x)).join("")}</div></div>` : ""}
+          ${m.propertyTranslation && m.propertyTranslation.length
+            ? `<div class="pt-3"><p class="t-meta font-bold text-slate-500 mb-1.5">물성 → 반응</p><div class="space-y-2">${m.propertyTranslation.map(t => `<div class="rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2.5">
+                <p class="t-meta font-bold text-blue-800">${esc(t.property)}${t.value !== "" ? ` <span class="tabular-nums">${esc(t.value)}</span>` : ""}</p>
+                <p class="t-meta text-slate-700 prose-ko">${esc(t.effect)}</p>
+              </div>`).join("")}</div></div>`
+            : (m.propertyMapping && m.propertyMapping.length ? `<div class="pt-3"><p class="t-meta font-bold text-slate-500 mb-1">연결 물성</p><div class="flex flex-wrap gap-1.5">${m.propertyMapping.map(x => chip(x)).join("")}</div></div>` : "")}
           ${row("감성 효과", m.emotionalEffect)}
         </article>`;
       }
@@ -3218,7 +3251,7 @@ ${others}`;
         const cards = state.interactions.map((m, i) => interactionCard(m, i)).join("");
         return `<div class="page-top px-4 dock-space animate-fade-in">
           ${header("인터랙션 제안", 4)}
-          ${sectionTitle("물성을 어떻게 움직임으로 표현할 것인가", state.interactionsMode === "physical" ? "선택한 물성의 물리 현상 자체를 작동 원리로 삼아, 휴대폰·TV에 적용되는 물리적 인터랙션으로 번역합니다." : "리퀴드 글라스가 유리라는 하나의 물성을 모든 인터랙션 요소에 적용하듯, 이 감성에서 나온 물성을 하나의 시스템으로 정리해 조금 과장되게 적용합니다. 리퀴드 글라스의 인터랙션 요소 8개 중 이 감성에 맞는 6개를 골라 휴대폰 화면의 디지털 인터랙션으로 제안합니다.")}
+          ${sectionTitle("물성을 어떻게 움직임으로 표현할 것인가", state.interactionsMode === "physical" ? "선택한 물성의 물리 현상 자체를 작동 원리로 삼아, 휴대폰·TV에 적용되는 물리적 인터랙션으로 번역합니다." : "리퀴드 글라스가 유리라는 하나의 물성을 모든 인터랙션 요소에 적용하듯, 앞 단계에서 정의한 물성을 하나의 시스템으로 정리해 실제 반응 속에 창의적으로, 조금 과장되게 적용합니다. 리퀴드 글라스의 인터랙션 요소 8개 중 이 감성에 맞는 6개를 골라 휴대폰 화면의 디지털 인터랙션으로 제안합니다.")}
           ${(function () {
             const c = selectedConcept();
             const ps = selectedPerceptions();
