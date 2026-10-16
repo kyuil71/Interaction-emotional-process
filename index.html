@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.23</title>
+  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.24</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -453,6 +453,12 @@ ${perceptions.map((p, i) => `${i + 1}. [${p.category}] ${p.titleKo} — ${p.desc
 - 물성의 값과 성격은 공통 연상 대상의 실제 물리적 거동에서 출발합니다. 예: 금속 덩어리 → 높은 관성·깊은 감쇠·낮은 오버슈트 / 인형·젤리 → 높은 탄성·통통 튀는 복원.
 - 앞 단계의 지각 특성이 왜 그런 체감으로 느껴지는지를 시간·힘·변형·광학 피드백·햅틱의 언어로 설명합니다.
 
+[움직임과 그래픽까지 정의 — 반드시 지킴]
+- 각 물성은 다음 단계에서 그대로 구현할 수 있도록 '움직임 수치'와 '그래픽 표현'을 함께 정의합니다. 이름과 설명만 있는 물성은 실패입니다.
+- 움직임 수치 예: 접촉 반응 40ms · 누르는 동안 깊이가 270ms에 걸쳐 차오름 · 최대 눌림 가로 +10% 세로 -21% · 놓은 뒤 100ms 머묾 · 760ms 동안 2~3번 출렁이며 복원 · 잔광 1200ms · 빛 파동이 480ms 동안 170px까지 퍼짐.
+- 그래픽 표현 예: 완벽한 원이 아닌 살짝 비뚤어진 유기적 곡선 · 눌리면 납작해지고 그림자가 짧아짐 · 누른 지점에서 따뜻한 빛이 번짐 · 가장자리가 부드럽게 흐려짐 · 우윳빛 반투명 · 얇고 날카로운 하이라이트.
+- 수치와 그래픽은 공통 연상 대상이 실제로 보이고 움직이는 방식에서 출발하고, 목표값(value)이 높을수록 더 크고 분명하게 정합니다. 감성이 바로 느껴지도록 실제보다 조금 과장합니다.
+
 [우선 검토할 물성 축]
 - Detection: 입력 감지 임계값, 즉시성, 반응 민감도
 - Force & Resistance: 드래그 저항, 압력 저항, 마찰, 장력
@@ -470,6 +476,8 @@ ${perceptions.map((p, i) => `${i + 1}. [${p.category}] ${p.titleKo} — ${p.desc
 - "axis"는 감지, 힘, 변형, 움직임, 회복, 시간, 빛, 진동 중 가장 가까운 짧은 분류어를 씁니다.
 - "description"은 정확히 2문장입니다. 첫 문장은 물성이 어떤 동적 성질인지 설명하고, 둘째 문장은 선택된 지각 경험을 어떻게 만들어 내는지 설명합니다.
 - "interactionHint"는 이 물성을 UI 움직임으로 번역하는 방법을 한 문장으로 적습니다. 예: '누르는 동안 4~7% 압축되고 손을 떼면 작은 오버슈트 후 복원됩니다.'
+- "motionSpec"은 이 물성의 움직임 수치를 ' · '로 이어 3~5개 적습니다. ms·%·px·횟수 같은 단위를 반드시 넣습니다.
+- "graphicSpec"은 이 물성이 화면 그래픽에서 어떻게 보이는지(형태·빛·그림자·투명도·질감·색) 1문장으로 적습니다.
 - "check"는 프로토타입에서 눈·손으로 비교 확인할 수 있는 테스트 방법 1문장입니다.
 - "value"는 LOW~HIGH 축의 위치를 0~100 정수로 적고, "level"은 낮음/중간/높음 중 하나만 씁니다.
 - "visual"은 제품 소재 샘플이 아니라 UI 요소의 압축, 늘어남, 드래그 저항, 스프링 복원, 잔광, 모션 트레일, 파동, 햅틱 반응을 연상시키는 단일 인터랙션 현상을 영어 한 문장으로 적습니다.
@@ -477,7 +485,7 @@ ${perceptions.map((p, i) => `${i + 1}. [${p.category}] ${p.titleKo} — ${p.desc
 
 ${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
 [FORMAT] 정확히 이 JSON만 반환하세요:
-{"properties":[{"axis":"회복","titleKo":"되돌아오는 탄성","titleEn":"Restorative Elasticity","description":"2문장","interactionHint":"UI 움직임으로 번역하는 1문장","check":"프로토타입 확인 방법 1문장","value":78,"level":"높음","visual":"close-up interaction study of a rounded UI control compressing under touch and springing back with a subtle overshoot"}]}`,
+{"properties":[{"axis":"회복","titleKo":"되돌아오는 탄성","titleEn":"Restorative Elasticity","description":"2문장","interactionHint":"UI 움직임으로 번역하는 1문장","motionSpec":"접촉 40ms · 최대 눌림 세로 -18% · 760ms 동안 2번 출렁이며 복원","graphicSpec":"눌리면 아래쪽이 넓게 퍼지며 그림자가 짧아지고, 누른 지점에 따뜻한 빛이 번집니다","check":"프로토타입 확인 방법 1문장","value":78,"level":"높음","visual":"close-up interaction study of a rounded UI control compressing under touch and springing back with a subtle overshoot"}]}`,
 
         /* 인터랙션 제안 — 물성을 메타포로 삼아 화면 속 디지털 UI 반응으로 제안 */
         INTERACTION_DIGITAL: (concept, properties, instruction, plan) => `선택된 감성 해석: ${concept.nameKo} (${concept.nameEn})
@@ -490,7 +498,7 @@ ${anchorBlock(concept)}감성 단어: ${(concept.moodWords || []).join(", ")}
 ${selectedPerceptions().map((p, i) => `${i + 1}. [${p.category}] ${p.titleKo} — ${p.description}`).join("\n") || "-"}
 
 사용자가 선택한 인터랙션 물성 (4단계 — 이번 제안의 재료):
-${properties.map((p, i) => `${i + 1}. [${p.axis}] ${p.titleKo} (${p.titleEn}) · 목표 ${p.level} ${p.value} — ${p.description} / 변환 힌트: ${p.interactionHint || ""}`).join("\n")}
+${properties.map((p, i) => `${i + 1}. [${p.axis}] ${p.titleKo} (${p.titleEn}) · 목표 ${p.level} ${p.value} — ${p.description} / 변환 힌트: ${p.interactionHint || ""}${p.motionSpec ? ` / 움직임 수치: ${p.motionSpec}` : ""}${p.graphicSpec ? ` / 그래픽: ${p.graphicSpec}` : ""}`).join("\n")}
 
 이 물성을 실제 휴대폰 화면에서 손으로 조작하며 체감할 수 있는 '디지털 인터랙션' 컨셉으로 반드시 정확히 6개 제안해 주세요. 6개보다 적거나 많으면 실패입니다.
 ${planBlock(plan)}
@@ -515,6 +523,16 @@ ${LG_ELEMENTS_TEXT}
 - 시스템 이름은 이번 감성이 드러나게 짓습니다. 'Liquid Glass'를 그대로 쓰지 않습니다. 'Dense Frost Glass', 'Jelly Glass'처럼 감성이 붙은 이름은 좋습니다. 한글 이름은 '서리 낀 두꺼운 유리', '젤리처럼 말랑한 유리'처럼 쉬운 말로 짓습니다.
 - 각 제안의 "physicalBasis"에는 이 시스템의 어떤 성질이 이 요소에서 어떻게 과장되어 나타나는지 적고, "propertyTranslation"에는 앞 단계 물성 2~4개가 이 인터랙션의 어떤 반응으로 번역되었는지 하나씩 적습니다.
 
+[좋은 인터랙션의 조건 — 반드시 지킴]
+아래 조건은 잘 만든 감성 인터랙션 사례('말랑한 미소': 봉오리 확인 버튼, 이슬 방울 선택 레일, 오래 누를수록 크게 펼쳐지는 기억 카드, 만진 자리에 숨은 기억이 비치는 온기 필드, 우윳빛 확대 렌즈)에서 정리한 것입니다. 사례의 내용을 따라 하지 말고, 조건만 이번 감성에 맞게 적용합니다.
+1. 주제의 형상: UI 요소 자체가 이번 감성·주제에서 떠오르는 대상의 모양과 이름을 띱니다. 예: 확인 버튼 → 봉오리, 선택 슬라이더 → 이슬 방울이 구르는 길, 확대 기능 → 우윳빛 렌즈. 사실적인 물체 그림이 아니라, 그 대상을 닮은 단순하고 깨끗한 UI 형태입니다.
+2. 실제 기능과 결과: 확인, 선택, 펼치기, 숨은 내용 보기, 기록 남기기, 확대 미리보기처럼 실제로 작동하는 기능이 있고, 조작이 끝나면 눈에 보이는 결과(확인 표시, 선택 확정, 패널 열림, 내용 드러남 등)가 남습니다. 결과로 보이는 내용도 주제에 어울려야 합니다.
+3. 입력의 크기 → 결과의 크기: 누른 시간·깊이·끄는 속도·거리가 결과를 바꿉니다. 예: 오래 누를수록 깊이 눌리고 카드가 더 크게 펼쳐짐 / 빠르게 밀면 관성으로 더 멀리 감.
+4. 구체적인 움직임 수치: 앞 단계 물성의 '움직임 수치'를 이어받아 접촉 반응 ms, 최대 눌림 %, 복원 시간과 출렁임 횟수, 잔광 시간, 파동이 퍼지는 시간과 반경을 적습니다.
+5. 물성이 보이는 그래픽: 형태(유기적 곡선 등), 눌릴 때의 찌그러짐, 그림자 변화, 빛 번짐·잔광, 투명도, 질감, 색이 감성 물성을 그대로 보여 줍니다. 앞 단계 물성의 '그래픽'을 이어받습니다.
+6. 손을 뗀 뒤의 여운: 바로 끝나지 않고 잠깐 머문 뒤 출렁이며 돌아오거나, 빛이 천천히 사라지는 식으로 감성에 맞는 여운이 남습니다.
+7. 감성 언어로 된 상태: 대표 상태 이름을 '고요히 기다리는 중', '살며시 받아들이는 중', '손길의 여운이 남아요'처럼 이번 감성의 말투로 짓습니다.
+
 [가장 중요한 원칙 — 이것은 디지털 인터랙션입니다]
 - 제안하는 것은 실제 물체나 기계 장치가 아니라, 화면 속 UI 요소가 사용자의 입력에 반응하는 방식입니다. 결과물은 UX 디자이너와 모션 디자이너가 바로 프로토타입으로 만들 수 있는 인터랙션 스펙이어야 합니다.
 - 각 제안은 하나의 명확한 디지털 인터랙션 패턴에 속합니다. 예: 화면 전환(Transition), 마이크로 인터랙션(Micro-interaction), 상태 피드백(State feedback), 제스처 응답(Gesture response), 스크롤·리스트 거동(Scroll physics), 진행·로딩 표현(Progress), 알림 등장과 정리(Notification), 콘텐츠 정리·삭제(Dismiss), 값 조절(Value control).
@@ -523,7 +541,7 @@ ${LG_ELEMENTS_TEXT}
 - 그 물성 메타포를 지우면 감성 경험이 사라지는 인터랙션이어야 합니다. 일반 기본 모션과 구별되지 않는 제안은 실패입니다.
 
 [금지]
-- 실제 물체·소재·기계 부품(돌, 금속 덩어리, 젤리, 얼음, 천, 레일, 추 등)이 화면에 등장하거나 손으로 만지는 물리 장치처럼 읽히는 제안을 하지 않습니다.
+- 사실적인 물체 사진·3D 모형을 화면에 두거나, 손으로 만지는 기계 장치처럼 읽히는 제안을 하지 않습니다. 단, UI 요소가 주제 대상을 닮은 단순한 형태(봉오리 모양 버튼, 이슬 방울 손잡이, 렌즈 모양 확대창)를 띠는 것은 좋습니다.
 - "점성 유체가 흐른다", "금속이 굴러간다"처럼 물리 현상 묘사로만 끝나는 설명을 하지 않습니다. 반드시 어떤 UI 요소가 어떤 입력에 어떻게 반응하는지로 씁니다.
 - 버튼·슬라이더·토글에 스타일만 입힌 평범한 제안을 하지 않습니다. 기본 컴포넌트를 쓰더라도 감성 메타포가 반영된 고유한 반응 거동이 있어야 합니다.
 - 같은 디지털 인터랙션 패턴과 같은 모션 원리를 두 번 쓰지 않습니다. 6개는 서로 다른 패턴·서로 다른 모션 원리여야 합니다.
@@ -532,7 +550,7 @@ ${LG_ELEMENTS_TEXT}
 
 [감성에 따라 달라져야 함]
 - 어떤 모션 원리와 피드백을 고르는지 자체가 처음 감성 키워드에서 나와야 합니다. 다른 감성에서도 똑같이 나올 6개 세트라면 실패입니다.
-- 6개 모두 감성 물성 시스템을 공유하며, 공통 연상 대상과 시각 앵커가 주는 느낌(무게·탄성·온도·날카로움 등)을 움직임 성격으로 번역합니다. 대상을 그리지 않습니다.
+- 6개 모두 감성 물성 시스템을 공유하며, 공통 연상 대상과 시각 앵커가 주는 느낌(무게·탄성·온도·날카로움 등)을 움직임 성격과 UI 형태로 번역합니다.
 - 색감, 광학 톤, 무게감, 속도, 감쇠 성격은 처음 감성 키워드와 끝까지 일치해야 합니다. visual과 visualBehavior는 시각 앵커의 색·빛·표면 톤만 이어받습니다.
 
 [적용 맥락과 입력의 다양성]
@@ -567,13 +585,18 @@ ${LG_ELEMENTS_TEXT}
 - "propertyMapping"은 사용한 물성명을 2~4개 배열로 적습니다.
 - "propertyTranslation"은 연결한 물성마다 {"property":"물성명","value":목표값,"effect":"이 인터랙션에서 어떤 반응으로 나타나는지 1문장"}을 2~4개 적습니다. effect에는 ms·%·px·횟수 같은 구체적인 크기나, 어떤 반응 채널(움직임·빛·두께·투명도·형태·햅틱)에서 드러나는지를 넣습니다.
 - "emotionalEffect"는 이 인터랙션이 원래 감성을 어떻게 강화하는지 1~2문장으로 설명합니다. 특히 왜 이 제안이 처음 감성 키워드와 어울리는지 드러내야 합니다.
-- "states"는 이미지와 검증에 사용할 3개 대표 상태를 정확히 3개 만듭니다. 정해진 흐름 없이 이 인터랙션의 핵심 변화가 가장 잘 보이는 3개 순간을 고르고, 각 상태에는 labelKo, labelEn, description을 넣습니다.
-- "visual"은 이 디지털 인터랙션이 3개 상태로 변하는 모습을 보여 주는 영어 이미지 지시입니다. 휴대폰 본체나 전체 화면은 그리지 않고, isolated digital UI element on a rounded card, three sequential states, motion cues such as ghosting, blur, glow, scale change를 포함합니다. 실제 물체나 소재로 그리지 않고, 감성은 디지털 UI의 색·빛·톤으로만 표현합니다.
+- "themedObject"는 이 UI 요소가 주제에서 어떤 대상의 형상을 띠는지를 '○○ 모양의 △△' 형태로 짧게 적습니다. 예: 봉오리 모양 확인 버튼, 이슬 방울이 구르는 선택 레일.
+- "function"은 실제로 작동하는 기능과 조작이 끝난 뒤 남는 결과를 1문장으로 적습니다.
+- "inputToOutcome"은 누른 시간·깊이·속도·거리가 결과를 어떻게 바꾸는지 1문장으로 적습니다.
+- "graphic"은 형태·찌그러짐·그림자·빛 번짐·투명도·질감·색이 어떻게 변하며 물성을 보여 주는지 1~2문장으로 적습니다.
+- "params"는 구현에 바로 쓸 움직임 수치 4~6개 배열입니다. 예: ["접촉 반응 40ms","최대 눌림 세로 -21%","놓은 뒤 머묾 100ms","복원 760ms · 2.4회 출렁임","잔광 1200ms","빛 파동 480ms · 반경 170px"]. 앞 단계 물성의 움직임 수치를 이어받고, 목표값이 높을수록 크게 정합니다.
+- "states"는 이미지와 검증에 사용할 3개 대표 상태를 정확히 3개 만듭니다. 정해진 흐름 없이 이 인터랙션의 핵심 변화가 가장 잘 보이는 3개 순간을 고르고, 각 상태에는 labelKo, labelEn, description을 넣습니다. labelKo는 이번 감성의 말투로 짓습니다.
+- "visual"은 이 디지털 인터랙션이 3개 상태로 변하는 모습을 보여 주는 영어 이미지 지시입니다. 휴대폰 본체나 전체 화면은 그리지 않고, isolated digital UI element on a rounded card, three sequential states, motion cues such as ghosting, blur, glow, scale change를 포함합니다. UI 요소는 themedObject의 단순한 형상을 띠고, graphic에 적은 형태·빛·그림자 변화가 보이게 합니다. 사실적인 물체 사진처럼 그리지는 않습니다.
 - 소재 규격, 제조 공정, 실제 CMF 샘플 제안은 하지 않습니다.
 
 ${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
 [FORMAT] 정확히 이 JSON만 반환하세요:
-{"selectedElements":[1,2,6,3,7,5],"materialSystem":{"nameKo":"감성 물성 시스템 이름","nameEn":"English System Name","surface":"기본 표면 1문장 (유리라면 어떤 유리인지)","core":["핵심 성질 1","핵심 성질 2","핵심 성질 3"],"exaggeration":"어떻게 과장해 적용하는지 1~2문장","whyKo":"이 감성과 맞는 이유 1문장"},"interactions":[{"element":1,"frame":"버튼 누르기","nameKo":"묵직한 결심 잠금 해제","nameEn":"Weighted Unlock Motion","type":"Weighted Unlock Motion","digitalPattern":"제스처 응답","physicalBasis":"무거운 금속 덩어리의 관성을 메타포로 삼습니다. 드래그 입력 후 80ms 늦게 따라오고, 강한 감쇠 스프링으로 오버슈트 없이 멈추며, 끝에서 짧고 낮은 햅틱 1회로 마무리합니다.","phoneContext":"휴대폰 · 잠금 해제","gesture":"기울이기 + 드래그","role":"잠금 해제를 무게 있는 결심의 순간으로 만듭니다.","interactionDNA":"늦은 출발 · 묵직한 활주 · 둔탁한 안착","behavior":"물성에 맞춘 동작 방식 2~4문장","timing":"420–680 ms / heavy spring / no overshoot","haptic":"끝에서 낮고 둔한 1회 thud","visualBehavior":"형태·깊이·빛의 동적 변화","propertyMapping":["묵직한 관성","천천히 사라지는 여운"],"propertyTranslation":[{"property":"묵직한 관성","value":82,"effect":"손잡이가 손가락보다 약 90ms 늦게 따라오며 진행 방향 뒤쪽 가장자리가 두껍게 눌립니다"},{"property":"천천히 사라지는 여운","value":70,"effect":"멈춘 뒤 표면의 빛 번짐이 0.6초에 걸쳐 천천히 가라앉습니다"}],"emotionalEffect":"원래 감성을 강화하는 설명","states":[{"labelKo":"정지","labelEn":"Rest","description":"기본 상태"},{"labelKo":"활주","labelEn":"Sliding","description":"작동 상태"},{"labelKo":"안착","labelEn":"Settle","description":"안착 상태"}],"visual":"isolated digital unlock control on a dark rounded card shown in three states: the handle lags slightly behind the finger, glides with a heavily damped motion and settles without overshoot, soft motion ghosting and a faint edge glow, cool blue-grey digital UI tone, no device frame, no physical objects"}]}`
+{"selectedElements":[1,2,6,3,7,5],"materialSystem":{"nameKo":"감성 물성 시스템 이름","nameEn":"English System Name","surface":"기본 표면 1문장 (유리라면 어떤 유리인지)","core":["핵심 성질 1","핵심 성질 2","핵심 성질 3"],"exaggeration":"어떻게 과장해 적용하는지 1~2문장","whyKo":"이 감성과 맞는 이유 1문장"},"interactions":[{"element":1,"frame":"버튼 누르기","nameKo":"묵직한 결심 잠금 해제","nameEn":"Weighted Unlock Motion","type":"Weighted Unlock Motion","digitalPattern":"제스처 응답","physicalBasis":"무거운 금속 덩어리의 관성을 메타포로 삼습니다. 드래그 입력 후 80ms 늦게 따라오고, 강한 감쇠 스프링으로 오버슈트 없이 멈추며, 끝에서 짧고 낮은 햅틱 1회로 마무리합니다.","phoneContext":"휴대폰 · 잠금 해제","gesture":"기울이기 + 드래그","role":"잠금 해제를 무게 있는 결심의 순간으로 만듭니다.","themedObject":"묵직한 강철 추 모양의 잠금 손잡이","function":"끝까지 끌면 잠금이 풀리고 홈 화면이 아래에서 떠오릅니다","inputToOutcome":"빠르게 끌수록 손잡이가 늦게 출발하지만 더 멀리 미끄러져 한 번에 풀립니다","graphic":"손잡이는 아래가 두꺼운 둥근 형태이고, 끄는 동안 진행 방향 뒤쪽이 납작해지며 그림자가 길게 끌립니다","params":["출발 지연 80ms","최대 눌림 세로 -12%","미끄러짐 420–680ms","착지 후 머묾 120ms","오버슈트 없음","저음 진동 1회 30ms"],"interactionDNA":"늦은 출발 · 묵직한 활주 · 둔탁한 안착","behavior":"물성에 맞춘 동작 방식 2~4문장","timing":"420–680 ms / heavy spring / no overshoot","haptic":"끝에서 낮고 둔한 1회 thud","visualBehavior":"형태·깊이·빛의 동적 변화","propertyMapping":["묵직한 관성","천천히 사라지는 여운"],"propertyTranslation":[{"property":"묵직한 관성","value":82,"effect":"손잡이가 손가락보다 약 90ms 늦게 따라오며 진행 방향 뒤쪽 가장자리가 두껍게 눌립니다"},{"property":"천천히 사라지는 여운","value":70,"effect":"멈춘 뒤 표면의 빛 번짐이 0.6초에 걸쳐 천천히 가라앉습니다"}],"emotionalEffect":"원래 감성을 강화하는 설명","states":[{"labelKo":"정지","labelEn":"Rest","description":"기본 상태"},{"labelKo":"활주","labelEn":"Sliding","description":"작동 상태"},{"labelKo":"안착","labelEn":"Settle","description":"안착 상태"}],"visual":"isolated digital unlock control on a dark rounded card shown in three states: the handle lags slightly behind the finger, glides with a heavily damped motion and settles without overshoot, soft motion ghosting and a faint edge glow, cool blue-grey digital UI tone, no device frame, no physical objects"}]}`
       };
 
       /* =========================================================
@@ -699,22 +722,24 @@ Render only the specified card titles/badges and no extra paragraphs.${anchorImg
   State 1: ${st(0).labelKo || "시작"} / ${st(0).labelEn || "Rest"} — ${st(0).description || m.rest || ""}
   State 2: ${st(1).labelKo || "작동 중"} / ${st(1).labelEn || "Transition"} — ${st(1).description || m.transition || m.behavior || ""}
   State 3: ${st(2).labelKo || "안착"} / ${st(2).labelEn || "Settle"} — ${st(2).description || m.settle || ""}
+  Themed UI shape: ${m.themedObject || ""}
+  Graphic behaviour: ${m.graphic || m.visualBehavior || ""}
   Visual behavior: ${m.visualBehavior || ""}
   Specific direction: ${m.visual || ""}`;
           }).join("\n");
           const c = selectedConcept();
           const ms = state.interactionPlan && state.interactionPlan.materialSystem;
-          const tone = (c && c.visualAnchor ? `\nColour, light and surface tone borrowed from the chosen emotion (tone only — never draw these objects): ${c.visualAnchor}` : "") +
+          const tone = (c && c.visualAnchor ? `\nColour, light and surface tone borrowed from the chosen emotion (use for the UI shapes and colours; stylised, never photo-real): ${c.visualAnchor}` : "") +
             (ms && ms.nameEn ? `\nOne shared signature UI material applied consistently to every row, rendered slightly exaggerated so the emotion is obvious at a glance (like a system-wide UI material; glass-like translucent layers, refraction and highlights are welcome, but their thickness, motion and light must clearly follow this emotion's properties): ${ms.nameEn}${ms.surface ? ` (${ms.surface})` : ""} — ${(ms.core || []).join(", ")}.` : "");
           return `Interaction design concept board in a clean editorial style, like a professional motion-spec review sheet. High-quality UI rendering, no watermark, no real brand logos, no app names.
 Create ONE single vertical 2:3 board with exactly ${items.length} horizontal rows separated by thin light-grey lines, numbered ${pad2(base + 1)} to ${pad2(base + items.length)} in this order, on a white or very light grey background.
 Left column of each row: a very large row number, the English concept name in bold, a short dash, then the Korean concept name with its English subtitle beneath.
 Right side of each row: THREE equal state panels left-to-right, each with a small Korean state label and an English state label directly above it.
 Each panel shows ONLY the interaction element itself as an isolated UI component on a simple rounded card or plain ground — for example a button, list, slider rail, bottom sheet, toggle, card stack, lens, dial or notification card. Do NOT draw a phone body, device frame, bezel, status bar, full app screen or TV set. Keep the element large and centred so the change between the three states is understood at a glance.
-These are screen-based digital interactions. Render every element as clean digital interface graphics — flat or glassy UI surfaces with light, shadow, blur and glow layers — never as a physical object, material sample, mechanical part, rail, weight or real-world substance.
+These are screen-based digital interactions. Render every element as clean digital interface graphics — flat or glassy UI surfaces with light, shadow, blur and glow layers — never as a photo-real object, material sample or mechanical part. Each UI element may take a simple stylised shape inspired by the theme (for example a bud-shaped button, a dew-drop slider handle, a soft lens-shaped magnifier) as described in its direction.
 Make the motion model readable through the element itself: position change, sinking depth, compression, stretch, resistance, overshoot, settling, blur, glow or ripple. Use restrained motion trails, ghosted previous positions or a small touch-point marker where helpful.
 Keep one consistent visual language across the whole board (same card style, same lighting), and keep each row's element identical across its three states except for the state change itself.
-Do NOT draw the emotion's association objects literally (no stones, dolls, metal blocks, ice, flowers or landscapes). Express the emotion only through colour, light, surface tone and motion character of the UI element.
+Do NOT paint realistic scenes or photo-real objects. Express the emotion through the themed UI shape, its squash and stretch when pressed, shadow changes, light bloom and afterglow, translucency, texture and colour.
 Fixed board design system — keep it identical on every board this program generates:
 - Canvas: pure white background, generous equal outer margins, thin light-grey (#E2E8F0) horizontal dividers between rows, every row exactly the same height.
 - Left label column: 30% of the width. Row number in a bold geometric sans-serif, very large, near-black navy (#0F172A). Below it the English concept name in bold sans-serif, a short dash, then the Korean concept name in a clean Korean sans-serif (Pretendard-like) with its English subtitle in medium grey beneath.
@@ -1496,6 +1521,8 @@ ${rows}`;
           description: str(p.description) || NO_DATA,
           check: str(p.check),
           interactionHint: str(p.interactionHint),
+          motionSpec: str(p.motionSpec),
+          graphicSpec: str(p.graphicSpec),
           value: clampValue(p.value, p.level),
           level: levels.includes(str(p.level)) ? str(p.level) : levelFromValue(clampValue(p.value, p.level)),
           visual: str(p.visual) || "a clean interaction study showing deformation, motion, resistance, recovery, optical feedback or haptic-like response",
@@ -1537,6 +1564,11 @@ ${rows}`;
           phoneContext: str(m.phoneContext),
           gesture: str(m.gesture),
           role: str(m.role) || NO_DATA,
+          themedObject: str(m.themedObject),
+          func: str(m.function || m.func),
+          inputToOutcome: str(m.inputToOutcome),
+          graphic: str(m.graphic),
+          params: arr(m.params).map(str).filter(Boolean).slice(0, 8),
           interactionDNA: str(m.interactionDNA) || NO_DATA,
           rest: str(m.rest),
           acknowledge: str(m.acknowledge),
@@ -1965,6 +1997,8 @@ ${rows}`;
             L.push("", `${pad2(i + 1)}. [${p.axis}] ${p.titleKo} / ${p.titleEn} · 목표 ${p.level} (LOW 0 - HIGH 100 축에서 ${p.value})${on}`);
             L.push(`  ${p.description}`);
             if (p.interactionHint) L.push(`  인터랙션 변환: ${p.interactionHint}`);
+            if (p.motionSpec) L.push(`  움직임: ${p.motionSpec}`);
+            if (p.graphicSpec) L.push(`  그래픽: ${p.graphicSpec}`);
             if (p.check) L.push(`  확인 방법: ${p.check}`);
           });
           L.push("");
@@ -1989,7 +2023,12 @@ ${rows}`;
             if (m.phoneContext) L.push(`  적용 맥락: ${m.phoneContext}`);
             if (m.gesture) L.push(`  입력 방식: ${m.gesture}`);
             L.push(`  Interaction DNA: ${m.interactionDNA}`);
+            if (m.themedObject) L.push(`  주제의 형상: ${m.themedObject}`);
+            if (m.func) L.push(`  실제 기능과 결과: ${m.func}`);
+            if (m.inputToOutcome) L.push(`  입력 → 결과: ${m.inputToOutcome}`);
             if (behaviorText(m)) L.push(`  동작 방식: ${behaviorText(m)}`);
+            if (m.graphic) L.push(`  그래픽 물성: ${m.graphic}`);
+            if (m.params && m.params.length) L.push(`  핵심 수치: ${m.params.join(" · ")}`);
             L.push(`  Timing: ${m.timing}`);
             L.push(`  Haptic: ${m.haptic}`);
             L.push(`  Visual Behavior: ${m.visualBehavior}`);
@@ -2028,7 +2067,7 @@ ${rows}`;
           L.push(`- 선택된 감성 해석: ${c.nameKo} (${c.nameEn})`);
           if (c.definition) L.push(`- 감성 정의: ${c.definition.replace(/\n/g, " ")}`);
           if (c.anchor) L.push(`- 사람들이 먼저 떠올리는 연상: ${c.anchor}`);
-          if (c.visualAnchor) L.push(`- 색·빛·표면 톤 기준(톤으로만 사용, 대상을 그리지 않음): ${c.visualAnchor}`);
+          if (c.visualAnchor) L.push(`- 색·빛·표면 톤 기준 (UI 형상과 색에 반영, 사실적인 물체로는 그리지 않음): ${c.visualAnchor}`);
           if (c.moodWords && c.moodWords.length) L.push(`- 감성 단어: ${c.moodWords.join(", ")}`);
         }
         const ms = state.interactionPlan && state.interactionPlan.materialSystem;
@@ -2044,7 +2083,7 @@ ${rows}`;
         if (props.length) {
           L.push("");
           L.push("# 인터랙션 물성 (LOW 0 – HIGH 100 목표값)");
-          props.forEach(p => L.push(`- ${p.titleKo} (${p.titleEn}) · ${p.axis} · ${p.value} — ${p.interactionHint || p.description}`));
+          props.forEach(p => L.push(`- ${p.titleKo} (${p.titleEn}) · ${p.axis} · ${p.value} — ${p.interactionHint || p.description}${p.motionSpec ? ` / 움직임: ${p.motionSpec}` : ""}${p.graphicSpec ? ` / 그래픽: ${p.graphicSpec}` : ""}`));
         }
         L.push("");
         L.push(`# 구현할 인터랙션 ${list.length}개`);
@@ -2058,6 +2097,11 @@ ${rows}`;
           if (m.gesture) L.push(`- 입력 방식: ${m.gesture}`);
           if (v(m.role)) L.push(`- UX 역할: ${m.role}`);
           if (m.physicalBasis) L.push(`- 물성 메타포 → 모션 모델: ${m.physicalBasis}`);
+          if (m.themedObject) L.push(`- 주제의 형상 (UI 요소를 이 모양으로 그림): ${m.themedObject}`);
+          if (m.func) L.push(`- 실제 기능과 결과 (반드시 작동): ${m.func}`);
+          if (m.inputToOutcome) L.push(`- 입력 → 결과 (누른 시간·깊이·속도에 비례): ${m.inputToOutcome}`);
+          if (m.graphic) L.push(`- 그래픽 물성: ${m.graphic}`);
+          if (m.params && m.params.length) L.push(`- 핵심 수치 (코드 상수로 그대로 사용): ${m.params.join(" · ")}`);
           const beh = behaviorText(m);
           if (beh) L.push(`- 동작 방식: ${beh.replace(/\n/g, " / ")}`);
           if (v(m.timing)) L.push(`- 타이밍·스프링: ${m.timing}`);
@@ -2095,7 +2139,11 @@ ${rows}`;
         L.push(`8. 햅틱은 navigator.vibrate의 짧은 펄스로 근사하고 미지원 기기에서는 조용히 생략합니다. 압력 감지가 어려우면 누름 시간으로 깊이를 보완합니다.`);
         L.push(`9. 기울이기·흔들기·뒤집기 입력은 DeviceOrientation/DeviceMotion을 쓰고, iOS는 첫 터치에서 권한을 요청합니다. 센서가 없거나 거부되면 드래그로 같은 효과를 낼 수 있게 대체합니다.`);
         L.push(`10. 모든 인터랙션은 휴대폰 화면 터치로 조작합니다. 리모컨·방향키 같은 별도 조작부는 만들지 않습니다.`);
-        L.push(`11. 각 인터랙션은 체험 영역 안에서 첨부 보드의 해당 행에 그려진 UI 요소(잠금 슬라이더, 알림 카드, 리스트, 시트, 다이얼, 셔터 등)를 같은 형태로 그려 '대표 상태'가 순서대로 실제로 일어나게 합니다. 휴대폰 본체나 베젤은 그리지 않습니다. 연상 대상(돌·인형·금속 덩어리·꽃 등)도 그리지 않고 색·빛·질감 톤과 움직임 성격으로만 감성을 표현합니다.`);
+        L.push(`11. 각 인터랙션은 체험 영역 안에서 첨부 보드의 해당 행에 그려진 UI 요소(잠금 슬라이더, 알림 카드, 리스트, 시트, 다이얼, 셔터 등)를 같은 형태로 그려 '대표 상태'가 순서대로 실제로 일어나게 합니다. 휴대폰 본체나 베젤은 그리지 않습니다. UI 요소는 '주제의 형상'에 적은 대상을 닮은 단순한 형태로 Canvas에 직접 그리고(예: 봉오리 모양 버튼, 이슬 방울 손잡이), 사실적인 사진이나 3D 모형처럼 그리지 않습니다.`);
+        L.push(`11-1. 각 인터랙션의 '실제 기능과 결과'를 실제로 작동하게 만듭니다: 확인 표시, 선택 확정, 패널 열림, 숨은 내용 드러남, 메모 저장, 확대 미리보기 등. 결과로 보이는 내용(문구·그림)도 이번 감성 주제에 맞게 직접 지어 넣습니다.`);
+        L.push(`11-2. '입력 → 결과'대로 누른 시간·깊이·끄는 속도가 결과 크기를 바꾸게 합니다(예: 오래 누를수록 깊이 눌리고 패널이 더 크게 펼쳐짐).`);
+        L.push(`11-3. '핵심 수치'를 코드 상수로 그대로 옮기고, 눌림은 가로·세로 비율을 다르게 찌그러뜨리며(squash), 눌릴수록 그림자를 짧고 흐리게, 누른 지점에서 빛이 번지고, 놓은 뒤 잠깐 머물렀다가 감쇠 진동으로 복원되며 잔광이 천천히 사라지게 합니다.`);
+        L.push(`11-4. 상태 표시줄의 한글 문구는 각 인터랙션의 '대표 상태' 이름처럼 이번 감성의 말투로 씁니다(예: 고요히 기다리는 중 → 살며시 받아들이는 중 → 손길의 여운이 남아요).`);
         L.push(`12. 결과가 열리는 인터랙션(카드 펼침, 패널 등장 등)은 체험 영역 안의 패널로 열고 × 버튼과 Esc로 닫습니다. 패널 등장 애니메이션도 해당 인터랙션의 스프링 성격을 따릅니다.`);
         L.push(`13. 색 팔레트는 위 색·빛·표면 톤 기준에서 뽑아 CSS 변수로 정의하고, 밝음/어두움 두 테마를 모두 지원합니다. prefers-reduced-motion에서는 진폭을 줄입니다.`);
         L.push(`14. 모든 문구는 한국어 존댓말로, 제목·힌트·상태 문구는 감성 키워드의 분위기에 맞춥니다.`);
@@ -2207,6 +2255,8 @@ ${rows}`;
                 ${PDF.bar(x.value)}
                 <div style="font-size:14px;color:#64748b;">목표 수준 · ${esc(x.level)} (${esc(x.value)})</div>
                 ${x.interactionHint ? `<div style="font-size:14px;color:#1d4ed8;margin-top:5px;">인터랙션 변환 · ${esc(x.interactionHint)}</div>` : ""}
+                ${x.motionSpec ? `<div style="font-size:14px;color:#334155;margin-top:4px;">움직임 · ${esc(x.motionSpec)}</div>` : ""}
+                ${x.graphicSpec ? `<div style="font-size:14px;color:#334155;margin-top:4px;">그래픽 · ${esc(x.graphicSpec)}</div>` : ""}
                 ${x.check ? `<div style="font-size:14px;color:#64748b;margin-top:4px;">확인 방법 · ${esc(x.check)}</div>` : ""}`));
             });
           }
@@ -2235,7 +2285,12 @@ ${rows}`;
                 ${PDF.kv("적용 맥락", x.phoneContext)}
                 ${PDF.kv("입력 방식", x.gesture)}
                 ${PDF.kv("Interaction DNA", x.interactionDNA)}
+                ${PDF.kv("주제의 형상", x.themedObject)}
+                ${PDF.kv("실제 기능과 결과", x.func)}
+                ${PDF.kv("입력 → 결과", x.inputToOutcome)}
                 ${PDF.kv("동작 방식", behaviorText(x))}
+                ${PDF.kv("그래픽 물성", x.graphic)}
+                ${PDF.kv("핵심 수치", (x.params || []).join(" · "))}
                 ${PDF.kv("Timing", x.timing)}
                 ${PDF.kv("Haptic", x.haptic)}
                 ${PDF.kv("Visual Behavior", x.visualBehavior)}
@@ -3141,6 +3196,8 @@ ${others}`;
           body: `
             <p class="t-small text-slate-700 prose-ko">${esc(p.description)}</p>
             ${p.interactionHint ? `<p class="t-meta text-blue-700 prose-ko"><strong>인터랙션 변환</strong> · ${esc(p.interactionHint)}</p>` : ""}
+            ${p.motionSpec ? `<p class="t-meta text-slate-700 prose-ko"><strong>움직임</strong> · ${esc(p.motionSpec)}</p>` : ""}
+            ${p.graphicSpec ? `<p class="t-meta text-slate-700 prose-ko"><strong>그래픽</strong> · ${esc(p.graphicSpec)}</p>` : ""}
             ${p.check ? `<p class="t-meta text-slate-500 prose-ko">확인 방법 · ${esc(p.check)}</p>` : ""}
             ${levelBar(p.value, state.propertyIds.includes(p.id))}
             <p class="t-meta text-slate-500">목표 수준 · ${esc(p.level)} (${esc(p.value)})</p>`
@@ -3232,7 +3289,12 @@ ${others}`;
           ${m.physicalBasis ? `<div class="mt-3 bg-slate-900 text-white rounded-2xl px-4 py-3"><p class="t-meta font-bold text-sky-300">${state.interactionsMode === "physical" ? "물리 현상 · Physical Basis" : "물성 메타포 → 디지털 모션 모델"}</p><p class="t-small prose-ko">${esc(m.physicalBasis)}</p></div>` : ""}
           ${(m.digitalPattern || m.phoneContext || m.gesture) ? `<div class="flex flex-wrap gap-1.5 mt-3">${m.digitalPattern ? chip("디지털 패턴 · " + m.digitalPattern, "blue") : ""}${m.phoneContext ? chip("적용 맥락 · " + m.phoneContext, "blue") : ""}${m.gesture ? chip("입력 · " + m.gesture) : ""}</div>` : ""}
           ${m.interactionDNA ? `<div class="mt-3 bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3"><p class="t-meta font-bold text-blue-700">Interaction DNA</p><p class="t-small font-bold text-slate-900 prose-ko">${esc(m.interactionDNA)}</p></div>` : ""}
+          ${row("주제의 형상", m.themedObject)}
+          ${row("실제 기능과 결과", m.func)}
+          ${row("입력 → 결과", m.inputToOutcome)}
           ${row("동작 방식", behaviorText(m))}
+          ${row("그래픽 물성", m.graphic)}
+          ${m.params && m.params.length ? `<div class="pt-3"><p class="t-meta font-bold text-slate-500 mb-1">핵심 수치</p><div class="flex flex-wrap gap-1.5">${m.params.map(x => chip(x, "blue")).join("")}</div></div>` : ""}
           <div class="grid grid-cols-3 gap-2 mt-4">${states.map((st, j) => `<div class="rounded-xl border border-slate-200 bg-white p-2.5 min-h-[92px]">
             <p class="t-meta font-bold text-blue-700">${pad2(j + 1)} ${esc(st.labelKo)}</p>
             <p class="t-meta text-slate-500">${esc(st.labelEn)}</p>
