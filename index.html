@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.25</title>
+  <!-- 홈 화면에 추가해 실행하면 주소창 없이 앱처럼 열립니다 (iPhone 포함) -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.26</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -3014,6 +3019,9 @@ ${others}`;
             <button type="button" onclick="Actions.startNewProject()" class="w-full bg-white text-slate-900 py-5 rounded-2xl font-bold t-h3 flex items-center justify-center gap-2 shadow-2xl active:scale-[0.98] transition-all">
               새 프로젝트 시작 <i data-lucide="arrow-right" class="w-5 h-5"></i>
             </button>
+            ${window.FS && FS.supported() && !FS.standalone() ? `<button type="button" onclick="FS.toggle()" class="self-center -mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/25 bg-white/5 t-meta font-bold text-slate-100 active:scale-95 transition-all">
+              <i data-lucide="${FS.active() ? "minimize" : "maximize"}" class="w-4 h-4"></i>${FS.active() ? "전체 화면 끄기" : "전체 화면으로 보기"}
+            </button>` : ""}
 
             <div>
               <h2 class="t-label text-slate-300 mb-3">저장된 프로젝트 ${projects.length}/${CONFIG.MAX_PROJECTS}</h2>
@@ -3535,6 +3543,50 @@ ${others}`;
       render(true);
       /* 지난 실행에서 localStorage 기록이 늦어 사라진 변경을 IndexedDB 사본으로 되살립니다. */
       Store.reconcile().then(changed => { if (changed && state.step <= 0) render(); }).catch(() => {});
+
+      /* =========================================================
+         19. 전체 화면 — 스마트폰 인터넷 창에서 실행하면 전체 화면으로 엽니다.
+         브라우저는 사용자의 터치 없이 전체 화면을 허용하지 않으므로,
+         페이지를 연 뒤 첫 번째 터치에서 전체 화면으로 바꿉니다.
+         사용자가 직접 전체 화면을 끄면 다시 강제로 켜지 않습니다.
+         ========================================================= */
+      const FS = {
+        root: document.documentElement,
+        supported() { return !!(this.root.requestFullscreen || this.root.webkitRequestFullscreen); },
+        active() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
+        standalone() {
+          /* 홈 화면에 추가해 앱처럼 실행한 경우만 해당합니다. (전체 화면 API로 켠 상태는 제외) */
+          return (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+        },
+        mobile() { return !!(window.matchMedia && matchMedia("(pointer: coarse)").matches); },
+        async enter() {
+          if (this.active() || !this.supported()) return;
+          try {
+            if (this.root.requestFullscreen) await this.root.requestFullscreen({ navigationUI: "hide" });
+            else this.root.webkitRequestFullscreen();
+          } catch (e) { /* 브라우저가 거부하면 일반 화면으로 계속 씁니다. */ }
+        },
+        async exit() {
+          try {
+            if (document.exitFullscreen) await document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+          } catch (e) { /* 무시 */ }
+        },
+        toggle() { return this.active() ? this.exit() : this.enter(); }
+      };
+      window.FS = FS;
+
+      if (FS.mobile() && FS.supported() && !FS.standalone()) {
+        /* 터치 입력은 pointerup·touchend·click에서만 전체 화면 요청이 허용됩니다. */
+        const firstTouch = () => {
+          ["pointerup", "touchend", "click"].forEach(t => document.removeEventListener(t, firstTouch, true));
+          FS.enter();
+        };
+        ["pointerup", "touchend", "click"].forEach(t => document.addEventListener(t, firstTouch, { capture: true, passive: true }));
+      }
+      /* 전체 화면이 켜지거나 꺼지면 홈 화면의 버튼 문구를 갱신합니다. */
+      ["fullscreenchange", "webkitfullscreenchange"].forEach(t => document.addEventListener(t, () => { if (state.step === 0 && !state.isAnalyzing) render(); }));
+      if (state.step === 0) render();
     })();
   </script>
 </body>
