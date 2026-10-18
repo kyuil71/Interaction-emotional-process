@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0f172a" />
-  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.26</title>
+  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.27</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -3545,10 +3545,7 @@ ${others}`;
       Store.reconcile().then(changed => { if (changed && state.step <= 0) render(); }).catch(() => {});
 
       /* =========================================================
-         19. 전체 화면 — 스마트폰 인터넷 창에서 실행하면 전체 화면으로 엽니다.
-         브라우저는 사용자의 터치 없이 전체 화면을 허용하지 않으므로,
-         페이지를 연 뒤 첫 번째 터치에서 전체 화면으로 바꿉니다.
-         사용자가 직접 전체 화면을 끄면 다시 강제로 켜지 않습니다.
+         19. 전체 화면 — 자동 전환은 하지 않고, 홈 화면의 버튼으로만 켜고 끕니다.
          ========================================================= */
       const FS = {
         root: document.documentElement,
@@ -3576,14 +3573,6 @@ ${others}`;
       };
       window.FS = FS;
 
-      if (FS.mobile() && FS.supported() && !FS.standalone()) {
-        /* 터치 입력은 pointerup·touchend·click에서만 전체 화면 요청이 허용됩니다. */
-        const firstTouch = () => {
-          ["pointerup", "touchend", "click"].forEach(t => document.removeEventListener(t, firstTouch, true));
-          FS.enter();
-        };
-        ["pointerup", "touchend", "click"].forEach(t => document.addEventListener(t, firstTouch, { capture: true, passive: true }));
-      }
       /* 전체 화면이 켜지거나 꺼지면 홈 화면의 버튼 문구를 갱신합니다. */
       ["fullscreenchange", "webkitfullscreenchange"].forEach(t => document.addEventListener(t, () => { if (state.step === 0 && !state.isAnalyzing) render(); }));
       if (state.step === 0) render();
