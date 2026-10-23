@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0f172a" />
-  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.30</title>
+  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.31</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -615,13 +615,16 @@ ${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
       /* 라벨이 작게 찍히면 화면에서 읽히지 않습니다. 픽셀 높이를 직접 지정합니다. */
       /* 감성 해석·지각 특성·인터랙션 물성 보드가 똑같이 쓰는 캡션 규칙.
          번호 + 한글 제목만 넣고(영어 없음), 글씨체·크기·굵기·위치를 세 보드 모두 동일하게 맞춥니다. */
+      /* 글씨체·크기는 CMF-emotional-process(감성 · 지각 · 물성 · CMF 랩)의 보드 캡션 규칙(CAPTION_SIZE)과 동일하게 맞춥니다.
+         가로 1024px 이미지에서 글자 높이 약 54px(폰트 약 56px, 이미지 폭의 약 5.3%). */
+      const CAPTION_SIZE = `Caption text size — identical on the emotion, perception and property boards of this project: large, bold captions with Korean glyphs about 54 pixels tall in this 1024 x 1536 image (a font size of about 56 px, roughly 5.3% of the full image width). Reference: on a two-column board, the caption "01 먼 곳까지 또렷한 빛" at this size is about as wide as the whole cell. Every caption on every board uses exactly this size: never smaller than 48 px glyph height and never larger than 60 px; do not shrink a caption to fit the cell or a long title — if the title does not fit on one line, wrap it onto a second line at the same size and make the caption strip taller (shrink the image area above instead). Number and title are both set in bold, near-black, in one neutral modern Korean sans-serif (Pretendard-like).`;
+
       const IMG_CAPTION_RULE = `[Caption typography — identical on every caption, and identical on all three boards of this program]
-- Every image has its own plain white caption strip directly beneath it, about 106 pixels tall, the same height for every image.
-- Inside the strip, left-aligned with a 12-pixel left margin and vertically centred, write the number and the Korean title on ONE line, exactly like "01 먼 곳까지 또렷한 빛": the two-digit number, one space, then the Korean title.
-- Number and title are both bold, solid near-black (#111111), in one clean Korean sans-serif typeface (Pretendard / Noto Sans KR style).
-- LARGE type: letter height about 62 pixels in this 1024 x 1536 image (roughly 6% of the image width) — clearly readable at a glance on a phone. Use exactly the same size, weight, colour and position for every caption — no caption may be larger or smaller than the others.
-- Korean only: the caption is the number plus the Korean title and nothing else. Do NOT render any English at all — no English titles, concept names, style names, subtitles, headings or category badges anywhere in the image. Render no other lettering anywhere in the image.
-- Keep each caption on one line when it fits. Never shrink a caption to fit; if a title is too long for one line, wrap it onto a second line at the same 62-pixel size and make that strip taller.`;
+- Every image has its own plain white caption strip directly beneath it, the same height for every image on the board.
+- Inside the strip, left-aligned with the same inner padding for every caption, write the two-digit number, a single space, then the Korean title exactly as specified, e.g. "01 먼 곳까지 또렷한 빛".
+- Font and size: ${CAPTION_SIZE}
+- Korean only — absolutely no English words, no romanization, no translation, no subtitles, headings, descriptions or category badges anywhere in the image. Render only the caption text specified and no other lettering.
+- Image area above the caption: same corner radius, same thin light-grey hairline border, same gutters between items.`;
 
       const pad2 = n => String(n).padStart(2, "0");
 
