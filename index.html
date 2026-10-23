@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0f172a" />
-  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.28</title>
+  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.29</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -616,12 +616,12 @@ ${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
       /* 감성 해석·지각 특성·인터랙션 물성 보드가 똑같이 쓰는 캡션 규칙.
          번호 + 한글 제목만 넣고(영어 없음), 글씨체·크기·굵기·위치를 세 보드 모두 동일하게 맞춥니다. */
       const IMG_CAPTION_RULE = `[Caption typography — identical on every caption, and identical on all three boards of this program]
-- Every image has its own plain white caption strip directly beneath it, about 46 pixels tall, the same height for every image.
+- Every image has its own plain white caption strip directly beneath it, about 84 pixels tall, the same height for every image.
 - Inside the strip, left-aligned with a 12-pixel left margin and vertically centred, write the number and the Korean title on ONE line, exactly like "01 먼 곳까지 또렷한 빛": the two-digit number, one space, then the Korean title.
 - Number and title are both bold, solid near-black (#111111), in one clean Korean sans-serif typeface (Pretendard / Noto Sans KR style).
-- Letter height about 24 pixels in this 1024 x 1536 image (roughly 2.3% of the image width). Use exactly the same size, weight, colour and position for every caption — no caption may be larger or smaller than the others.
-- Korean only: no English words, no subtitles, no category badges, no second line. Render no other lettering anywhere in the image.
-- Never break a caption onto two lines and never shrink one caption to fit; if a title is long, let the strip text run closer to the right edge.`;
+- LARGE type: letter height about 48 pixels in this 1024 x 1536 image (roughly 4.7% of the image width) — clearly readable at a glance on a phone. Use exactly the same size, weight, colour and position for every caption — no caption may be larger or smaller than the others.
+- Korean only: the caption is the number plus the Korean title and nothing else. Do NOT render any English at all — no English titles, concept names, style names, subtitles, headings or category badges anywhere in the image. Render no other lettering anywhere in the image.
+- Keep each caption on one line when it fits. Never shrink a caption to fit; if a title is too long for one line, wrap it onto a second line at the same 48-pixel size and make that strip taller.`;
 
       const pad2 = n => String(n).padStart(2, "0");
 
@@ -648,7 +648,7 @@ ${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
           const panels = concepts.map((c, i) => {
             const s = styleOf(c, i);
             return `Panel ${i + 1} — one complete standalone mood image, rendered as ${s.directive}.
-  Emotional concept: ${c.nameKo} / ${c.nameEn}.
+  Emotional concept (for meaning only, not to be written): ${c.nameKo}.
   Single-scene direction: ${c.visual}
   People's first association this panel must make recognisable: ${c.anchor || ""}. Visual anchor: ${c.visualAnchor || ""}
   Important: this panel itself must be a single coherent scene, never a collage, montage, split-screen, contact sheet, or collection of unrelated symbolic objects.
@@ -668,7 +668,7 @@ ${IMG_CAPTION_RULE}`;
           const cells = items.map((p, i) => {
             const s = styleOf(p, i);
             return `Cell ${i + 1} — one complete standalone perceptual reference image, rendered as ${s.directive}.
-  Perceptual axis: ${p.category} / ${p.titleKo}.
+  Perceptual axis (for meaning only, not to be written): ${p.category} / ${p.titleKo}.
   Single-scene direction: ${p.visual}
   Important: visually demonstrate the perceptual mechanism, not merely a beautiful mood. This cell must contain one coherent subject or scene, never a collage or multiple examples.
   White caption strip directly under this image, text exactly: ${perceptionLabelLine(p, i)}.`;
@@ -688,7 +688,7 @@ ${cells}
 - Do not force unrelated colour palettes. Maintain one emotional family, but avoid nearly identical green/yellow images.
 - Each image must make its own perceptual quality immediately visible: initial detection, contact/response, spatial development, temporal movement/recovery, aftereffect/settling, or directional/spatial orientation as appropriate.
 - Styles must not all be identical. The same named style may appear in at most one third of the cells.
-Styles used across the cells: ${styleNote(items)}.
+Styles used across the cells (for direction only, never written in the image): ${styleNote(items)}.
 Flower rule: ${flowerRuleEn(state.keyword, state.note)}${anchorImgLine()}
 ${IMG_CAPTION_RULE}`;
         },
@@ -698,7 +698,7 @@ ${IMG_CAPTION_RULE}`;
   Image direction: ${p.visual || p.interactionHint || p.description}
   The image must show a dynamic UI/interaction phenomenon such as compression, drag resistance, spring recovery, inertia, damping, glow diffusion, motion trail, deformation or haptic-like pulse. Do not show a physical material coupon.`).join("\n");
           return `${IMG_BASE}
-Create ONE single vertical 2:3 integrated image file that presents all ${items.length} Dynamic Interaction Property cards on a clean premium editorial board.
+Create ONE single vertical 2:3 integrated image file that presents all ${items.length} dynamic interaction property studies on a clean premium editorial board (no board title).
 Do NOT place any large board title or introductory paragraph at the top.
 Layout: cells form a balanced 2-column × ${Math.ceil(items.length / 2)}-row grid${items.length % 2 ? " (centre the final cell in the last row)" : ""}. Each cell contains ONE interaction-study image plus a separate white caption strip directly beneath it. Use thin light-grey hairlines, consistent gutters and generous white margins, exactly like a clean editorial reference board. The image must visually explain the property through a UI component or abstract digital response, not through a material sample.
 Use consistent neutral interface geometry, but vary the demonstrated behavior: touch compression, threshold detection, progressive drag, elastic stretch, inertial movement, overshoot, damping, opacity/blur diffusion, edge deformation, ripple propagation, or tactile pulse visualization.
