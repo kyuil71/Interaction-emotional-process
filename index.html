@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0f172a" />
-  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.27</title>
+  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.28</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -613,7 +613,15 @@ ${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
       const IMG_BASE = `Editorial imagery for a high-end design magazine. Premium image quality, professional lighting, convincing material and atmospheric detail where appropriate, natural tonal depth, no watermark, no logo, no signature. Preserve the chosen style faithfully rather than forcing every panel to look equally sharp. Avoid conventional posed portraits and identifiable faces; hands, back views or partial figures are fine when a lifestyle scene genuinely needs a person.`;
 
       /* 라벨이 작게 찍히면 화면에서 읽히지 않습니다. 픽셀 높이를 직접 지정합니다. */
-      const IMG_LABEL_RULE = `Label typography, applied to every label in the image: set each label on its own clean white caption strip, with the leading number in bold followed by the title text exactly as specified below, all on ONE line in regular weight, in a neutral sans-serif on white. Never break a caption onto a second line. The caption text must be large and unmistakably legible — letters at least 40 pixels tall in this 1024 x 1536 image. Never set label text smaller than that; if space is tight make the caption strip taller rather than shrinking the type. Render only the label text specified below and no other lettering anywhere in the image.`;
+      /* 감성 해석·지각 특성·인터랙션 물성 보드가 똑같이 쓰는 캡션 규칙.
+         번호 + 한글 제목만 넣고(영어 없음), 글씨체·크기·굵기·위치를 세 보드 모두 동일하게 맞춥니다. */
+      const IMG_CAPTION_RULE = `[Caption typography — identical on every caption, and identical on all three boards of this program]
+- Every image has its own plain white caption strip directly beneath it, about 46 pixels tall, the same height for every image.
+- Inside the strip, left-aligned with a 12-pixel left margin and vertically centred, write the number and the Korean title on ONE line, exactly like "01 먼 곳까지 또렷한 빛": the two-digit number, one space, then the Korean title.
+- Number and title are both bold, solid near-black (#111111), in one clean Korean sans-serif typeface (Pretendard / Noto Sans KR style).
+- Letter height about 24 pixels in this 1024 x 1536 image (roughly 2.3% of the image width). Use exactly the same size, weight, colour and position for every caption — no caption may be larger or smaller than the others.
+- Korean only: no English words, no subtitles, no category badges, no second line. Render no other lettering anywhere in the image.
+- Never break a caption onto two lines and never shrink one caption to fit; if a title is long, let the strip text run closer to the right edge.`;
 
       const pad2 = n => String(n).padStart(2, "0");
 
@@ -622,29 +630,13 @@ ${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
         return { name, directive: IMAGE_STYLES[name] };
       }
 
-      function emotionLabelLine(item, i) {
-        const ko = item.nameKo || item.labelKo || "";
-        const en = item.nameEn || item.label || "";
-        return state.labelLang === "ko" && ko
-          ? `"${pad2(i + 1)}" in bold followed by "${ko}  ${en}" on the SAME line`
-          : `"${pad2(i + 1)}" in bold followed by "${en}"`;
+      /* 보드 캡션 문구 — 번호와 한글 제목만 씁니다. */
+      function captionText(ko, i) {
+        return `"${pad2(i + 1)} ${String(ko || "").trim()}"`;
       }
-
-      function perceptionLabelLine(item, i) {
-        const ko = item.titleKo || item.labelKo || "";
-        const en = item.titleEn || item.label || "";
-        return state.labelLang === "ko" && ko
-          ? `"${pad2(i + 1)}" in bold followed by "${ko}  ${en}" on the SAME line`
-          : `"${pad2(i + 1)}" in bold followed by "${en}"`;
-      }
-
-      function propertyLabelLine(item, i) {
-        const ko = item.titleKo || item.labelKo || "";
-        const en = item.titleEn || item.label || "";
-        return state.labelLang === "ko" && ko
-          ? `"${pad2(i + 1)}" in bold followed by "${ko}  ${en}" on the SAME line`
-          : `"${pad2(i + 1)}" in bold followed by "${en}"`;
-      }
+      const emotionLabelLine = (item, i) => captionText(item.nameKo || item.labelKo, i);
+      const perceptionLabelLine = (item, i) => captionText(item.titleKo || item.labelKo, i);
+      const propertyLabelLine = (item, i) => captionText(item.titleKo || item.labelKo, i);
 
       function styleNote(items) {
         const used = items.map((it, i) => styleOf(it, i).name);
@@ -660,17 +652,17 @@ ${instruction ? `\n[추가 지시사항]\n${instruction}\n` : ""}
   Single-scene direction: ${c.visual}
   People's first association this panel must make recognisable: ${c.anchor || ""}. Visual anchor: ${c.visualAnchor || ""}
   Important: this panel itself must be a single coherent scene, never a collage, montage, split-screen, contact sheet, or collection of unrelated symbolic objects.
-  Caption strip along the bottom edge of this panel: ${emotionLabelLine(c, i)}. The caption title must exactly match the corresponding emotion text-card title; do not invent or shorten a different title.`;
+  White caption strip directly under this panel image, text exactly: ${emotionLabelLine(c, i)}. Do not invent, translate or shorten the title.`;
           }).join("\n");
           return `${IMG_BASE}
 Generate ONE single vertical 2:3 image file that contains THREE independent, full-width mood-image panels stacked vertically. The generation request is one integrated image, but each of the three panels must visually function as a complete standalone image for Concept 01, 02, and 03 respectively.
-Use equal-height panels, a narrow white outer margin, thin light-grey dividers, and a clean white caption strip at the bottom of each panel. Do not create any additional subdivisions inside a panel.
+Use equal-height panels, a narrow white outer margin, thin light-grey dividers, and a white caption strip directly beneath each panel image (see caption rule). Do not create any additional subdivisions inside a panel.
 ${panels}
 The three panels express different experiential readings of the same original emotion. Keep a recognisable emotional family across all three while clearly differentiating scene, experiential focus, composition and visual rhythm. Do not force radically different palettes just for variety; colour should follow each concept naturally.
 Do not combine architecture, animals, landscapes, products or abstract forms as disconnected symbols inside one panel. Every panel must feel like one naturally photographed or rendered moment.
 Each panel must show something ordinary viewers immediately associate with the emotion word(s), not an obscure metaphor. The three panels may share the same association family but must differ clearly in object, scale and situation.
 Flower rule: ${flowerRuleEn(state.keyword, state.note)}
-${IMG_LABEL_RULE}`;
+${IMG_CAPTION_RULE}`;
         },
         perception(items) {
           const cells = items.map((p, i) => {
@@ -679,7 +671,7 @@ ${IMG_LABEL_RULE}`;
   Perceptual axis: ${p.category} / ${p.titleKo}.
   Single-scene direction: ${p.visual}
   Important: visually demonstrate the perceptual mechanism, not merely a beautiful mood. This cell must contain one coherent subject or scene, never a collage or multiple examples.
-  White caption strip directly under this image: ${perceptionLabelLine(p, i)}. Keep Korean and English together on one line.`;
+  White caption strip directly under this image, text exactly: ${perceptionLabelLine(p, i)}.`;
           }).join("\n");
           return `${IMG_BASE}
 Create ONE single vertical 2:3 integrated image file containing exactly ${items.length} independent perceptual-reference images on a clean white editorial board.
@@ -698,23 +690,22 @@ ${cells}
 - Styles must not all be identical. The same named style may appear in at most one third of the cells.
 Styles used across the cells: ${styleNote(items)}.
 Flower rule: ${flowerRuleEn(state.keyword, state.note)}${anchorImgLine()}
-${IMG_LABEL_RULE}`;
+${IMG_CAPTION_RULE}`;
         },
         property(items) {
-          const cards = items.map((p, i) => `Card ${i + 1}:
-  Large prominent numbering and title on white: ${propertyLabelLine(p, i)}.
-  Optional small axis badge only: "${p.axis}".
+          const cards = items.map((p, i) => `Cell ${i + 1}:
+  White caption strip directly under this image, text exactly: ${propertyLabelLine(p, i)}.
   Image direction: ${p.visual || p.interactionHint || p.description}
   The image must show a dynamic UI/interaction phenomenon such as compression, drag resistance, spring recovery, inertia, damping, glow diffusion, motion trail, deformation or haptic-like pulse. Do not show a physical material coupon.`).join("\n");
           return `${IMG_BASE}
 Create ONE single vertical 2:3 integrated image file that presents all ${items.length} Dynamic Interaction Property cards on a clean premium editorial board.
 Do NOT place any large board title or introductory paragraph at the top.
-Layout: compact two-column grid of white cards with thin light-grey lines, generous margins and consistent spacing. Fit every card cleanly on one board.
-Each card contains a strong title and ONE interaction-study image only. The image must visually explain the property through a UI component or abstract digital response, not through a material sample.
+Layout: cells form a balanced 2-column × ${Math.ceil(items.length / 2)}-row grid${items.length % 2 ? " (centre the final cell in the last row)" : ""}. Each cell contains ONE interaction-study image plus a separate white caption strip directly beneath it. Use thin light-grey hairlines, consistent gutters and generous white margins, exactly like a clean editorial reference board. The image must visually explain the property through a UI component or abstract digital response, not through a material sample.
 Use consistent neutral interface geometry, but vary the demonstrated behavior: touch compression, threshold detection, progressive drag, elastic stretch, inertial movement, overshoot, damping, opacity/blur diffusion, edge deformation, ripple propagation, or tactile pulse visualization.
 Avoid product mockups, phones, devices, brand UI, icons as decoration, physical sample tiles, metal/glass/textile swatches, or CMF boards.
 ${cards}
-Render only the specified card titles/badges and no extra paragraphs.${anchorImgLine()}`;
+${anchorImgLine()}
+${IMG_CAPTION_RULE}`;
         },
         interaction(items, offset) { return IMG.interactionDigital(items, offset); },
         interactionDigital(items, offset) {
