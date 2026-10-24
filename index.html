@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0f172a" />
-  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.32</title>
+  <title>감성 · 지각 · 물성 · 인터렉션 랩 v12.33</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -22,6 +22,8 @@
        body 접두사로 특이도를 한 단계 올려 유틸리티 충돌을 막습니다.
        ========================================================== */
     html { -webkit-text-size-adjust: 100%; }
+    /* 화면 맨 위에서 아래로 끌어내려도 브라우저가 새로 고침하지 않도록 막습니다. */
+    html, body { overscroll-behavior-y: none; }
     body {
       font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
       -webkit-tap-highlight-color: transparent;
@@ -3528,6 +3530,31 @@ ${others}`;
           if (ping && ping.projectId === state.projectId && !state.isAnalyzing) loadImagesFor(state.projectId);
         }
       });
+
+      /* 당겨서 새로 고침 방지 — CSS(overscroll-behavior)를 지원하지 않는 브라우저를 위한 보완.
+         페이지가 맨 위에 있고 손가락이 아래로 끌릴 때만 브라우저 기본 동작을 막습니다.
+         안쪽에 스크롤할 내용이 남은 영역(확대 이미지, 긴 글 상자 등)은 그대로 스크롤됩니다. */
+      (function blockPullToRefresh() {
+        let startY = 0, startX = 0;
+        const innerCanScrollUp = el => {
+          for (let n = el; n && n !== document.body && n !== document.documentElement; n = n.parentElement) {
+            const st = getComputedStyle(n);
+            if (/(auto|scroll)/.test(st.overflowY) && n.scrollHeight > n.clientHeight && n.scrollTop > 0) return true;
+          }
+          return false;
+        };
+        document.addEventListener("touchstart", e => {
+          if (e.touches.length !== 1) return;
+          startY = e.touches[0].clientY; startX = e.touches[0].clientX;
+        }, { passive: true });
+        document.addEventListener("touchmove", e => {
+          if (e.touches.length !== 1) return;
+          const dy = e.touches[0].clientY - startY;
+          const dx = e.touches[0].clientX - startX;
+          const atTop = (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+          if (atTop && dy > 0 && dy > Math.abs(dx) && !innerCanScrollUp(e.target) && e.cancelable) e.preventDefault();
+        }, { passive: false });
+      })();
 
       loadSession();
       if (state.apiKey) state.step = 0;
